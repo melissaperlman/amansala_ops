@@ -1,0 +1,2234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Amansala · Ops Scheduler</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f5f3ef;
+    --card: #ffffff;
+    --border: #e8e4df;
+    --text: #1a1a1a;
+    --muted: #9a9490;
+    --heaven: #a8c5da;
+    --chica: #e8a5b0;
+    --bf: #b8d4b0;
+    --grande: #d4b896;
+    --sky: #c5b8d4;
+    --conflict: #e8703a;
+    --requested: #d4a017;
+    --green: #4a8c5c;
+    --darkgreen: #2d6e40;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  /* HEADER */
+  .header { background: var(--card); border-bottom: 1px solid var(--border); padding: 18px 32px 0; }
+  .header-top { display: flex; align-items: baseline; gap: 12px; margin-bottom: 16px; flex-wrap:wrap; }
+  .logo { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 600; }
+  .week-label { font-size: 13px; color: var(--muted); }
+
+  /* TABS */
+  .tabs { display: flex; gap: 24px; }
+  .tab { font-size: 14px; font-weight: 500; color: var(--muted); padding-bottom: 12px; cursor: pointer; border-bottom: 2px solid transparent; background: none; border-top: none; border-left: none; border-right: none; transition: all 0.2s; font-family: inherit; }
+  .tab.active { color: var(--text); border-bottom-color: var(--text); }
+
+  /* FILTER BAR */
+  .filter-bar { background: var(--card); border-bottom: 1px solid var(--border); padding: 10px 32px; }
+  .filter-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .filter-row + .filter-row { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
+  .filter-label { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-right: 4px; white-space: nowrap; }
+
+  .pill { padding: 5px 13px; border-radius: 999px; border: 1.5px solid var(--border); font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s; background: var(--card); color: var(--text); white-space: nowrap; font-family: inherit; }
+  .pill:hover { border-color: #bbb; }
+  .pill.active { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
+  .pill.room-heaven.active { background: var(--heaven); color: #1a4a6e; border-color: var(--heaven); }
+  .pill.room-chica.active  { background: var(--chica);  color: #7a2030; border-color: var(--chica); }
+  .pill.room-bf.active     { background: var(--bf);     color: #1a4a28; border-color: var(--bf); }
+  .pill.room-grande.active { background: var(--grande); color: #6a3a10; border-color: var(--grande); }
+  .pill.room-sky.active    { background: var(--sky);    color: #3a2a6a; border-color: var(--sky); }
+  .pill.teacher-active { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
+
+  /* CONTENT */
+  .content { max-width: 800px; margin: 0 auto; padding: 28px 24px; }
+  .day-section { margin-bottom: 32px; }
+  .day-heading { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+  .booking-count { font-size: 12px; color: var(--muted); margin-bottom: 14px; }
+
+  /* LEGEND */
+  .legend { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 16px; font-size: 13px; }
+  .legend-item { display: flex; align-items: center; gap: 5px; }
+  .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .conflict-badge { display: flex; align-items: center; gap: 4px; color: var(--conflict); font-size: 13px; font-weight: 500; }
+  .conflict-counter-pill { background:#e8703a;color:#fff;border-radius:20px;padding:3px 10px;font-size:12px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:5px;border:none;font-family:inherit; }
+  .conflict-counter-pill:hover { background:#c4420a; }
+  .conflict-counter-pill.clear { background:#4caf50; }
+  .requested-badge { display: flex; align-items: center; gap: 4px; color: var(--requested); font-size: 13px; font-weight: 500; }
+
+  /* BOOKING CARD */
+  .booking-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 18px 20px; margin-bottom: 10px; display: grid; grid-template-columns: 150px 1fr; gap: 16px; transition: box-shadow 0.2s; }
+  .booking-card:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.07); }
+  .booking-left { display: flex; flex-direction: column; gap: 8px; }
+  .time-range { font-size: 15px; font-weight: 600; line-height: 1.2; }
+  .duration { font-size: 12px; color: var(--muted); }
+  .room-tag { display: inline-block; padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; width: fit-content; }
+  .room-tag.heaven { background: var(--heaven); color: #1a4a6e; }
+  .room-tag.chica  { background: var(--chica);  color: #7a2030; }
+  .room-tag.bf     { background: var(--bf);     color: #1a4a28; }
+  .room-tag.grande { background: var(--grande); color: #6a3a10; }
+  .room-tag.sky    { background: var(--sky);    color: #3a2a6a; }
+  .status-tag { display: flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--requested); }
+  .status-tag.conflict { color: var(--conflict); }
+  .booking-right { display: flex; flex-direction: column; gap: 10px; }
+  .booking-title-row { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 6px; }
+  .booking-title { font-size: 15px; font-weight: 600; line-height: 1.3; }
+  .booking-title span { font-weight: 400; color: var(--muted); }
+  .title-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .teacher-chip { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: #f0ebe5; color: var(--text); white-space: nowrap; }
+  .teacher-chip.green { background: #d4ead9; color: var(--darkgreen); }
+  .teacher-chip.brown { background: #ead9d4; color: #7a3020; }
+  .pax { font-size: 12px; color: var(--muted); }
+  .setup-section { margin-top: 4px; }
+  .setup-label { font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; display: flex; align-items: center; gap: 4px; }
+  .setup-notes { font-size: 13px; color: var(--muted); font-style: italic; }
+  .setup-notes.has-content { color: var(--text); font-style: italic; }
+  .card-footer { display: flex; justify-content: flex-end; }
+  .edit-btn { display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--muted); border: 1px solid var(--border); border-radius: 6px; padding: 4px 10px; cursor: pointer; background: none; transition: all 0.15s; font-family: inherit; }
+  .edit-btn:hover { background: var(--bg); color: var(--text); }
+
+  /* ADD BTN */
+  .add-btn { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); background: none; border: 1.5px dashed var(--border); border-radius: 10px; padding: 12px 20px; cursor: pointer; width: 100%; transition: all 0.15s; font-family: inherit; margin-top: 4px; }
+  .add-btn:hover { border-color: #bbb; color: var(--text); }
+
+  /* BY TEACHER VIEW */
+  .teacher-section { margin-bottom: 28px; }
+  .teacher-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+  .teacher-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .teacher-name-big { font-size: 16px; font-weight: 600; }
+  .teacher-meta { font-size: 13px; color: var(--muted); }
+  .teacher-booking-row { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; margin-bottom: 8px; display: flex; align-items: center; gap: 12px; font-size: 13px; flex-wrap: wrap; }
+  .trow-day { color: var(--muted); width: 70px; font-weight: 500; flex-shrink: 0; }
+  .trow-time { font-weight: 600; width: 150px; flex-shrink: 0; }
+  .trow-title { flex: 1; min-width: 120px; }
+  .trow-pax { color: var(--muted); font-size: 12px; }
+
+  /* BY ROOM VIEW */
+  .room-section { margin-bottom: 36px; }
+  .room-section-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+  .room-section-name { font-size: 16px; font-weight: 600; }
+  .room-section-meta { font-size: 13px; color: var(--muted); }
+
+  /* SORT */
+  .sort-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+  .sort-label { font-size: 12px; color: var(--muted); font-weight: 500; }
+  .sort-btn { font-size: 12px; padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--card); cursor: pointer; font-family: inherit; transition: all 0.15s; color: var(--text); }
+  .sort-btn.active { background: var(--text); color: #fff; border-color: var(--text); }
+
+  /* MODAL */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 100; align-items: center; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--card); border-radius: 14px; padding: 28px; width: 480px; max-width: 95vw; box-shadow: 0 20px 60px rgba(0,0,0,0.15); max-height: 90vh; overflow-y: auto; }
+  .modal-title { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 600; margin-bottom: 20px; }
+  .form-row { margin-bottom: 14px; }
+  .form-label { font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-bottom: 5px; display: block; }
+  .form-input, .form-select, .form-textarea { width: 100%; padding: 9px 12px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px; font-family: inherit; background: var(--bg); color: var(--text); outline: none; transition: border-color 0.15s; }
+  .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: #999; }
+  .form-textarea { resize: vertical; min-height: 70px; }
+  .form-row-half { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+  .btn-cancel { padding: 9px 18px; border: 1.5px solid var(--border); border-radius: 8px; background: none; font-size: 14px; font-family: inherit; cursor: pointer; color: var(--text); }
+  .btn-save { padding: 9px 22px; border: none; border-radius: 8px; background: var(--text); color: #fff; font-size: 14px; font-family: inherit; font-weight: 600; cursor: pointer; }
+  .btn-save:hover { opacity: 0.8; }
+  .btn-delete { padding: 9px 16px; border: 1.5px solid #ffcccc; border-radius: 8px; background: none; font-size: 14px; font-family: inherit; cursor: pointer; color: #cc3333; margin-right: auto; }
+
+  /* PAX SUMMARY */
+  .pax-summary { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+  .pax-chip { display:inline-flex; align-items:center; gap:5px; padding:4px 12px; border-radius:6px; font-size:13px; font-weight:400; border:1px solid var(--border); background:#fff; color:var(--text); }
+  .pax-total { display:inline-flex; align-items:center; gap:4px; padding:4px 12px; border-radius:6px; font-size:13px; font-weight:700; background:#1a1a1a; color:#fff; }
+  .meal-row { background:var(--card); border:1px solid var(--border); border-radius:8px; margin-bottom:7px; overflow:hidden; transition: box-shadow 0.2s; }
+  .dc-vegan   { background:#e8f5e9;border:1px solid #81c784;color:#2e7d32;border-radius:5px;padding:1px 7px;font-size:11px;font-weight:600 }
+  .dc-veg     { background:#f1f8e9;border:1px solid #aed581;color:#558b2f;border-radius:5px;padding:1px 7px;font-size:11px;font-weight:600 }
+  .dc-gf      { background:#fff8e1;border:1px solid #ffca28;color:#f57f17;border-radius:5px;padding:1px 7px;font-size:11px;font-weight:600 }
+  .dc-allergy { background:#fce4ec;border:1px solid #f48fb1;color:#c62828;border-radius:5px;padding:1px 7px;font-size:11px;font-weight:600 }
+  .meal-diet-chips { display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap }
+  .meal-row:hover { box-shadow:0 2px 8px rgba(0,0,0,0.07); }
+  .meal-row-top { display:flex; align-items:center; gap:12px; padding:11px 16px; flex-wrap:wrap; }
+  .meal-row-pax { background:#f5f3ef; border-top:1px solid var(--border); padding:10px 16px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .meal-pax-label { font-size:11px; font-weight:700; letter-spacing:0.07em; text-transform:uppercase; color:var(--muted); margin-right:6px; white-space:nowrap; }
+
+  /* GROUP FILTER */
+  .group-filter-bar { background:#faf8f5; border-bottom:1px solid var(--border); padding:8px 32px; display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .group-pill { display:flex; align-items:center; gap:6px; padding:5px 13px; border-radius:999px; border:2px solid transparent; font-size:12px; font-weight:600; cursor:pointer; transition:all 0.15s; background:var(--card); font-family:inherit; }
+  .group-pill:hover { opacity:0.85; }
+  .group-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+  .group-tag { display:inline-flex; align-items:center; gap:4px; padding:2px 9px; border-radius:999px; font-size:11px; font-weight:700; }
+
+  /* CATEGORIES */
+  .cat-tabs { display:flex; gap:6px; flex-wrap:wrap; padding:10px 32px; background:var(--card); border-bottom:1px solid var(--border); }
+  .cat-tab { display:flex; align-items:center; gap:6px; padding:7px 16px; border-radius:999px; border:1.5px solid var(--border); font-size:13px; font-weight:600; cursor:pointer; transition:all 0.15s; background:var(--card); font-family:inherit; color:var(--text); }
+  .cat-tab:hover { border-color:#bbb; }
+  .cat-tab.active { color:#fff; border-color:transparent; }
+  .cat-tab.active.cat-classes     { background:#5b7fa6; }
+  .cat-tab.active.cat-meals       { background:#b07340; }
+  .cat-tab.active.cat-tours       { background:#4a8c5c; }
+  .cat-tab.active.cat-soul        { background:#8a5ba6; }
+  .cat-tab.active.cat-all         { background:#1a1a1a; }
+
+  .cat-section-header { display:flex; align-items:center; gap:8px; margin:20px 0 10px; }
+  .cat-section-icon { font-size:15px; }
+  .cat-section-label { font-size:11px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; }
+  .cat-section-label.classes { color:#5b7fa6; }
+  .cat-section-label.meals   { color:#b07340; }
+  .cat-section-label.tours   { color:#4a8c5c; }
+  .cat-section-label.soul    { color:#8a5ba6; }
+  .cat-divider { flex:1; height:1px; background:var(--border); }
+
+  .cat-badge { display:inline-block; padding:2px 9px; border-radius:999px; font-size:11px; font-weight:600; }
+  .cat-badge.classes { background:#dde8f5; color:#3a5f86; }
+  .cat-badge.meals   { background:#f5e8d8; color:#8a5320; }
+  .cat-badge.tours   { background:#d8f0e0; color:#2a6c3c; }
+  .cat-badge.soul    { background:#ecdaf5; color:#6a3b86; }
+
+  .compact-row { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:11px 16px; margin-bottom:7px; display:flex; align-items:center; gap:12px; font-size:13px; flex-wrap:wrap; }
+  .compact-row:hover { box-shadow:0 2px 8px rgba(0,0,0,0.06); }
+  .compact-time { font-weight:600; width:130px; flex-shrink:0; }
+  .compact-title { flex:1; font-weight:500; }
+  .compact-detail { color:var(--muted); font-size:12px; }
+  .compact-price { font-size:12px; font-weight:600; color:var(--green); }
+  .optional-badge { font-size:11px; font-weight:600; color:var(--requested); border:1px solid var(--requested); border-radius:4px; padding:1px 6px; }
+
+  /* TOUR ROW */
+  .tour-row { background:var(--card); border:1px solid var(--border); border-left:3px solid #4a8c5c; border-radius:8px; margin-bottom:8px; overflow:hidden; }
+  .tour-row-top { display:flex; align-items:center; gap:10px; padding:11px 16px; flex-wrap:wrap; }
+  .tour-row:hover { box-shadow:0 2px 8px rgba(0,0,0,0.06); }
+  .tour-expand-btn { background:none; border:1px solid var(--border); border-radius:5px; font-size:11px; padding:2px 8px; cursor:pointer; color:var(--muted); font-family:inherit; margin-left:auto; flex-shrink:0; }
+  .tour-expand-btn:hover, .tour-expand-btn.open { border-color:#4a8c5c; color:#4a8c5c; background:#eef7ef; }
+  .tour-panel { display:none; padding:12px 16px 14px; border-top:1px solid var(--border); background:#f9fbf9; }
+  .tour-panel.open { display:block; }
+  .tour-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px; }
+  @media(max-width:600px){ .tour-grid { grid-template-columns:1fr; } }
+  .tour-field { display:flex; flex-direction:column; gap:3px; }
+  .tour-label { font-size:10px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--muted); }
+  .tour-input { font-size:13px; font-family:inherit; border:1px solid var(--border); border-radius:6px; padding:6px 10px; background:#fff; color:var(--text); }
+  .tour-input:focus { outline:none; border-color:#4a8c5c; }
+  .tour-cost-bar { background:#fff; border:1px solid var(--border); border-radius:8px; padding:12px 14px; margin-top:4px; }
+  .tour-cost-title { font-size:11px; font-weight:700; letter-spacing:0.07em; text-transform:uppercase; color:var(--muted); margin-bottom:8px; }
+  .tour-cost-row { display:flex; align-items:center; justify-content:space-between; font-size:13px; padding:3px 0; }
+  .tour-cost-total { font-weight:700; font-size:14px; border-top:1px solid var(--border); margin-top:6px; padding-top:6px; display:flex; justify-content:space-between; }
+  .transport-badge { font-size:11px; font-weight:600; border-radius:5px; padding:2px 8px; }
+  .transport-yes { background:#ddeedd; color:#2a6c3c; border:1px solid #a8d4a8; }
+  .transport-no  { background:#f5f5f0; color:var(--muted); border:1px solid var(--border); }
+  .guide-chip { display:inline-block; font-size:12px; font-weight:500; background:#eef3ee; border:1px solid #c0d4c0; border-radius:5px; padding:2px 10px; color:#2a5c2a; }
+  .cost-pill { display:inline-block; border-radius:5px; font-size:12px; font-weight:700; padding:2px 9px; }
+  .cost-high  { background:#fde8e8; color:#9c2a2a; border:1px solid #f0b8b8; }
+  .cost-mid   { background:#fff3e0; color:#8a5a00; border:1px solid #f0d090; }
+  .cost-low   { background:#e8f5e8; color:#2a6c2a; border:1px solid #a8d4a8; }
+  .cost-free  { background:#f0f0f0; color:var(--muted); border:1px solid var(--border); }
+  .tour-save-btn { padding:6px 18px; border:none; border-radius:6px; background:#4a8c5c; color:#fff; font-size:12px; font-family:inherit; font-weight:600; cursor:pointer; margin-top:10px; }
+  .tour-save-btn:hover { background:#3a7c4c; }
+  .tour-saved { font-size:11px; color:#4a8c5c; font-weight:600; display:none; margin-left:10px; }
+
+  .empty-state { text-align: center; padding: 48px 0; color: var(--muted); font-size: 14px; }
+
+  /* TOAST */
+  .toast { position:fixed; top:16px; left:50%; transform:translateX(-50%); background:#2e7d32; color:#fff; padding:12px 28px; border-radius:8px; font-size:14px; font-weight:600; z-index:9999; box-shadow:0 4px 16px rgba(0,0,0,.2); font-family:inherit; white-space:nowrap; transition:opacity 0.3s; }
+
+  /* RETREATS TAB */
+  .retreat-card { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:18px 20px; margin-bottom:12px; }
+  .retreat-card:hover { box-shadow:0 2px 12px rgba(0,0,0,0.07); }
+  .status-pill { display:inline-block; padding:2px 10px; border-radius:999px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; }
+  .status-upcoming { background:#e8eaf6; color:#283593; }
+  .status-active { background:#e8f5e9; color:#2e7d32; }
+  .status-completed { background:#f5f5f5; color:var(--muted); }
+
+  /* REPORTS TAB */
+  .report-card { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:20px; margin-bottom:16px; }
+  .report-title { font-family:'Playfair Display',serif; font-size:16px; font-weight:600; margin-bottom:12px; }
+  .report-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:12px; }
+  .report-stat { background:var(--bg); border-radius:8px; padding:14px; text-align:center; }
+  .report-stat-value { font-size:28px; font-weight:700; }
+  .report-stat-label { font-size:12px; color:var(--muted); margin-top:4px; }
+
+  /* SPINNER */
+  .spinner { width:16px; height:16px; border:2px solid var(--border); border-top-color:var(--text); border-radius:50%; animation:spin 0.7s linear infinite; flex-shrink:0; display:inline-block; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+
+  /* LOADING OVERLAY */
+  .loading-overlay { position:fixed; inset:0; background:rgba(245,243,239,0.9); z-index:200; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:16px; }
+  .loading-overlay .spinner { width:32px; height:32px; border-width:3px; }
+
+  @media (max-width: 600px) {
+    .booking-card { grid-template-columns: 1fr; }
+    .header { padding: 16px 16px 0; }
+    .filter-bar { padding: 10px 16px; }
+    .content { padding: 20px 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <div style="font-size:14px;color:var(--muted)">Loading schedule data...</div>
+</div>
+
+<div class="header">
+  <div class="header-top">
+    <span class="logo">Amansala</span>
+    <span class="week-label" id="weekLabel">Loading...</span>
+    <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+      <select id="retreatSelector" class="form-select" style="width:auto;padding:6px 12px;font-size:13px" onchange="onRetreatChange(this.value)"></select>
+      <span id="formBadge" style="display:none;background:#e8703a;color:#fff;border-radius:8px;padding:4px 12px;font-size:12px;font-weight:700;cursor:pointer" onclick="switchTopTab('retreats')"></span>
+      <span id="syncIndicator" style="font-size:11px;color:var(--muted)"></span>
+    </div>
+  </div>
+  <div class="tabs" id="topTabs">
+    <button class="tab active" onclick="switchTopTab('week')">Week View</button>
+    <button class="tab" onclick="switchTopTab('retreats')">Retreats</button>
+    <button class="tab" onclick="switchTopTab('reports')">Reports</button>
+  </div>
+</div>
+
+<div id="weekViewControls">
+  <div class="cat-tabs" id="catTabs">
+    <button class="cat-tab cat-all active" onclick="setCat('all')">&#128197; All</button>
+    <button class="cat-tab cat-classes" onclick="setCat('classes')">&#129496; Classes</button>
+    <button class="cat-tab cat-meals" onclick="setCat('meals')">&#127869; Meals</button>
+    <button class="cat-tab cat-tours" onclick="setCat('tours')">&#128506; Tours</button>
+    <button class="cat-tab cat-soul" onclick="setCat('soul')">&#10024; Soul Services</button>
+  </div>
+  <div class="group-filter-bar" id="groupFilterBar">
+    <span style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-right:4px">Groups</span>
+    <button class="conflict-counter-pill" id="conflictPill" onclick="scrollToConflicts()" title="Room conflicts">&#9888; checking...</button>
+  </div>
+  <div class="filter-bar" id="filterBar"></div>
+</div>
+
+<div id="weekSubTabs" style="display:none;background:var(--card);border-bottom:1px solid var(--border);padding:8px 32px">
+  <div class="tabs">
+    <button class="tab active" onclick="switchWeekSub('day')">By Room &amp; Day</button>
+    <button class="tab" onclick="switchWeekSub('room')">By Room</button>
+    <button class="tab" onclick="switchWeekSub('teacher')">By Teacher</button>
+  </div>
+</div>
+
+<div class="content" id="mainContent"></div>
+
+<!-- BOOKING MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-title" id="modalTitle">Add Booking</div>
+    <div class="form-row">
+      <label class="form-label">Class / Session Title</label>
+      <input class="form-input" id="fieldTitle" placeholder="e.g. Morning Vinyasa Flow">
+    </div>
+    <div class="form-row">
+      <label class="form-label">Teacher</label>
+      <input class="form-input" id="fieldTeacher" placeholder="Teacher name" list="teacherList">
+      <datalist id="teacherList"></datalist>
+    </div>
+    <div class="form-row-half">
+      <div class="form-row" style="margin-bottom:0">
+        <label class="form-label">Day</label>
+        <select class="form-select" id="fieldDay"></select>
+      </div>
+      <div class="form-row" style="margin-bottom:0">
+        <label class="form-label">Room</label>
+        <select class="form-select" id="fieldRoom">
+          <option>Heaven</option><option>Chica</option><option>BF</option><option>Grande</option><option>Sky</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row-half" style="margin-top:14px">
+      <div class="form-row" style="margin-bottom:0">
+        <label class="form-label">Start Time</label>
+        <input class="form-input" id="fieldStart" type="time" value="08:00">
+      </div>
+      <div class="form-row" style="margin-bottom:0">
+        <label class="form-label">End Time</label>
+        <input class="form-input" id="fieldEnd" type="time" value="09:30">
+      </div>
+    </div>
+    <div class="form-row" style="margin-top:14px">
+      <label class="form-label">Pax</label>
+      <input class="form-input" id="fieldPax" type="number" placeholder="e.g. 20" min="1">
+    </div>
+    <div class="form-row">
+      <label class="form-label">Setup Notes</label>
+      <textarea class="form-textarea" id="fieldNotes" placeholder="Blocks, blankets, candles, speaker..."></textarea>
+    </div>
+    <div class="form-row">
+      <label class="form-label">Group</label>
+      <select class="form-select" id="fieldGroup"></select>
+    </div>
+    <div class="form-row">
+      <label class="form-label">Category</label>
+      <select class="form-select" id="fieldCategory">
+        <option value="classes">&#129496; Classes</option>
+        <option value="meals">&#127869; Meals</option>
+        <option value="tours">&#128506; Tours</option>
+        <option value="soul">&#10024; Soul Services</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label class="form-label">Status</label>
+      <select class="form-select" id="fieldStatus">
+        <option value="confirmed">Confirmed</option>
+        <option value="requested">Requested</option>
+        <option value="conflict">Conflict</option>
+      </select>
+    </div>
+    <div class="form-row-half">
+      <div class="form-row" style="margin-bottom:0">
+        <label class="form-label">Price</label>
+        <input class="form-input" id="fieldPrice" placeholder="e.g. $75">
+      </div>
+      <div class="form-row" style="margin-bottom:0">
+        <label class="form-label">Options</label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;margin-top:6px"><input type="checkbox" id="fieldOptional"> Optional</label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;margin-top:4px"><input type="checkbox" id="fieldShared"> Shared</label>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-delete" id="deleteBtn" onclick="deleteBooking()" style="display:none">&#128465; Delete</button>
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-save" onclick="saveBooking()">Save Booking</button>
+    </div>
+  </div>
+</div>
+
+<!-- RETREAT MODAL -->
+<div class="modal-overlay" id="retreatModalOverlay">
+  <div class="modal">
+    <div class="modal-title" id="retreatModalTitle">New Retreat</div>
+    <div class="form-row">
+      <label class="form-label">Retreat Name</label>
+      <input class="form-input" id="retreatName" placeholder="e.g. March 2026 Week">
+    </div>
+    <div class="form-row-half">
+      <div class="form-row" style="margin-bottom:0">
+        <label class="form-label">Start Date</label>
+        <input class="form-input" id="retreatStart" type="date">
+      </div>
+      <div class="form-row" style="margin-bottom:0">
+        <label class="form-label">End Date</label>
+        <input class="form-input" id="retreatEnd" type="date">
+      </div>
+    </div>
+    <div class="form-row" style="margin-top:14px">
+      <label class="form-label">Notes</label>
+      <textarea class="form-textarea" id="retreatNotes" placeholder="Optional notes..."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeRetreatModal()">Cancel</button>
+      <button class="btn-save" onclick="saveRetreat()">Save Retreat</button>
+    </div>
+  </div>
+</div>
+
+<!-- GROUP MODAL -->
+<div class="modal-overlay" id="groupModalOverlay">
+  <div class="modal">
+    <div class="modal-title">Add Group</div>
+    <div class="form-row">
+      <label class="form-label">Group Name</label>
+      <input class="form-input" id="groupName" placeholder="e.g. Meghan's Group">
+    </div>
+    <div class="form-row-half">
+      <div class="form-row" style="margin-bottom:0">
+        <label class="form-label">Pax</label>
+        <input class="form-input" id="groupPax" type="number" placeholder="e.g. 26">
+      </div>
+      <div class="form-row" style="margin-bottom:0">
+        <label class="form-label">Color</label>
+        <input class="form-input" id="groupColor" type="color" value="#e8a5b0">
+      </div>
+    </div>
+    <div class="form-row-half" style="margin-top:14px">
+      <div class="form-row" style="margin-bottom:0">
+        <label class="form-label">Arrival</label>
+        <input class="form-input" id="groupArrival" type="date">
+      </div>
+      <div class="form-row" style="margin-bottom:0">
+        <label class="form-label">Departure</label>
+        <input class="form-input" id="groupDeparture" type="date">
+      </div>
+    </div>
+    <div class="form-row" style="margin-top:14px">
+      <label class="form-label">Teacher</label>
+      <select class="form-select" id="groupTeacher"><option value="">None</option></select>
+    </div>
+    <div class="form-row">
+      <label class="form-label">Package</label>
+      <input class="form-input" id="groupPackage" placeholder="e.g. all-inclusive">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeGroupModal()">Cancel</button>
+      <button class="btn-save" onclick="saveGroup()">Save Group</button>
+    </div>
+  </div>
+</div>
+
+<!-- REVIEW MODAL -->
+<div class="modal-overlay" id="reviewModalOverlay">
+  <div class="modal" style="width:600px">
+    <div class="modal-title" id="reviewModalTitle">Review Submission</div>
+    <div id="reviewContent"></div>
+    <div class="modal-actions">
+      <button class="btn-delete" onclick="declineSubmission()" style="display:block">Decline</button>
+      <button class="btn-cancel" onclick="closeReviewModal()">Cancel</button>
+      <button class="btn-save" style="background:var(--green)" onclick="approveSubmission()">&#10003; Approve &amp; Apply</button>
+    </div>
+  </div>
+</div>
+
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════════════════════════════════════
+const CONFIG = {
+  APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbxnhymPPYBM6lXJFgCvemGQJaCyg7sJhHJ7ePGnutRMS3_Im_njyzbXOKKP6vmuxMoP7w/exec',
+  SYNC_INTERVAL: 60000,
+};
+
+// ═══════════════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════════════
+let bookings = [];
+let GROUPS = [];
+let DAYS = [];
+let DAY_LABELS = {};
+let TEACHERS = [];
+let RETREATS = [];
+let SLOTS = [];
+let SOUL_SERVICES = [];
+let PENDING_SUBMISSIONS = [];
+const dietaryState = {};
+const tourState = {};
+let activeRetreatId = null;
+
+let activeTopTab = 'week';
+let activeTab = 'day';
+let activeCategory = 'all';
+let activeGroup = 'all';
+let activeDay = null;
+let activeRoom = 'All';
+let activeTeacher = 'All';
+let teacherSearchQuery = '';
+let editingId = null;
+let editingRetreatId = null;
+let reviewingSubmissionId = null;
+
+const ROOMS = ['Heaven','Chica','BF','Grande','Sky'];
+const ROOM_CSS = { Heaven:'heaven', Chica:'chica', BF:'bf', Grande:'grande', Sky:'sky' };
+const TEACHER_COLORS = {};
+const NW_PALETTE = ['#e8a5b0','#5b7fa6','#4a8c5c','#8a5ba6','#d4a017','#e8703a','#c47d3e'];
+
+const CAT_META = {
+  classes: { label:'Classes', icon:'\u{1F9D8}', css:'classes' },
+  meals:   { label:'Meals', icon:'\u{1F37D}', css:'meals' },
+  tours:   { label:'Tours', icon:'\u{1F5FA}', css:'tours' },
+  soul:    { label:'Soul Services', icon:'\u2728', css:'soul' },
+};
+const CAT_ORDER = ['classes','tours','meals','soul'];
+
+const TOUR_CONFIG = {
+  cenote:    { key:'cenote',    label:'Grande Cenote',  pesosPerPerson:400 },
+  mangroves: { key:'mangroves', label:'Mangroves Tour', pesosPerPerson:0   },
+  ruins:     { key:'ruins',     label:'Tulum Ruins',    pesosPerPerson:450 },
+};
+
+// ═══════════════════════════════════════════════════════════════════════
+// API LAYER
+// ═══════════════════════════════════════════════════════════════════════
+async function apiGet(params) {
+  const qs = new URLSearchParams(params).toString();
+  const url = CONFIG.APPS_SCRIPT_URL + (qs ? '?' + qs : '');
+  const resp = await fetch(url);
+  return resp.json();
+}
+
+async function apiPost(body) {
+  const resp = await fetch(CONFIG.APPS_SCRIPT_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  return resp.json();
+}
+
+function showToast(msg, duration) {
+  duration = duration || 2500;
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 400); }, duration);
+}
+
+function setSyncStatus(msg) {
+  const el = document.getElementById('syncIndicator');
+  if (el) el.textContent = msg;
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// DATA LOADING & MAPPING
+// ═══════════════════════════════════════════════════════════════════════
+async function loadAllData(retreatId) {
+  setSyncStatus('Syncing...');
+  try {
+    const params = { action: 'all' };
+    if (retreatId) params.retreat_id = retreatId;
+    const result = await apiGet(params);
+    if (!result.success) { console.error('Load failed:', result.error); setSyncStatus('Sync error'); return; }
+    mapApiData(result.data);
+    setSyncStatus('\u2713 Synced');
+    setTimeout(() => setSyncStatus(''), 3000);
+  } catch (e) {
+    console.error('Load error:', e);
+    setSyncStatus('Offline');
+  }
+}
+
+function mapApiData(data) {
+  RETREATS = data.retreats || [];
+  TEACHERS = data.teachers || [];
+  SLOTS = data.slots || [];
+  SOUL_SERVICES = data.soulServices || [];
+  PENDING_SUBMISSIONS = data.pendingSubmissions || [];
+
+  // Build teacher colors
+  TEACHERS.forEach((t, i) => { TEACHER_COLORS[t.name] = NW_PALETTE[i % NW_PALETTE.length]; });
+
+  // Build GROUPS from API
+  const apiGroups = data.groups || [];
+  GROUPS = [{ id: 'all', label: 'All Groups / Shared', color: '#9a9490', short: 'Shared', pax: 0, departure_date: null, _apiId: null }];
+
+  apiGroups.forEach(g => {
+    if (g.name === 'All Groups / Shared' || g.pax === 0 && g.notes === 'Shared bookings') {
+      GROUPS[0]._apiId = g.id;
+      GROUPS[0].departure_date = g.departure_date;
+      return;
+    }
+    const short = g.name.length > 14 ? g.name.slice(0, 14) + '\u2026' : g.name;
+    GROUPS.push({
+      id: g.id,
+      label: g.name,
+      color: g.color || NW_PALETTE[GROUPS.length % NW_PALETTE.length],
+      short: short,
+      pax: g.pax || 0,
+      departure_date: g.departure_date,
+      teacher_id: g.teacher_id,
+      retreat_id: g.retreat_id,
+      arrival_date: g.arrival_date,
+      package_type: g.package_type,
+      notes: g.notes,
+      status: g.status,
+    });
+  });
+
+  // Build DAYS from retreat dates
+  const retreat = RETREATS.find(r => String(r.id) === String(activeRetreatId));
+  if (retreat) {
+    buildDaysFromRetreat(retreat);
+  } else if (RETREATS.length > 0) {
+    buildDaysFromRetreat(RETREATS[0]);
+  }
+
+  // Build bookings
+  const apiBookings = data.bookings || [];
+  bookings = apiBookings.map(b => {
+    const dayStr = formatDayLabel(b.day_date);
+    const groupId = mapGroupId(b.group_id, b.is_shared);
+    return {
+      id: b.id,
+      _apiId: b.id,
+      group: groupId,
+      day: dayStr,
+      day_date: b.day_date,
+      start: normalizeTime(b.start_time),
+      end: normalizeTime(b.end_time),
+      title: b.title || '',
+      subtitle: b.subtitle || '',
+      teacher: b.teacher_name || '',
+      teacher_id: b.teacher_id,
+      room: b.room || '',
+      pax: b.pax || 0,
+      notes: b.setup_notes || b.notes || '',
+      status: b.status || 'confirmed',
+      category: b.category || 'classes',
+      optional: b.is_optional || false,
+      price: b.price || '',
+      is_shared: b.is_shared || false,
+      slot_id: b.slot_id,
+    };
+  });
+
+  // Build dietary state
+  const apiDietary = data.dietary || [];
+  apiDietary.forEach(d => {
+    const gid = mapGroupId(d.group_id, false);
+    dietaryState[gid] = {
+      _apiId: d.id,
+      group_id: d.group_id,
+      vegans: d.vegans || 0,
+      vegetarians: d.vegetarians || 0,
+      glutenFree: d.gluten_free || 0,
+      nutAllergy: d.nut_allergy || 0,
+      shellfishAllergy: d.shellfish_allergy || 0,
+      allergies: d.other_allergies || '',
+      kitchenNotes: d.kitchen_notes || '',
+    };
+  });
+
+  // Set active day if not set
+  if (!activeDay && DAYS.length > 0) activeDay = DAYS[0];
+
+  // Update retreat selector
+  updateRetreatSelector();
+  updateFormBadge();
+}
+
+function mapGroupId(apiGroupId, isShared) {
+  if (isShared || !apiGroupId) return 'all';
+  const sharedApiId = GROUPS[0]._apiId;
+  if (sharedApiId && String(apiGroupId) === String(sharedApiId)) return 'all';
+  const g = GROUPS.find(x => String(x.id) === String(apiGroupId));
+  return g ? g.id : 'all';
+}
+
+function getApiGroupId(localGroupId) {
+  if (localGroupId === 'all') return GROUPS[0]._apiId || '';
+  return localGroupId;
+}
+
+function buildDaysFromRetreat(retreat) {
+  DAYS = [];
+  DAY_LABELS = {};
+  const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+  let start = new Date(retreat.week_start + 'T12:00:00');
+  let end = new Date(retreat.week_end + 'T12:00:00');
+  if (isNaN(start.getTime()) || isNaN(end.getTime())) return;
+
+  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+    const dn = dayNames[d.getDay()];
+    const dd = d.getDate();
+    const key = dn + ' ' + dd;
+    DAYS.push(key);
+    DAY_LABELS[key] = dayNames[d.getDay()] === 'Sun' ? 'Sunday' : dayNames[d.getDay()] === 'Mon' ? 'Monday' : dayNames[d.getDay()] === 'Tue' ? 'Tuesday' : dayNames[d.getDay()] === 'Wed' ? 'Wednesday' : dayNames[d.getDay()] === 'Thu' ? 'Thursday' : dayNames[d.getDay()] === 'Fri' ? 'Friday' : 'Saturday';
+    DAY_LABELS[key] = DAY_LABELS[key] + ', ' + monthNames[d.getMonth()] + ' ' + dd;
+  }
+
+  // Update week label
+  const wl = document.getElementById('weekLabel');
+  if (wl) wl.textContent = retreat.name + ' \u00B7 Room Schedule';
+}
+
+function formatDayLabel(dateStr) {
+  if (!dateStr) return '';
+  const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const d = new Date(String(dateStr).slice(0, 10) + 'T12:00:00');
+  if (isNaN(d.getTime())) return String(dateStr);
+  return dayNames[d.getDay()] + ' ' + d.getDate();
+}
+
+function dayToDateStr(dayLabel) {
+  // Reverse lookup: day label -> date string
+  const retreat = RETREATS.find(r => String(r.id) === String(activeRetreatId)) || RETREATS[0];
+  if (!retreat) return '';
+  const start = new Date(retreat.week_start + 'T12:00:00');
+  const end = new Date(retreat.week_end + 'T12:00:00');
+  const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+    const key = dayNames[d.getDay()] + ' ' + d.getDate();
+    if (key === dayLabel) {
+      return d.toISOString().slice(0, 10);
+    }
+  }
+  return '';
+}
+
+function normalizeTime(t) {
+  if (!t) return '00:00';
+  const s = String(t);
+  if (s.includes('T')) {
+    const d = new Date(s);
+    return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+  }
+  return s.slice(0, 5);
+}
+
+function updateRetreatSelector() {
+  const sel = document.getElementById('retreatSelector');
+  if (!sel) return;
+  sel.innerHTML = RETREATS.map(r => {
+    const sel2 = String(r.id) === String(activeRetreatId) ? ' selected' : '';
+    return '<option value="' + r.id + '"' + sel2 + '>' + r.name + ' (' + (r.status || 'upcoming') + ')</option>';
+  }).join('');
+}
+
+function updateFormBadge() {
+  const badge = document.getElementById('formBadge');
+  if (!badge) return;
+  const n = PENDING_SUBMISSIONS.length;
+  if (n > 0) {
+    badge.style.display = 'inline';
+    badge.textContent = '\u{1F4E5} Forms (' + n + ')';
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+async function onRetreatChange(id) {
+  activeRetreatId = id;
+  activeDay = null;
+  await loadAllData(id);
+  render();
+}
+
+
+// ═══════════════════════════════════════════════════════════════════════
+// HELPERS (same as prototype)
+// ═══════════════════════════════════════════════════════════════════════
+function fmt12(t) {
+  if (!t) return '';
+  let [h, m] = t.split(':').map(Number);
+  const ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12;
+  return h + ':' + String(m).padStart(2, '0') + ' ' + ap;
+}
+function dur(s, e) {
+  if (!s || !e) return '';
+  const [sh, sm] = s.split(':').map(Number), [eh, em] = e.split(':').map(Number);
+  const mins = (eh * 60 + em) - (sh * 60 + sm);
+  if (mins <= 0) return '';
+  const h = Math.floor(mins / 60), m = mins % 60;
+  return h > 0 ? (m > 0 ? h + 'h ' + m + 'm' : h + 'h') : m + 'm';
+}
+function tColor(name) { return TEACHER_COLORS[name] || '#c5b8d4'; }
+function tChip(name) { return ''; }
+function allTeachers() { return [...new Set(visibleBookings().map(b => b.teacher))].filter(Boolean).sort(); }
+function updateTeacherDatalist() {
+  const dl = document.getElementById('teacherList');
+  if (dl) dl.innerHTML = allTeachers().map(t => '<option value="' + t + '">').join('');
+}
+
+function groupMeta(id) {
+  return GROUPS.find(g => String(g.id) === String(id)) || GROUPS[0];
+}
+
+function dayIndex(dayLabel) { return DAYS.indexOf(dayLabel); }
+
+function todayDayPill() {
+  const today = new Date();
+  const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const key = dayNames[today.getDay()] + ' ' + today.getDate();
+  return DAYS.includes(key) ? key : null;
+}
+
+function currentHour() { return new Date().getHours() + new Date().getMinutes() / 60; }
+
+function groupStatus(g) {
+  if (!g.departure_date || g.id === 'all') return 'active';
+  const depDate = new Date(String(g.departure_date).slice(0,10) + 'T12:00:00');
+  const today = new Date();
+  today.setHours(12,0,0,0);
+  if (today > depDate) return 'departed';
+  if (today.toDateString() === depDate.toDateString()) {
+    return currentHour() >= 15 ? 'departed' : 'departing-today';
+  }
+  return 'active';
+}
+
+function matchTourConfig(title) {
+  const t = title.toLowerCase();
+  if (t.includes('cenote')) return TOUR_CONFIG['cenote'];
+  if (t.includes('mangrove')) return TOUR_CONFIG['mangroves'];
+  if (t.includes('ruin')) return TOUR_CONFIG['ruins'];
+  return null;
+}
+
+function costPillClass(pesos) {
+  if (pesos === 0) return 'cost-free';
+  if (pesos < 200) return 'cost-low';
+  if (pesos <= 400) return 'cost-mid';
+  return 'cost-high';
+}
+
+function removeGroup(gid) {
+  const g = GROUPS.find(x => String(x.id) === String(gid));
+  if (g) g.removed = true;
+  if (String(activeGroup) === String(gid)) activeGroup = 'all';
+  render();
+}
+
+function restoreGroup(gid) {
+  const g = GROUPS.find(x => String(x.id) === String(gid));
+  if (g) g.removed = false;
+  render();
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// CONFLICT DETECTION
+// ═══════════════════════════════════════════════════════════════════════
+function detectRoomConflicts() {
+  const conflicts = [];
+  const classBookings = bookings.filter(b =>
+    b.room && ROOMS.includes(b.room) &&
+    (b.category === 'classes' || b.category === 'soul') &&
+    b.group !== 'all'
+  );
+  const byDayRoom = {};
+  classBookings.forEach(b => {
+    const key = b.day + '|' + b.room;
+    if (!byDayRoom[key]) byDayRoom[key] = [];
+    byDayRoom[key].push(b);
+  });
+  Object.entries(byDayRoom).forEach(([key, bks]) => {
+    if (bks.length < 2) return;
+    bks.sort((a, b) => a.start.localeCompare(b.start));
+    for (let i = 0; i < bks.length; i++) {
+      for (let j = i + 1; j < bks.length; j++) {
+        const a = bks[i], b2 = bks[j];
+        if (a.start < b2.end && b2.start < a.end) {
+          conflicts.push({
+            room: a.room, day: a.day,
+            timeA: a.start + '\u2013' + a.end, timeB: b2.start + '\u2013' + b2.end,
+            groupA: a.group, groupB: b2.group,
+            titleA: a.title, titleB: b2.title,
+            idA: a.id, idB: b2.id,
+          });
+        }
+      }
+    }
+  });
+  return conflicts;
+}
+
+function renderConflictBanner() {
+  const conflicts = detectRoomConflicts();
+  if (conflicts.length === 0) return '';
+  const items = conflicts.map(c => {
+    const gA = groupMeta(c.groupA), gB = groupMeta(c.groupB);
+    return '<div style="background:#fff3e0;border-left:4px solid #e8703a;border-radius:6px;padding:8px 12px;margin-bottom:6px;font-size:13px">' +
+      '<span style="font-weight:700;color:#c4420a">\u26A0 Room conflict \u00B7 ' + c.room + ' \u00B7 ' + c.day + '</span><br>' +
+      '<span style="display:inline-flex;align-items:center;gap:4px;margin-top:3px">' +
+      '<span style="width:9px;height:9px;border-radius:50%;background:' + gA.color + ';display:inline-block"></span>' +
+      '<strong>' + gA.short + '</strong> ' + fmt12(c.timeA.split('\u2013')[0]) + '\u2013' + fmt12(c.timeA.split('\u2013')[1]) + ' \u00B7 ' + c.titleA +
+      '</span><span style="color:#aaa;margin:0 6px">vs</span>' +
+      '<span style="display:inline-flex;align-items:center;gap:4px">' +
+      '<span style="width:9px;height:9px;border-radius:50%;background:' + gB.color + ';display:inline-block"></span>' +
+      '<strong>' + gB.short + '</strong> ' + fmt12(c.timeB.split('\u2013')[0]) + '\u2013' + fmt12(c.timeB.split('\u2013')[1]) + ' \u00B7 ' + c.titleB +
+      '</span></div>';
+  }).join('');
+  return '<div style="margin-bottom:14px"><div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:#e8703a;margin-bottom:6px">' +
+    '\u{1F6A8} ' + conflicts.length + ' Room Conflict' + (conflicts.length > 1 ? 's' : '') + ' Detected</div>' + items + '</div>';
+}
+
+function updateConflictPill() {
+  const pill = document.getElementById('conflictPill');
+  if (!pill) return;
+  const conflicts = detectRoomConflicts();
+  if (conflicts.length === 0) {
+    pill.textContent = '\u2713 No conflicts';
+    pill.className = 'conflict-counter-pill clear';
+    pill.onclick = null;
+    pill.style.cursor = 'default';
+  } else {
+    pill.innerHTML = '\u26A0 ' + conflicts.length + ' conflict' + (conflicts.length > 1 ? 's' : '');
+    pill.className = 'conflict-counter-pill';
+    pill.onclick = scrollToConflicts;
+    pill.style.cursor = 'pointer';
+  }
+}
+
+function scrollToConflicts() {
+  const conflicts = detectRoomConflicts();
+  if (conflicts.length === 0) return;
+  activeDay = conflicts[0].day;
+  render();
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// VISIBLE BOOKINGS & FILTERS
+// ═══════════════════════════════════════════════════════════════════════
+function visibleBookings() {
+  let b = bookings;
+  const removedIds = new Set(GROUPS.filter(g => g.removed).map(g => String(g.id)));
+  b = b.filter(x => !removedIds.has(String(x.group)));
+  if (String(activeGroup) !== 'all') b = b.filter(x => String(x.group) === String(activeGroup) || x.group === 'all');
+  if (activeCategory !== 'all') b = b.filter(x => x.category === activeCategory);
+  return b;
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// GROUP TAG & PAX BUBBLES
+// ═══════════════════════════════════════════════════════════════════════
+function groupTag(b) {
+  if (!b.group || b.group === 'all') return '';
+  const g = groupMeta(b.group);
+  return '<span class="group-tag" style="background:var(--bg);color:var(--text);border:1px solid var(--border);font-weight:600">' + g.short + '</span>';
+}
+
+function paxBubbles(b, overrideCounts) {
+  const activeGroups = GROUPS.filter(g => g.id !== 'all' && !g.removed);
+  let parts = [], total = 0;
+  if (overrideCounts) {
+    activeGroups.forEach(g => {
+      const n = overrideCounts[g.id] || 0;
+      if (n > 0) { parts.push({ color: g.color, short: g.short, n: n }); total += n; }
+    });
+  } else if (b.group === 'all') {
+    if (b.pax > 0) return '<span style="display:inline-flex;align-items:center;gap:4px;background:#f0f0f0;border-radius:20px;padding:2px 9px;font-size:12px;font-weight:700;color:#333">' + b.pax + ' guests</span>';
+    parts = activeGroups.map(g => ({ color: g.color, short: g.short, n: g.pax || 0 }));
+    total = parts.reduce((s, p) => s + p.n, 0);
+  } else {
+    const g = groupMeta(b.group);
+    const n = b.pax || g.pax || 0;
+    parts = [{ color: g.color, short: g.short, n: n }];
+    total = n;
+  }
+  if (total === 0) return '';
+  const dots = parts.map(p =>
+    '<span style="display:inline-flex;align-items:center;gap:3px"><span style="width:8px;height:8px;border-radius:50%;background:' + p.color + ';display:inline-block;flex-shrink:0"></span><span style="font-size:12px;font-weight:600;color:#333">' + p.n + '</span></span>'
+  ).join('<span style="color:#bbb;font-size:10px">\u00B7</span>');
+  const totalPill = parts.length > 1
+    ? '<span style="font-size:12px;font-weight:700;color:#fff;background:#1a1a1a;border-radius:10px;padding:1px 7px;margin-left:2px">' + total + '</span>'
+    : '';
+  return '<span style="display:inline-flex;align-items:center;gap:4px;background:#f5f5f5;border:1px solid #e0e0e0;border-radius:20px;padding:2px 8px;gap:5px">' + dots + totalPill + '</span>';
+}
+
+
+// ═══════════════════════════════════════════════════════════════════════
+// MERGE LOGIC (meals, tours, soul)
+// ═══════════════════════════════════════════════════════════════════════
+function mergeMeals(meals) {
+  const slots = {};
+  meals.forEach(b => {
+    const [sh, sm] = b.start.split(':').map(Number);
+    const roundedStart = String(sh).padStart(2,'0') + ':' + (sm < 30 ? '00' : '30');
+    const key = roundedStart + '|' + b.title.toLowerCase().trim();
+    if (!slots[key]) { slots[key] = { ...b, _merged: [b], _displayStart: b.start }; }
+    else { slots[key]._merged.push(b); if (b.start < slots[key]._displayStart) { slots[key]._displayStart = b.start; slots[key].start = b.start; } }
+  });
+  return Object.values(slots).sort((a, b) => a.start.localeCompare(b.start));
+}
+
+function mergeTours(tours) {
+  const slots = {};
+  tours.forEach(b => {
+    const [sh, sm] = b.start.split(':').map(Number);
+    const roundedStart = String(sh).padStart(2,'0') + ':' + (sm < 30 ? '00' : '30');
+    const key = roundedStart + '|' + b.title.toLowerCase().replace(/optional\s*/i, '').trim();
+    if (!slots[key]) { slots[key] = { ...b, _merged: [b] }; }
+    else { slots[key]._merged.push(b); if (b.start < slots[key].start) slots[key].start = b.start; }
+  });
+  return Object.values(slots).sort((a, b) => a.start.localeCompare(b.start));
+}
+
+function mergeSoul(souls) {
+  const slots = {};
+  souls.forEach(b => {
+    const [sh, sm] = b.start.split(':').map(Number);
+    const rounded = String(sh).padStart(2,'0') + ':' + (sm < 30 ? '00' : '30');
+    const key = rounded + '|' + b.title.toLowerCase().replace(/optional\s*/i, '').replace(/all group\s*/i, '').trim();
+    if (!slots[key]) { slots[key] = { ...b, _merged: [b] }; }
+    else { slots[key]._merged.push(b); if (b.start < slots[key].start) slots[key].start = b.start; }
+  });
+  return Object.values(slots).sort((a, b) => a.start.localeCompare(b.start));
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// MEAL PAX
+// ═══════════════════════════════════════════════════════════════════════
+function mealPaxForDay(day) {
+  const removedIds = new Set(GROUPS.filter(g => g.removed).map(g => String(g.id)));
+  const activeOnDay = new Set(bookings.filter(b => b.day === day && b.group !== 'all' && !removedIds.has(String(b.group))).map(b => String(b.group)));
+  const visGroups = String(activeGroup) === 'all' ? [...activeOnDay] : (activeOnDay.has(String(activeGroup)) ? [String(activeGroup)] : []);
+  const breakdown = visGroups.map(gid => {
+    const g = groupMeta(gid);
+    return { gid: gid, label: g.short, color: g.color, pax: g.pax || 0 };
+  }).filter(x => x.pax > 0);
+  const total = breakdown.reduce((s, x) => s + x.pax, 0);
+  return { breakdown: breakdown, total: total };
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// CARD RENDERING
+// ═══════════════════════════════════════════════════════════════════════
+function card(b) {
+  const allConflicts = detectRoomConflicts();
+  const isConflicted = allConflicts.some(c => c.idA === b.id || c.idB === b.id);
+  const statusTag = isConflicted
+    ? '<div class="status-tag conflict">\u26A0 ROOM CONFLICT</div>'
+    : b.status === 'requested'
+    ? '<div class="status-tag">\u2605 REQUESTED</div>'
+    : b.status === 'conflict'
+    ? '<div class="status-tag conflict">\u26A0 CONFLICT</div>'
+    : '';
+  const conflictStyle = isConflicted ? 'border:2px solid #e8703a !important;box-shadow:0 0 0 3px rgba(232,112,58,0.15) !important;' : '';
+  const notesHtml = b.notes
+    ? '<div class="setup-notes has-content">' + b.notes + '</div>'
+    : '<div class="setup-notes">Add setup needs\u2026</div>';
+  return '<div class="booking-card" style="' + conflictStyle + '">' +
+    '<div class="booking-left">' +
+    '<div class="time-range">' + fmt12(b.start) + ' \u2013 ' + fmt12(b.end) + '</div>' +
+    '<div class="duration">' + dur(b.start, b.end) + '</div>' +
+    (b.room ? '<div class="room-tag ' + (ROOM_CSS[b.room] || '') + '">' + b.room + '</div>' : '') +
+    statusTag +
+    '</div>' +
+    '<div class="booking-right">' +
+    '<div class="booking-title-row"><div class="booking-title">' + b.title + (b.subtitle ? ' <span>' + b.subtitle + '</span>' : '') + '</div>' +
+    '<div class="title-meta">' + groupTag(b) +
+    (b.teacher ? '<span class="teacher-chip">' + b.teacher + '</span>' : '') +
+    '<span class="pax">' + b.pax + ' pax</span>' + paxBubbles(b) + '</div></div>' +
+    '<div class="setup-section"><div class="setup-label">\u{1F4CB} Setup Notes</div>' + notesHtml + '</div>' +
+    '<div class="card-footer"><button class="edit-btn" onclick="openModal(' + b.id + ')">\u270F Edit</button></div>' +
+    '</div></div>';
+}
+
+function compactRow(b) {
+  if (b.category === 'meals') return mergedMealRow({ ...b, _merged: [b] });
+  if (b.category === 'tours') return mergedTourRow({ ...b, _merged: [b] });
+  return '<div class="compact-row">' +
+    '<span class="compact-time">' + fmt12(b.start) + (b.end && b.end !== b.start ? ' \u2013 ' + fmt12(b.end) : '') + '</span>' +
+    '<span class="compact-title">' + b.title + (b.subtitle ? ' <span style="color:var(--muted);font-weight:400">' + b.subtitle + '</span>' : '') + '</span>' +
+    groupTag(b) +
+    (b.teacher ? '<span class="compact-detail">w/ ' + b.teacher + '</span>' : '') +
+    (b.room ? '<span class="compact-detail">\u00B7 ' + b.room + '</span>' : '') +
+    (b.optional ? '<span class="optional-badge">Optional</span>' : '') +
+    (b.price ? '<span class="compact-price">' + b.price + '</span>' : '') +
+    paxBubbles(b) +
+    (b.notes ? '<span class="compact-detail" title="' + b.notes + '">\u{1F4CB}</span>' : '') +
+    '<button class="edit-btn" onclick="openModal(' + b.id + ')">\u270F Edit</button>' +
+    '</div>';
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// MERGED MEAL ROW
+// ═══════════════════════════════════════════════════════════════════════
+function mergedMealRow(b) {
+  const entries = b._merged || [b];
+  const groupIds = [...new Set(entries.map(x => x.group))];
+  const activeGroups = GROUPS.filter(g => g.id !== 'all' && !g.removed);
+  let counts = {}, total = 0;
+  groupIds.forEach(gid => {
+    if (gid === 'all') return;
+    const g = groupMeta(gid);
+    counts[gid] = g.pax || 0; total += counts[gid];
+  });
+  if (total === 0) { activeGroups.forEach(g => { counts[g.id] = g.pax || 0; total += counts[g.id]; }); }
+
+  const dots = activeGroups.filter(g => (counts[g.id] || 0) > 0).map(g =>
+    '<span style="display:inline-flex;align-items:center;gap:3px"><span style="width:8px;height:8px;border-radius:50%;background:' + g.color + ';display:inline-block"></span><span style="font-size:12px;font-weight:600;color:#333">' + counts[g.id] + '</span></span>'
+  ).join('<span style="color:#bbb;font-size:10px">\u00B7</span>');
+  const totalPill = activeGroups.filter(g => (counts[g.id] || 0) > 0).length > 1
+    ? '<span style="font-size:12px;font-weight:700;color:#fff;background:#1a1a1a;border-radius:10px;padding:1px 7px;margin-left:2px">' + total + '</span>' : '';
+  const paxInline = total > 0
+    ? '<span style="display:inline-flex;align-items:center;gap:5px;background:#f5f5f5;border:1px solid #e0e0e0;border-radius:20px;padding:2px 8px">' + dots + totalPill + '</span>' : '';
+
+  const mealKey = 'meal-' + b.start + '-' + (b.title || '').toLowerCase().replace(/[^a-z0-9]/g, '-').slice(0, 20);
+  let dietChips = '';
+  let totalVegans = 0, totalVeg = 0, totalGF = 0, hasAllergy = false;
+  activeGroups.forEach(g => {
+    const d = dietaryState[g.id] || {};
+    totalVegans += d.vegans || 0; totalVeg += d.vegetarians || 0; totalGF += d.glutenFree || 0;
+    if (d.allergies && d.allergies.trim()) hasAllergy = true;
+  });
+  if (totalVegans > 0) dietChips += '<span class="dc-vegan">\u{1F331} ' + totalVegans + ' vegan</span>';
+  if (totalVeg > 0) dietChips += '<span class="dc-veg">\u{1F957} ' + totalVeg + ' veg</span>';
+  if (totalGF > 0) dietChips += '<span class="dc-gf">\u{1F33E} ' + totalGF + ' GF</span>';
+  if (hasAllergy) dietChips += '<span class="dc-allergy">\u26A0 Allergy</span>';
+
+  const dietRows = activeGroups.map(g => {
+    const d = dietaryState[g.id] || {};
+    return '<div style="border-bottom:1px solid #f0e8f8;padding:10px 0">' +
+      '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span style="width:10px;height:10px;border-radius:50%;background:' + g.color + ';display:inline-block"></span><span style="font-size:13px;font-weight:600">' + g.label + '</span><span style="font-size:12px;color:var(--muted)">' + (g.pax || 0) + ' guests total</span></div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px">' +
+      '<div><div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);letter-spacing:0.06em;margin-bottom:3px">\u{1F331} Vegans</div><input type="number" min="0" max="' + (g.pax || 99) + '" value="' + (d.vegans || 0) + '" style="width:100%;padding:5px 8px;font-size:14px;font-weight:600;text-align:center;border:1px solid #ddd;border-radius:6px;font-family:inherit" class="diet-input diet-vegan" data-group="' + g.id + '" oninput="saveDietary(\'' + g.id + '\', this)"></div>' +
+      '<div><div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);letter-spacing:0.06em;margin-bottom:3px">\u{1F957} Vegetarians</div><input type="number" min="0" max="' + (g.pax || 99) + '" value="' + (d.vegetarians || 0) + '" style="width:100%;padding:5px 8px;font-size:14px;font-weight:600;text-align:center;border:1px solid #ddd;border-radius:6px;font-family:inherit" class="diet-input diet-veg" data-group="' + g.id + '" oninput="saveDietary(\'' + g.id + '\', this)"></div>' +
+      '<div><div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);letter-spacing:0.06em;margin-bottom:3px">\u{1F33E} Gluten Free</div><input type="number" min="0" max="' + (g.pax || 99) + '" value="' + (d.glutenFree || 0) + '" style="width:100%;padding:5px 8px;font-size:14px;font-weight:600;text-align:center;border:1px solid #ddd;border-radius:6px;font-family:inherit" class="diet-input diet-gf" data-group="' + g.id + '" oninput="saveDietary(\'' + g.id + '\', this)"></div>' +
+      '</div>' +
+      '<div><div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);letter-spacing:0.06em;margin-bottom:3px">\u26A0 Allergies / restrictions</div><input type="text" value="' + (d.allergies || '') + '" placeholder="e.g. severe nut allergy, shellfish, celiac\u2026" style="width:100%;padding:6px 10px;font-size:13px;border:1px solid #f48fb1;border-radius:6px;font-family:inherit;box-sizing:border-box" class="diet-input diet-allergy" data-group="' + g.id + '" oninput="saveDietary(\'' + g.id + '\', this)"></div>' +
+      '</div>';
+  }).join('');
+
+  const allNotes = entries.map(x => x.notes).filter(Boolean).join(' \u00B7 ');
+  const allRooms = [...new Set(entries.map(x => x.room).filter(Boolean))].join(', ');
+
+  return '<div class="meal-row"><div class="meal-row-top">' +
+    '<span class="compact-time">' + fmt12(b.start) + (b.end && b.end !== b.start ? ' \u2013 ' + fmt12(b.end) : '') + '</span>' +
+    '<span class="compact-title">' + b.title + (b.subtitle ? ' <span style="color:var(--muted);font-weight:400">' + b.subtitle + '</span>' : '') + '</span>' +
+    (allRooms ? '<span class="compact-detail">\u00B7 ' + allRooms + '</span>' : '') +
+    (b.optional ? '<span class="optional-badge">Optional</span>' : '') +
+    (b.price ? '<span class="compact-price">' + b.price + '</span>' : '') +
+    paxInline +
+    '<span class="meal-diet-chips">' + dietChips + '</span>' +
+    (allNotes ? '<span class="compact-detail" title="' + allNotes + '">\u{1F4CB}</span>' : '') +
+    '<button onclick="toggleDietPanel(\'' + mealKey + '\')" style="margin-left:auto;font-size:11px;font-weight:600;color:#8a5ba6;background:#f5e8ff;border:1px solid #d4a0e4;border-radius:5px;padding:2px 8px;cursor:pointer;font-family:inherit" id="diet-btn-' + mealKey + '">\u{1F37D} Dietary</button>' +
+    '<button class="edit-btn" onclick="openModal(' + b.id + ')">\u270F Edit</button>' +
+    '</div>' +
+    '<div id="diet-panel-' + mealKey + '" style="display:none;background:#fdf5ff;border-top:1px solid #e8d8f8;padding:14px 16px;border-radius:0 0 8px 8px">' +
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><div style="font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#8a5ba6">Dietary needs \u2014 applies to all meals</div><span style="font-size:11px;color:#4a8c5c;font-weight:600;opacity:0;transition:opacity 0.3s" class="diet-saved-flash">\u2713 Saved</span></div>' +
+    dietRows +
+    '<div style="font-size:11px;color:var(--muted);margin-top:10px">\u2726 Auto-saves as you type \u2014 no button needed.</div></div></div>';
+}
+
+function toggleDietPanel(mealKey) {
+  const panel = document.getElementById('diet-panel-' + mealKey);
+  const btn = document.getElementById('diet-btn-' + mealKey);
+  if (!panel) return;
+  const open = panel.style.display === 'none';
+  panel.style.display = open ? 'block' : 'none';
+  if (btn) btn.style.background = open ? '#e8d0ff' : '#f5e8ff';
+}
+
+let dietarySaveTimer = null;
+function saveDietary(groupId, triggerEl) {
+  if (!dietaryState[groupId]) dietaryState[groupId] = {};
+  const d = dietaryState[groupId];
+  const panel = triggerEl ? triggerEl.closest('[id^="diet-panel-"]') : null;
+  if (panel) {
+    const get = function(cls) { const el = panel.querySelector('.diet-input.' + cls + '[data-group="' + groupId + '"]'); return el ? el.value : null; };
+    const v = get('diet-vegan'); if (v !== null) d.vegans = parseInt(v) || 0;
+    const g = get('diet-veg'); if (g !== null) d.vegetarians = parseInt(g) || 0;
+    const f = get('diet-gf'); if (f !== null) d.glutenFree = parseInt(f) || 0;
+    const a = get('diet-allergy'); if (a !== null) d.allergies = a;
+  }
+  // Sync to other panels
+  document.querySelectorAll('.diet-input.diet-vegan[data-group="' + groupId + '"]').forEach(function(el) { if (el !== triggerEl) el.value = d.vegans; });
+  document.querySelectorAll('.diet-input.diet-veg[data-group="' + groupId + '"]').forEach(function(el) { if (el !== triggerEl) el.value = d.vegetarians; });
+  document.querySelectorAll('.diet-input.diet-gf[data-group="' + groupId + '"]').forEach(function(el) { if (el !== triggerEl) el.value = d.glutenFree; });
+  document.querySelectorAll('.diet-input.diet-allergy[data-group="' + groupId + '"]').forEach(function(el) { if (el !== triggerEl) el.value = d.allergies; });
+  refreshAllDietChips();
+  if (panel) {
+    const flash = panel.querySelector('.diet-saved-flash');
+    if (flash) { flash.style.opacity = '1'; clearTimeout(flash._t); flash._t = setTimeout(function() { flash.style.opacity = '0'; }, 1500); }
+  }
+  // Debounce API save
+  clearTimeout(dietarySaveTimer);
+  dietarySaveTimer = setTimeout(function() {
+    apiPost({
+      action: 'saveDietary',
+      group_id: getApiGroupId(groupId),
+      vegans: d.vegans || 0,
+      vegetarians: d.vegetarians || 0,
+      gluten_free: d.glutenFree || 0,
+      nut_allergy: d.nutAllergy || 0,
+      shellfish_allergy: d.shellfishAllergy || 0,
+      other_allergies: d.allergies || '',
+      kitchen_notes: d.kitchenNotes || '',
+    }).then(function(r) { if (r.success) showToast('\u2713 Dietary saved'); });
+  }, 1200);
+}
+
+function refreshAllDietChips() {
+  const activeGroups = GROUPS.filter(g => g.id !== 'all' && !g.removed);
+  let totalVegans = 0, totalVeg = 0, totalGF = 0, hasAllergy = false;
+  activeGroups.forEach(g => {
+    const d = dietaryState[g.id] || {};
+    totalVegans += d.vegans || 0; totalVeg += d.vegetarians || 0; totalGF += d.glutenFree || 0;
+    if (d.allergies && d.allergies.trim()) hasAllergy = true;
+  });
+  let chips = '';
+  if (totalVegans > 0) chips += '<span class="dc-vegan">\u{1F331} ' + totalVegans + ' vegan</span>';
+  if (totalVeg > 0) chips += '<span class="dc-veg">\u{1F957} ' + totalVeg + ' veg</span>';
+  if (totalGF > 0) chips += '<span class="dc-gf">\u{1F33E} ' + totalGF + ' GF</span>';
+  if (hasAllergy) chips += '<span class="dc-allergy">\u26A0 Allergy</span>';
+  document.querySelectorAll('.meal-diet-chips').forEach(function(el) { el.innerHTML = chips; });
+}
+
+
+// ═══════════════════════════════════════════════════════════════════════
+// MERGED TOUR ROW
+// ═══════════════════════════════════════════════════════════════════════
+function mergedTourRow(b) {
+  const slotKey = 'tour-' + b.start + '-' + b.title.toLowerCase().replace(/optional\s*/i, '').replace(/[^a-z0-9]/g, '-').slice(0, 24);
+  const cfg = matchTourConfig(b.title);
+  const pesos = cfg ? cfg.pesosPerPerson : 0;
+  if (!tourState[slotKey]) tourState[slotKey] = { guide: '', transport: 'none', vehicle: '', driver: '', extraNotes: '' };
+  const ts = tourState[slotKey];
+  const cleanTitle = b.title.replace(/^Optional\s+/i, '').trim();
+  const activeGroups = GROUPS.filter(g => g.id !== 'all' && !g.removed);
+  const gKey = function(gid) { return slotKey + '__' + gid; };
+  activeGroups.forEach(g => { if (!tourState[gKey(g.id)]) tourState[gKey(g.id)] = { signups: 0 }; });
+  const totalSignups = activeGroups.reduce(function(s, g) { return s + (tourState[gKey(g.id)].signups || 0); }, 0);
+  const tourSignupCounts = {};
+  activeGroups.forEach(g => { tourSignupCounts[g.id] = tourState[gKey(g.id)].signups || 0; });
+  const tourPaxBubbles = paxBubbles(b, tourSignupCounts);
+  const costPill = pesos > 0
+    ? '<span class="cost-pill ' + costPillClass(pesos) + '">' + pesos + ' MXN/pp</span>'
+    : '<span class="cost-pill cost-free">No local fee</span>';
+  const optBadge = b.optional ? '<span class="optional-badge">Optional</span>' : '';
+
+  let transportBadge = '';
+  if (ts.transport === 'ours') {
+    transportBadge = '<span class="transport-badge transport-yes">\u{1F690} Our Transport' + (ts.vehicle ? ' \u00B7 ' + ts.vehicle : '') + (ts.driver ? ' \u00B7 ' + ts.driver : '') + '</span>';
+  } else if (ts.transport === 'miguel') {
+    transportBadge = '<span class="transport-badge transport-yes">\u{1F690} Miguel</span>';
+  } else {
+    transportBadge = '<span class="transport-badge transport-no">No transport</span>';
+  }
+  const guideChip = ts.guide ? '<span class="guide-chip">\u{1F464} ' + ts.guide + '</span>' : '';
+  const totalBadge = totalSignups > 0
+    ? '<span style="background:#1a1a1a;color:#fff;border-radius:5px;padding:2px 8px;font-size:12px;font-weight:700">' + totalSignups + ' going</span>'
+    : '<span style="background:var(--bg);color:var(--muted);border-radius:5px;padding:2px 8px;font-size:12px;border:1px solid var(--border)">No sign-ups yet</span>';
+
+  const groupRows = activeGroups.map(g => {
+    const gs = tourState[gKey(g.id)];
+    const n = gs.signups || 0;
+    const sub = pesos * n;
+    const costStr = pesos > 0 && n > 0 ? '<span style="font-size:12px;color:var(--muted)">= ' + sub.toLocaleString() + ' MXN</span>' : '';
+    return '<div style="display:grid;grid-template-columns:14px 1fr auto auto;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">' +
+      '<span style="width:12px;height:12px;border-radius:50%;background:' + g.color + ';display:inline-block"></span>' +
+      '<span style="font-size:13px;font-weight:500">' + g.label + '</span>' +
+      '<div style="display:flex;align-items:center;gap:6px"><input class="tour-input" type="number" min="0" max="' + (g.pax || 99) + '" value="' + n + '" style="width:65px;padding:5px 8px;font-size:14px;font-weight:600;text-align:center" id="gs-' + slotKey + '-' + g.id + '" oninput="liveUpdateTour(\'' + slotKey + '\', ' + pesos + ')" placeholder="0"><span style="font-size:12px;color:var(--muted)">of ' + (g.pax || '?') + '</span></div>' +
+      '<span id="gs-cost-' + slotKey + '-' + g.id + '" style="font-size:12px;color:var(--muted);min-width:80px;text-align:right">' + costStr + '</span></div>';
+  }).join('');
+
+  const totalMXN = pesos > 0 ? activeGroups.reduce(function(s, g) { return s + pesos * (tourState[gKey(g.id)].signups || 0); }, 0) : 0;
+  const collapsedCost = totalMXN > 0
+    ? '<span id="tour-cost-pill-' + slotKey + '" style="background:#fff8e1;border:1px solid #f5c842;color:#7a5c00;border-radius:6px;padding:2px 9px;font-size:12px;font-weight:700">\u{1F4B0} ' + totalMXN.toLocaleString() + ' MXN</span>'
+    : '<span id="tour-cost-pill-' + slotKey + '" style="background:var(--bg);border:1px solid var(--border);color:var(--muted);border-radius:6px;padding:2px 9px;font-size:12px">\u2014</span>';
+
+  return '<div class="tour-row" id="tourrow-' + slotKey + '"><div class="tour-row-top">' +
+    '<span class="compact-time">' + fmt12(b.start) + (b.end && b.end !== b.start ? ' \u2013 ' + fmt12(b.end) : '') + '</span>' +
+    '<span class="compact-title" style="font-weight:600;font-size:14px">' + cleanTitle + '</span>' +
+    costPill + ' ' + optBadge + ' ' + tourPaxBubbles + ' ' + collapsedCost + ' ' + guideChip + transportBadge +
+    '<button class="tour-expand-btn" id="texpbtn-' + slotKey + '" onclick="toggleTourPanel(\'' + slotKey + '\')">\u25BE Sign-ups</button>' +
+    '<button class="edit-btn" onclick="openModal(' + b.id + ')">\u270F</button></div>' +
+    '<div class="tour-panel" id="tourpanel-' + slotKey + '"><div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">' +
+    '<div><div style="font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:2px">How many from each group?</div><div style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:0 14px">' + groupRows +
+    '<div style="display:flex;justify-content:space-between;padding:9px 0;font-size:13px;font-weight:700"><span>Total going</span><span id="tour-total-' + slotKey + '">' + totalSignups + ' guests</span></div></div></div>' +
+    '<div style="display:flex;flex-direction:column;gap:10px"><div style="font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted)">Logistics</div>' +
+    '<div class="tour-field"><span class="tour-label">\u{1F464} Guide</span><input class="tour-input" type="text" value="' + (ts.guide || '') + '" id="tguide-' + slotKey + '" placeholder="Guide name\u2026"></div>' +
+    '<div class="tour-field"><span class="tour-label">\u{1F690} Transport</span><select class="tour-input" id="ttransport-' + slotKey + '" onchange="toggleVehicleFields(\'' + slotKey + '\')"><option value="none"' + ((ts.transport || 'none') === 'none' ? ' selected' : '') + '>None</option><option value="ours"' + (ts.transport === 'ours' ? ' selected' : '') + '>Our Transport</option><option value="miguel"' + (ts.transport === 'miguel' ? ' selected' : '') + '>Miguel</option></select></div>' +
+    '<div id="tvehicle-wrap-' + slotKey + '" style="display:' + (ts.transport === 'ours' ? 'contents' : 'none') + '">' +
+    '<div class="tour-field"><span class="tour-label">\u{1F697} Vehicle</span><select class="tour-input" id="tvehicle-' + slotKey + '"><option value="">Select\u2026</option><option value="Van"' + (ts.vehicle === 'Van' ? ' selected' : '') + '>Van</option><option value="Infinity"' + (ts.vehicle === 'Infinity' ? ' selected' : '') + '>Infinity</option><option value="FJ"' + (ts.vehicle === 'FJ' ? ' selected' : '') + '>FJ</option></select></div>' +
+    '<div class="tour-field"><span class="tour-label">\u{1F9D1}\u200D\u2708\uFE0F Driver</span><input class="tour-input" type="text" value="' + (ts.driver || '') + '" id="tdriver-' + slotKey + '" placeholder="Driver\u2026"></div></div>' +
+    '<div class="tour-field"><span class="tour-label">\u{1F4CB} Notes</span><input class="tour-input" type="text" value="' + (ts.extraNotes || '') + '" id="tnotes-' + slotKey + '" placeholder="e.g. Meet reception 10:30am\u2026"></div></div></div>' +
+    '<div id="tcalc-' + slotKey + '" style="margin-top:12px"></div>' +
+    '<div style="display:flex;align-items:center;gap:10px;margin-top:12px"><button class="tour-save-btn" onclick="saveTourSlot(\'' + slotKey + '\')">Save</button><span class="tour-saved" id="tsaved-' + slotKey + '">\u2713 Saved</span></div></div></div>';
+}
+
+function toggleTourPanel(slotKey) {
+  const panel = document.getElementById('tourpanel-' + slotKey);
+  const btn = document.getElementById('texpbtn-' + slotKey);
+  const open = panel.classList.toggle('open');
+  btn.classList.toggle('open', open);
+  btn.textContent = open ? '\u25B4 Close' : '\u25BE Sign-ups';
+}
+
+function liveUpdateTour(slotKey, pesos) {
+  const activeGroups = GROUPS.filter(g => g.id !== 'all' && !g.removed);
+  let grand = 0, grandPesos = 0;
+  activeGroups.forEach(g => {
+    const el = document.getElementById('gs-' + slotKey + '-' + g.id);
+    const n = el ? (parseInt(el.value) || 0) : 0;
+    grand += n;
+    const sub = pesos * n;
+    grandPesos += sub;
+    const costEl = document.getElementById('gs-cost-' + slotKey + '-' + g.id);
+    if (costEl) costEl.textContent = (pesos > 0 && n > 0) ? '= ' + sub.toLocaleString() + ' MXN' : '';
+  });
+  const totalEl = document.getElementById('tour-total-' + slotKey);
+  if (totalEl) totalEl.textContent = grand + ' guests';
+  const pill = document.getElementById('tour-cost-pill-' + slotKey);
+  if (pill) {
+    if (grandPesos > 0) {
+      pill.style.cssText = 'background:#fff8e1;border:1px solid #f5c842;color:#7a5c00;border-radius:6px;padding:2px 9px;font-size:12px;font-weight:700';
+      pill.innerHTML = '\u{1F4B0} ' + grandPesos.toLocaleString() + ' MXN';
+    } else {
+      pill.style.cssText = 'background:var(--bg);border:1px solid var(--border);color:var(--muted);border-radius:6px;padding:2px 9px;font-size:12px';
+      pill.textContent = '\u2014';
+    }
+  }
+}
+
+function toggleVehicleFields(slotKey) {
+  const val = document.getElementById('ttransport-' + slotKey).value;
+  const wrap = document.getElementById('tvehicle-wrap-' + slotKey);
+  if (wrap) wrap.style.display = val === 'ours' ? 'contents' : 'none';
+}
+
+function saveTourSlot(slotKey) {
+  const activeGroups = GROUPS.filter(g => g.id !== 'all' && !g.removed);
+  const gKey = function(gid) { return slotKey + '__' + gid; };
+  tourState[slotKey] = {
+    guide: document.getElementById('tguide-' + slotKey).value.trim(),
+    transport: document.getElementById('ttransport-' + slotKey).value,
+    vehicle: (document.getElementById('tvehicle-' + slotKey) || {}).value || '',
+    driver: (document.getElementById('tdriver-' + slotKey) || {}).value || '',
+    extraNotes: document.getElementById('tnotes-' + slotKey).value.trim(),
+  };
+  activeGroups.forEach(g => {
+    const el = document.getElementById('gs-' + slotKey + '-' + g.id);
+    if (!tourState[gKey(g.id)]) tourState[gKey(g.id)] = {};
+    tourState[gKey(g.id)].signups = el ? (parseInt(el.value) || 0) : 0;
+  });
+  const s = document.getElementById('tsaved-' + slotKey);
+  s.style.display = 'inline';
+  setTimeout(function() { s.style.display = 'none'; render(); }, 900);
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// MERGED SOUL ROW
+// ═══════════════════════════════════════════════════════════════════════
+function mergedSoulRow(b) {
+  const slotKey = 'soul-' + b.start + '-' + b.title.toLowerCase().replace(/optional\s*/i, '').replace(/all group\s*/i, '').replace(/[^a-z0-9]/g, '-').slice(0, 24);
+  const pricePer = b.price ? b.price : null;
+  if (!tourState[slotKey]) tourState[slotKey] = { guide: '', extraNotes: '' };
+  const ts = tourState[slotKey];
+  const cleanTitle = b.title.replace(/^Optional\s+/i, '').replace(/^All Group\s+/i, '').trim();
+  const activeGroups = GROUPS.filter(g => g.id !== 'all' && !g.removed);
+  const gKey = function(gid) { return slotKey + '__' + gid; };
+  activeGroups.forEach(g => { if (!tourState[gKey(g.id)]) tourState[gKey(g.id)] = { signups: 0 }; });
+  const totalSignups = activeGroups.reduce(function(s, g) { return s + (tourState[gKey(g.id)].signups || 0); }, 0);
+  const soulSignupCounts = {};
+  activeGroups.forEach(g => { soulSignupCounts[g.id] = tourState[gKey(g.id)].signups || 0; });
+  const soulPaxBubbles = paxBubbles(b, soulSignupCounts);
+  const pricePill = pricePer
+    ? '<span style="background:#f5e0f5;color:#7a3a8a;border:1px solid #ddb0e8;font-size:11px;padding:2px 8px;border-radius:5px;font-weight:700">' + pricePer + '/pp</span>'
+    : '<span style="background:#ecdaf5;color:#6a3b86;border:1px solid #d4a0e4;font-size:11px;padding:2px 8px;border-radius:5px;font-weight:700">Included</span>';
+  const optBadge = b.optional ? '<span class="optional-badge">Optional</span>' : '';
+  const totalBadge = totalSignups > 0
+    ? '<span style="background:#1a1a1a;color:#fff;border-radius:5px;padding:2px 8px;font-size:12px;font-weight:700">' + totalSignups + ' attending</span>'
+    : '<span style="background:var(--bg);color:var(--muted);border-radius:5px;padding:2px 8px;font-size:12px;border:1px solid var(--border)">No sign-ups yet</span>';
+  const teacherLine = b.teacher ? '<span style="font-size:12px;color:var(--muted)">w/ ' + b.teacher + '</span>' : '';
+
+  const groupRows = activeGroups.map(g => {
+    const gs = tourState[gKey(g.id)];
+    const n = gs.signups || 0;
+    return '<div style="display:grid;grid-template-columns:14px 1fr auto;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">' +
+      '<span style="width:12px;height:12px;border-radius:50%;background:' + g.color + ';display:inline-block"></span>' +
+      '<span style="font-size:13px;font-weight:500">' + g.label + ' <span style="color:var(--muted);font-weight:400;font-size:12px">(' + (g.pax || '?') + ' total)</span></span>' +
+      '<input class="tour-input" type="number" min="0" max="' + (g.pax || 99) + '" value="' + n + '" style="width:65px;padding:5px 8px;font-size:14px;font-weight:600;text-align:center" id="ss-' + slotKey + '-' + g.id + '" oninput="liveUpdateSoul(\'' + slotKey + '\')" placeholder="0"></div>';
+  }).join('');
+
+  return '<div class="tour-row" style="border-left-color:#8a5ba6" id="soulrow-' + slotKey + '"><div class="tour-row-top">' +
+    '<span class="compact-time">' + fmt12(b.start) + (b.end && b.end !== b.start ? ' \u2013 ' + fmt12(b.end) : '') + '</span>' +
+    '<span class="compact-title" style="font-weight:600;font-size:14px">' + cleanTitle + '</span>' +
+    pricePill + ' ' + optBadge + ' ' + teacherLine + ' ' + totalBadge + ' ' + soulPaxBubbles +
+    '<button class="tour-expand-btn" style="border-color:#c8a0e0;color:#8a5ba6" id="sexpbtn-' + slotKey + '" onclick="toggleSoulPanel(\'' + slotKey + '\')">\u25BE Sign-ups</button>' +
+    '<button class="edit-btn" onclick="openModal(' + b.id + ')">\u270F</button></div>' +
+    '<div class="tour-panel" id="soulpanel-' + slotKey + '" style="background:#fdf5ff"><div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">' +
+    '<div><div style="font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#8a5ba6;margin-bottom:4px">Who\'s joining?</div><div style="background:#fff;border:1px solid #e0c0f0;border-radius:8px;padding:0 14px">' + groupRows +
+    '<div style="display:flex;justify-content:space-between;padding:9px 0;font-size:13px;font-weight:700"><span>Total attending</span><span id="soul-total-' + slotKey + '">' + totalSignups + ' guests</span></div></div></div>' +
+    '<div style="display:flex;flex-direction:column;gap:10px"><div style="font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#8a5ba6">Details</div>' +
+    '<div class="tour-field"><span class="tour-label">\u2728 Facilitator</span><input class="tour-input" type="text" value="' + (ts.guide || b.teacher || '') + '" id="sguide-' + slotKey + '" placeholder="Name\u2026"></div>' +
+    '<div class="tour-field"><span class="tour-label">\u{1F4CB} Instructions</span><input class="tour-input" type="text" value="' + (ts.extraNotes || b.notes || '') + '" id="snotes-' + slotKey + '" placeholder="e.g. Bring towel\u2026"></div>' +
+    '<div class="tour-field"><span class="tour-label">\u{1F4CD} Location</span><input class="tour-input" type="text" value="' + (ts.location || b.room || '') + '" id="sloc-' + slotKey + '" placeholder="e.g. Firepit\u2026"></div></div></div>' +
+    '<div style="display:flex;align-items:center;gap:10px;margin-top:12px"><button class="tour-save-btn" style="background:#8a5ba6" onclick="saveSoulSlot(\'' + slotKey + '\')">Save</button><span class="tour-saved" id="ssaved-' + slotKey + '">\u2713 Saved</span></div></div></div>';
+}
+
+function toggleSoulPanel(slotKey) {
+  const panel = document.getElementById('soulpanel-' + slotKey);
+  const btn = document.getElementById('sexpbtn-' + slotKey);
+  const open = panel.classList.toggle('open');
+  btn.classList.toggle('open', open);
+  btn.textContent = open ? '\u25B4 Close' : '\u25BE Sign-ups';
+}
+
+function liveUpdateSoul(slotKey) {
+  const activeGroups = GROUPS.filter(g => g.id !== 'all' && !g.removed);
+  let total = 0;
+  activeGroups.forEach(g => {
+    const el = document.getElementById('ss-' + slotKey + '-' + g.id);
+    total += el ? (parseInt(el.value) || 0) : 0;
+  });
+  const el = document.getElementById('soul-total-' + slotKey);
+  if (el) el.textContent = total + ' guests';
+}
+
+function saveSoulSlot(slotKey) {
+  const activeGroups = GROUPS.filter(g => g.id !== 'all' && !g.removed);
+  const gKey = function(gid) { return slotKey + '__' + gid; };
+  tourState[slotKey] = {
+    guide: document.getElementById('sguide-' + slotKey).value.trim(),
+    extraNotes: document.getElementById('snotes-' + slotKey).value.trim(),
+    location: document.getElementById('sloc-' + slotKey).value.trim(),
+  };
+  activeGroups.forEach(g => {
+    const el = document.getElementById('ss-' + slotKey + '-' + g.id);
+    if (!tourState[gKey(g.id)]) tourState[gKey(g.id)] = {};
+    tourState[gKey(g.id)].signups = el ? (parseInt(el.value) || 0) : 0;
+  });
+  const s = document.getElementById('ssaved-' + slotKey);
+  s.style.display = 'inline';
+  setTimeout(function() { s.style.display = 'none'; render(); }, 900);
+}
+
+
+// ═══════════════════════════════════════════════════════════════════════
+// RENDER: BY DAY VIEW
+// ═══════════════════════════════════════════════════════════════════════
+function renderByDay() {
+  const content = document.getElementById('mainContent');
+  if (!activeDay && DAYS.length > 0) activeDay = DAYS[0];
+  if (!activeDay) { content.innerHTML = '<div class="empty-state">No days available. Select a retreat.</div>'; return; }
+  const allDay = visibleBookings()
+    .filter(b => b.day === activeDay && (activeRoom === 'All' || b.room === activeRoom))
+    .sort((a, b) => a.start.localeCompare(b.start));
+
+  const { breakdown: paxBreakdown, total: paxTotal } = mealPaxForDay(activeDay);
+  const paxHeaderHtml = paxTotal > 0 ? '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px"><span style="font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted)">Total covers today:</span>' +
+    paxBreakdown.map(x => '<span class="pax-chip">' + x.label + ' <strong>' + x.pax + '</strong></span>').join('') +
+    '<span class="pax-total">' + paxTotal + ' guests</span></div>' : '';
+
+  const meals = mergeMeals(allDay.filter(b => b.category === 'meals'));
+  const tours = mergeTours(allDay.filter(b => b.category === 'tours'));
+  const souls = mergeSoul(allDay.filter(b => b.category === 'soul'));
+  const nonMTSoul = allDay.filter(b => b.category !== 'meals' && b.category !== 'tours' && b.category !== 'soul');
+  const displayCount = meals.length + tours.length + souls.length + nonMTSoul.length;
+
+  const conflictBanner = renderConflictBanner();
+  let html = '<div class="day-section"><div class="day-heading">' + (DAY_LABELS[activeDay] || activeDay) + '</div>' +
+    conflictBanner + paxHeaderHtml +
+    '<div class="booking-count">' + displayCount + ' item' + (displayCount !== 1 ? 's' : '') + '</div>';
+
+  if (displayCount === 0) {
+    html += '<div class="empty-state">Nothing scheduled for this selection.</div>';
+  } else if (activeCategory !== 'all') {
+    const cm = CAT_META[activeCategory];
+    if (cm) html += '<div class="cat-section-header"><span class="cat-section-icon">' + cm.icon + '</span><span class="cat-section-label ' + cm.css + '">' + cm.label + '</span><div class="cat-divider"></div></div>';
+    if (activeCategory === 'meals') meals.forEach(b => { html += mergedMealRow(b); });
+    else if (activeCategory === 'tours') tours.forEach(b => { html += mergedTourRow(b); });
+    else if (activeCategory === 'soul') souls.forEach(b => { html += mergedSoulRow(b); });
+    else nonMTSoul.filter(b => b.category === activeCategory).forEach(b => { html += activeCategory === 'classes' ? card(b) : compactRow(b); });
+  } else {
+    CAT_ORDER.forEach(cat => {
+      if (cat === 'meals') {
+        if (meals.length === 0) return;
+        const cm = CAT_META['meals'];
+        html += '<div class="cat-section-header"><span class="cat-section-icon">' + cm.icon + '</span><span class="cat-section-label ' + cm.css + '">' + cm.label + '</span><div class="cat-divider"></div></div>';
+        meals.forEach(b => { html += mergedMealRow(b); });
+      } else if (cat === 'tours') {
+        if (tours.length === 0) return;
+        const cm = CAT_META['tours'];
+        html += '<div class="cat-section-header"><span class="cat-section-icon">' + cm.icon + '</span><span class="cat-section-label ' + cm.css + '">' + cm.label + '</span><div class="cat-divider"></div></div>';
+        tours.forEach(b => { html += mergedTourRow(b); });
+      } else if (cat === 'soul') {
+        if (souls.length === 0) return;
+        const cm = CAT_META['soul'];
+        html += '<div class="cat-section-header"><span class="cat-section-icon">' + cm.icon + '</span><span class="cat-section-label ' + cm.css + '">' + cm.label + '</span><div class="cat-divider"></div></div>';
+        souls.forEach(b => { html += mergedSoulRow(b); });
+      } else {
+        const group = nonMTSoul.filter(b => b.category === cat);
+        if (group.length === 0) return;
+        const cm = CAT_META[cat];
+        html += '<div class="cat-section-header"><span class="cat-section-icon">' + cm.icon + '</span><span class="cat-section-label ' + cm.css + '">' + cm.label + '</span><div class="cat-divider"></div></div>';
+        group.forEach(b => { html += cat === 'classes' ? card(b) : compactRow(b); });
+      }
+    });
+  }
+  html += '<button class="add-btn" onclick="openModal(null,\'' + activeDay + '\')">+ Add Item</button></div>';
+  content.innerHTML = html;
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// RENDER: BY ROOM VIEW
+// ═══════════════════════════════════════════════════════════════════════
+function renderByRoom() {
+  const content = document.getElementById('mainContent');
+  const rooms = activeRoom === 'All' ? ROOMS : [activeRoom];
+  let html = '';
+  rooms.forEach(room => {
+    const rb = visibleBookings().filter(b => b.room === room).sort((a, b) => a.day.localeCompare(b.day) || a.start.localeCompare(b.start));
+    html += '<div class="room-section"><div class="room-section-header"><span class="room-tag ' + (ROOM_CSS[room] || '') + '" style="font-size:13px">' + room + '</span><span class="room-section-name"></span><span class="room-section-meta">' + rb.length + ' booking' + (rb.length !== 1 ? 's' : '') + '</span></div>';
+    if (rb.length === 0) {
+      html += '<div class="empty-state" style="padding:20px 0">No bookings for this room.</div>';
+    } else {
+      rb.forEach(b => {
+        html += '<div class="teacher-booking-row"><span class="trow-day">' + b.day + '</span><span class="trow-time">' + fmt12(b.start) + '\u2013' + fmt12(b.end) + '</span><span class="trow-title"><strong>' + b.title + '</strong>' + (b.subtitle ? ' <span style="color:var(--muted)">' + b.subtitle + '</span>' : '') + '</span>' +
+          (b.teacher ? '<span class="teacher-chip" style="font-size:12px">' + b.teacher + '</span>' : '') +
+          '<span class="trow-pax">' + b.pax + ' pax</span><button class="edit-btn" onclick="openModal(' + b.id + ')">\u270F Edit</button></div>';
+      });
+    }
+    html += '<button class="add-btn" onclick="openModal(null,null,\'' + room + '\')">+ Add to ' + room + '</button></div>';
+  });
+  content.innerHTML = html || '<div class="empty-state">No bookings found.</div>';
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// RENDER: BY TEACHER VIEW
+// ═══════════════════════════════════════════════════════════════════════
+function renderByTeacher() {
+  const content = document.getElementById('mainContent');
+  const searchQ = teacherSearchQuery.toLowerCase();
+  const teachers = allTeachers()
+    .filter(t => (!searchQ || t.toLowerCase().includes(searchQ)) && (activeTeacher === 'All' || t === activeTeacher));
+  let html = '';
+  teachers.forEach(teacher => {
+    const tb = visibleBookings().filter(b => b.teacher === teacher)
+      .sort((a, b) => a.day.localeCompare(b.day) || a.start.localeCompare(b.start));
+    const totalPax = tb.reduce((s, b) => s + b.pax, 0);
+    html += '<div class="teacher-section"><div class="teacher-header"><div class="teacher-dot" style="background:' + tColor(teacher) + '"></div><div class="teacher-name-big">' + teacher + '</div><div class="teacher-meta">' + tb.length + ' class' + (tb.length !== 1 ? 'es' : '') + ' \u00B7 ' + totalPax + ' total pax</div></div>';
+    if (tb.length === 0) {
+      html += '<div class="empty-state" style="padding:16px 0">No classes this week.</div>';
+    } else {
+      tb.forEach(b => {
+        html += '<div class="teacher-booking-row"><span class="trow-day">' + b.day + '</span><span class="trow-time">' + fmt12(b.start) + '\u2013' + fmt12(b.end) + '</span><span class="trow-title"><strong>' + b.title + '</strong>' + (b.subtitle ? ' <span style="color:var(--muted)">' + b.subtitle + '</span>' : '') + '</span>' +
+          (b.room ? '<span class="trow-room"><span class="room-tag ' + (ROOM_CSS[b.room] || '') + '" style="font-size:11px;padding:2px 9px">' + b.room + '</span></span>' : '') +
+          '<span class="trow-pax">' + b.pax + ' pax</span><button class="edit-btn" onclick="openModal(' + b.id + ')">\u270F Edit</button></div>';
+      });
+    }
+    html += '</div>';
+  });
+  content.innerHTML = html || '<div class="empty-state">No teachers found.</div>';
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// RENDER BARS
+// ═══════════════════════════════════════════════════════════════════════
+function renderGroupBar() {
+  const bar = document.getElementById('groupFilterBar');
+  const activeGroups = GROUPS.filter(g => !g.removed);
+  const removedGroups = GROUPS.filter(g => g.removed && g.id !== 'all');
+  let html = '<span style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-right:4px">Groups</span>';
+  activeGroups.forEach(g => {
+    const isActive = String(activeGroup) === String(g.id);
+    const status = groupStatus(g);
+    const border = isActive ? '2px solid ' + g.color : '2px solid var(--border)';
+    const bg = isActive ? g.color + '22' : 'var(--card)';
+    const paxBadge = g.pax ? '<span style="margin-left:6px;background:#1a1a1a;color:#fff;border-radius:4px;padding:1px 7px;font-size:12px;font-weight:700">' + g.pax + '</span>' : '';
+    let statusBadge = '';
+    if (status === 'departing-today') statusBadge = '<span style="margin-left:5px;font-size:10px;font-weight:700;color:#b07340;background:#f5e8d8;border-radius:4px;padding:1px 5px;">DEPARTS TODAY</span>';
+    else if (status === 'departed') statusBadge = '<span style="margin-left:5px;font-size:10px;font-weight:700;color:var(--muted);background:var(--bg);border-radius:4px;padding:1px 5px;">DEPARTED</span>';
+    const removeBtn = g.id !== 'all' ? '<span onclick="event.stopPropagation();removeGroup(\'' + g.id + '\')" title="Remove group" style="margin-left:6px;cursor:pointer;color:var(--muted);font-size:15px;line-height:1;opacity:0.6" onmouseover="this.style.opacity=1;this.style.color=\'#cc3333\'" onmouseout="this.style.opacity=0.6;this.style.color=\'var(--muted)\'">x</span>' : '';
+    const opacity = status === 'departed' ? 'opacity:0.55;' : '';
+    html += '<button class="group-pill" onclick="setGroup(\'' + g.id + '\')" style="border:' + border + ';background:' + bg + ';' + opacity + '"><span class="group-dot" style="background:' + g.color + '"></span>' + g.short + paxBadge + statusBadge + removeBtn + '</button>';
+  });
+  if (removedGroups.length > 0) {
+    html += '<span style="font-size:11px;color:var(--muted);margin-left:8px;margin-right:4px">Archived:</span>';
+    removedGroups.forEach(g => {
+      html += '<button onclick="restoreGroup(\'' + g.id + '\')" class="group-pill" style="border:2px dashed var(--border);opacity:0.6;font-size:12px" title="Restore group"><span class="group-dot" style="background:' + g.color + '"></span>' + g.short + ' \u21A9</button>';
+    });
+  }
+  bar.innerHTML = html;
+}
+
+function renderCatTabs() {
+  document.querySelectorAll('.cat-tab').forEach(btn => {
+    const m = btn.getAttribute('onclick').match(/setCat\('(.*?)'\)/);
+    if (m) btn.classList.toggle('active', m[1] === activeCategory);
+  });
+}
+
+function renderFilterBar() {
+  const bar = document.getElementById('filterBar');
+  if (activeTab === 'day') {
+    bar.innerHTML = '<div class="filter-row"><span class="filter-label">Day</span>' +
+      DAYS.map(d => '<button class="pill' + (activeDay === d ? ' active' : '') + '" onclick="setDay(\'' + d + '\')">' + d + '</button>').join('') +
+      '<div style="width:1px;height:20px;background:var(--border);margin:0 4px"></div><span class="filter-label">Room</span>' +
+      '<button class="pill' + (activeRoom === 'All' ? ' active' : '') + '" onclick="setRoom(\'All\')">All</button>' +
+      ROOMS.map(r => '<button class="pill room-' + ROOM_CSS[r] + (activeRoom === r ? ' active' : '') + '" onclick="setRoom(\'' + r + '\')">' + r + '</button>').join('') +
+      '</div>';
+  } else if (activeTab === 'room') {
+    bar.innerHTML = '<div class="filter-row"><span class="filter-label">Room</span><button class="pill' + (activeRoom === 'All' ? ' active' : '') + '" onclick="setRoom(\'All\')">All Rooms</button>' +
+      ROOMS.map(r => '<button class="pill room-' + ROOM_CSS[r] + (activeRoom === r ? ' active' : '') + '" onclick="setRoom(\'' + r + '\')">' + r + '</button>').join('') + '</div>';
+  } else {
+    bar.innerHTML = '<div class="filter-row"><span class="filter-label">Search</span>' +
+      '<div style="position:relative;display:flex;align-items:center"><span style="position:absolute;left:10px;color:var(--muted);font-size:14px">\u{1F50D}</span>' +
+      '<input id="teacherSearch" type="text" placeholder="Type teacher name\u2026" value="' + teacherSearchQuery + '" oninput="onTeacherSearch(this.value)" style="padding:6px 12px 6px 32px;border:1.5px solid var(--border);border-radius:999px;font-size:13px;font-family:inherit;background:var(--card);outline:none;width:220px" onfocus="this.style.borderColor=\'#999\'" onblur="this.style.borderColor=\'var(--border)\'">' +
+      (teacherSearchQuery ? '<button onclick="clearTeacherSearch()" style="position:absolute;right:10px;background:none;border:none;cursor:pointer;color:var(--muted);font-size:16px;line-height:1">x</button>' : '') +
+      '</div></div>' +
+      '<div class="filter-row"><span class="filter-label">Teacher</span><button class="pill' + (activeTeacher === 'All' ? ' active' : '') + '" onclick="setTeacher(\'All\')">All</button>' +
+      allTeachers().filter(t => !teacherSearchQuery || t.toLowerCase().includes(teacherSearchQuery.toLowerCase())).map(t => '<button class="pill' + (activeTeacher === t ? ' active' : '') + '" style="border-left:3px solid ' + tColor(t) + '" onclick="setTeacher(\'' + t.replace(/'/g, "\\'") + '\')">' + t + '</button>').join('') + '</div>';
+  }
+}
+
+
+// ═══════════════════════════════════════════════════════════════════════
+// RETREATS TAB
+// ═══════════════════════════════════════════════════════════════════════
+function renderRetreatsTab() {
+  const content = document.getElementById('mainContent');
+  let html = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px"><div style="font-family:Playfair Display,serif;font-size:22px;font-weight:600">Retreats</div>' +
+    '<button class="btn-save" onclick="openRetreatModal()">+ New Retreat</button></div>';
+
+  // Status filters
+  const statuses = ['all', 'upcoming', 'active', 'completed'];
+  html += '<div style="display:flex;gap:8px;margin-bottom:20px">';
+  statuses.forEach(s => {
+    const count = s === 'all' ? RETREATS.length : RETREATS.filter(r => r.status === s).length;
+    html += '<button class="pill' + (s === 'all' ? ' active' : '') + '" onclick="filterRetreats(\'' + s + '\', this)">' + s.charAt(0).toUpperCase() + s.slice(1) + ' (' + count + ')</button>';
+  });
+  html += '</div>';
+
+  // Retreat list
+  const filtered = RETREATS.sort((a, b) => (b.week_start || '').localeCompare(a.week_start || ''));
+  filtered.forEach(r => {
+    const statusClass = 'status-' + (r.status || 'upcoming');
+    const groups = GROUPS.filter(g => g.id !== 'all' && String(g.retreat_id) === String(r.id));
+    const startDate = r.week_start ? new Date(r.week_start + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
+    const endDate = r.week_end ? new Date(r.week_end + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+
+    html += '<div class="retreat-card">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">' +
+      '<div><span style="font-size:16px;font-weight:600">' + (r.name || 'Untitled') + '</span> <span style="font-size:13px;color:var(--muted);margin-left:8px">' + startDate + ' \u2013 ' + endDate + '</span></div>' +
+      '<span class="status-pill ' + statusClass + '">' + (r.status || 'upcoming') + '</span></div>';
+
+    // Groups for this retreat
+    if (groups.length > 0) {
+      html += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">';
+      groups.forEach(g => {
+        // Form status
+        const sub = PENDING_SUBMISSIONS.find(s => String(s.group_id) === String(g.id));
+        let formStatus = 'Not Sent';
+        let formColor = 'var(--muted)';
+        let formBg = 'var(--bg)';
+        if (sub) {
+          if (sub.status === 'submitted') { formStatus = 'Submitted'; formColor = '#e8703a'; formBg = '#fff3e0'; }
+          else if (sub.status === 'approved') { formStatus = 'Approved'; formColor = '#2e7d32'; formBg = '#e8f5e9'; }
+          else if (sub.status === 'sent') { formStatus = 'Sent'; formColor = '#1565c0'; formBg = '#e8eaf6'; }
+          else if (sub.status === 'opened') { formStatus = 'Opened'; formColor = '#8a5ba6'; formBg = '#f5e8ff'; }
+        }
+        html += '<div style="background:var(--card);border:1px solid var(--border);border-left:3px solid ' + (g.color || '#999') + ';border-radius:8px;padding:10px 14px;min-width:200px">' +
+          '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><span style="font-weight:600;font-size:14px">' + g.label + '</span><span style="background:#1a1a1a;color:#fff;border-radius:4px;padding:1px 7px;font-size:11px;font-weight:700">' + (g.pax || 0) + '</span></div>' +
+          '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">' +
+          '<span style="font-size:11px;font-weight:600;color:' + formColor + ';background:' + formBg + ';border-radius:4px;padding:1px 6px">' + formStatus + '</span>';
+        if (!sub || sub.status === 'sent' || sub.status === 'opened') {
+          html += '<button onclick="sendForm(' + g.id + ')" style="font-size:11px;color:#1565c0;background:#e8eaf6;border:1px solid #90caf9;border-radius:4px;padding:1px 8px;cursor:pointer;font-family:inherit">\u{1F4E7} Send Form</button>';
+        }
+        if (sub && sub.status === 'submitted') {
+          html += '<button onclick="openReviewModal(' + sub.id + ')" style="font-size:11px;color:#e8703a;background:#fff3e0;border:1px solid #f5c842;border-radius:4px;padding:1px 8px;cursor:pointer;font-family:inherit">\u{1F4CB} Review</button>';
+        }
+        html += '</div></div>';
+      });
+      html += '</div>';
+    }
+
+    html += '<button onclick="openGroupModal(' + r.id + ')" style="font-size:12px;color:var(--muted);background:none;border:1.5px dashed var(--border);border-radius:6px;padding:6px 14px;cursor:pointer;font-family:inherit">+ Add Group</button>';
+    html += '</div>';
+  });
+
+  if (RETREATS.length === 0) {
+    html += '<div class="empty-state">No retreats yet. Click "New Retreat" to get started.</div>';
+  }
+  content.innerHTML = html;
+}
+
+function filterRetreats(status, btn) {
+  // Visual only filter - re-renders
+  document.querySelectorAll('.retreat-card').forEach(el => el.style.display = '');
+  if (status !== 'all') {
+    document.querySelectorAll('.retreat-card').forEach(el => {
+      const pill = el.querySelector('.status-pill');
+      if (pill && !pill.classList.contains('status-' + status)) el.style.display = 'none';
+    });
+  }
+  btn.parentElement.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// REPORTS TAB
+// ═══════════════════════════════════════════════════════════════════════
+function renderReportsTab() {
+  const content = document.getElementById('mainContent');
+  const activeGroups = GROUPS.filter(g => g.id !== 'all' && !g.removed);
+  const totalPax = activeGroups.reduce((s, g) => s + (g.pax || 0), 0);
+
+  // Dietary summary
+  let dVegans = 0, dVeg = 0, dGF = 0, dNut = 0, dShellfish = 0, allergies = [];
+  activeGroups.forEach(g => {
+    const d = dietaryState[g.id] || {};
+    dVegans += d.vegans || 0; dVeg += d.vegetarians || 0; dGF += d.glutenFree || 0;
+    dNut += d.nutAllergy || 0; dShellfish += d.shellfishAllergy || 0;
+    if (d.allergies) allergies.push(g.short + ': ' + d.allergies);
+  });
+
+  // Room utilization
+  const roomCounts = {};
+  ROOMS.forEach(r => { roomCounts[r] = {}; });
+  bookings.forEach(b => {
+    if (b.room && ROOMS.includes(b.room) && b.day) {
+      if (!roomCounts[b.room][b.day]) roomCounts[b.room][b.day] = 0;
+      roomCounts[b.room][b.day]++;
+    }
+  });
+
+  // Teacher roster
+  const teacherMap = {};
+  bookings.filter(b => b.teacher && b.category === 'classes').forEach(b => {
+    if (!teacherMap[b.teacher]) teacherMap[b.teacher] = 0;
+    teacherMap[b.teacher]++;
+  });
+
+  let html = '<div style="font-family:Playfair Display,serif;font-size:22px;font-weight:600;margin-bottom:20px">Reports</div>';
+
+  // Total pax
+  html += '<div class="report-card"><div class="report-title">Total Pax on Property</div><div class="report-grid">' +
+    '<div class="report-stat"><div class="report-stat-value">' + totalPax + '</div><div class="report-stat-label">Total Guests</div></div>' +
+    '<div class="report-stat"><div class="report-stat-value">' + activeGroups.length + '</div><div class="report-stat-label">Active Groups</div></div>' +
+    '<div class="report-stat"><div class="report-stat-value">' + bookings.length + '</div><div class="report-stat-label">Total Bookings</div></div>' +
+    '</div></div>';
+
+  // Dietary summary
+  html += '<div class="report-card"><div class="report-title">Dietary Summary (Kitchen Printout)</div>' +
+    '<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px">' +
+    '<span class="dc-vegan" style="font-size:14px;padding:4px 12px">\u{1F331} ' + dVegans + ' Vegan</span>' +
+    '<span class="dc-veg" style="font-size:14px;padding:4px 12px">\u{1F957} ' + dVeg + ' Vegetarian</span>' +
+    '<span class="dc-gf" style="font-size:14px;padding:4px 12px">\u{1F33E} ' + dGF + ' Gluten Free</span>' +
+    (dNut > 0 ? '<span class="dc-allergy" style="font-size:14px;padding:4px 12px">\u{1F95C} ' + dNut + ' Nut Allergy</span>' : '') +
+    (dShellfish > 0 ? '<span class="dc-allergy" style="font-size:14px;padding:4px 12px">\u{1F990} ' + dShellfish + ' Shellfish</span>' : '') +
+    '</div>';
+  if (allergies.length > 0) {
+    html += '<div style="background:#fce4ec;border:1px solid #f48fb1;border-radius:8px;padding:10px 14px;font-size:13px">' +
+      '<div style="font-weight:700;color:#c62828;margin-bottom:6px">\u26A0 Allergy Notes</div>' +
+      allergies.map(a => '<div>' + a + '</div>').join('') + '</div>';
+  }
+  html += '<div style="margin-top:12px"><button onclick="window.print()" style="background:var(--text);color:#fff;border:none;padding:8px 18px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">\u{1F5A8} Print</button></div></div>';
+
+  // Room utilization
+  html += '<div class="report-card"><div class="report-title">Room Utilization by Day</div>' +
+    '<table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr><th style="text-align:left;padding:8px;border-bottom:2px solid var(--border)">Room</th>';
+  DAYS.forEach(d => { html += '<th style="text-align:center;padding:8px;border-bottom:2px solid var(--border)">' + d + '</th>'; });
+  html += '</tr></thead><tbody>';
+  ROOMS.forEach(r => {
+    html += '<tr><td style="padding:8px;font-weight:600"><span class="room-tag ' + ROOM_CSS[r] + '" style="font-size:11px;padding:2px 8px">' + r + '</span></td>';
+    DAYS.forEach(d => {
+      const count = (roomCounts[r] || {})[d] || 0;
+      const bg = count > 3 ? '#fde8e8' : count > 1 ? '#fff8e1' : count > 0 ? '#e8f5e9' : '';
+      html += '<td style="text-align:center;padding:8px;background:' + bg + '">' + count + '</td>';
+    });
+    html += '</tr>';
+  });
+  html += '</tbody></table></div>';
+
+  // Teacher roster
+  html += '<div class="report-card"><div class="report-title">Teacher Roster</div>';
+  const sortedTeachers = Object.entries(teacherMap).sort((a, b) => b[1] - a[1]);
+  if (sortedTeachers.length === 0) {
+    html += '<div class="empty-state" style="padding:16px 0">No classes with assigned teachers.</div>';
+  } else {
+    sortedTeachers.forEach(([name, count]) => {
+      html += '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">' +
+        '<span style="width:10px;height:10px;border-radius:50%;background:' + tColor(name) + ';flex-shrink:0"></span>' +
+        '<span style="font-weight:600;flex:1">' + name + '</span>' +
+        '<span style="font-size:13px;color:var(--muted)">' + count + ' class' + (count !== 1 ? 'es' : '') + '</span></div>';
+    });
+  }
+  html += '</div>';
+
+  content.innerHTML = html;
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// MODALS: BOOKING
+// ═══════════════════════════════════════════════════════════════════════
+function openModal(id, defaultDay, defaultRoom) {
+  editingId = id;
+  updateTeacherDatalist();
+  // Populate day select
+  const daySel = document.getElementById('fieldDay');
+  daySel.innerHTML = DAYS.map(d => '<option value="' + d + '">' + (DAY_LABELS[d] || d) + '</option>').join('');
+  // Populate group select
+  const grpSel = document.getElementById('fieldGroup');
+  grpSel.innerHTML = GROUPS.map(g => '<option value="' + g.id + '">' + g.label + (g.pax ? ' (' + g.pax + ' pax)' : '') + '</option>').join('');
+
+  document.getElementById('modalTitle').textContent = id ? 'Edit Booking' : 'Add Booking';
+  document.getElementById('deleteBtn').style.display = id ? 'block' : 'none';
+  if (id) {
+    const b = bookings.find(x => x.id === id);
+    if (!b) return;
+    document.getElementById('fieldTitle').value = b.title;
+    document.getElementById('fieldTeacher').value = b.teacher;
+    document.getElementById('fieldDay').value = b.day;
+    document.getElementById('fieldRoom').value = b.room;
+    document.getElementById('fieldStart').value = b.start;
+    document.getElementById('fieldEnd').value = b.end;
+    document.getElementById('fieldPax').value = b.pax;
+    document.getElementById('fieldNotes').value = b.notes;
+    document.getElementById('fieldStatus').value = b.status;
+    document.getElementById('fieldCategory').value = b.category || 'classes';
+    document.getElementById('fieldGroup').value = b.group || 'all';
+    document.getElementById('fieldPrice').value = b.price || '';
+    document.getElementById('fieldOptional').checked = b.optional || false;
+    document.getElementById('fieldShared').checked = b.is_shared || false;
+  } else {
+    document.getElementById('fieldTitle').value = '';
+    document.getElementById('fieldTeacher').value = '';
+    document.getElementById('fieldDay').value = defaultDay || activeDay || DAYS[0] || '';
+    document.getElementById('fieldRoom').value = defaultRoom || 'Heaven';
+    document.getElementById('fieldStart').value = '08:00';
+    document.getElementById('fieldEnd').value = '09:30';
+    document.getElementById('fieldPax').value = '';
+    document.getElementById('fieldNotes').value = '';
+    document.getElementById('fieldStatus').value = 'confirmed';
+    document.getElementById('fieldCategory').value = activeCategory !== 'all' ? activeCategory : 'classes';
+    document.getElementById('fieldGroup').value = String(activeGroup) !== 'all' ? activeGroup : 'all';
+    document.getElementById('fieldPrice').value = '';
+    document.getElementById('fieldOptional').checked = false;
+    document.getElementById('fieldShared').checked = false;
+  }
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); editingId = null; }
+
+async function saveBooking() {
+  const grpVal = document.getElementById('fieldGroup').value;
+  const isShared = document.getElementById('fieldShared').checked || grpVal === 'all';
+  const dayVal = document.getElementById('fieldDay').value;
+  const data = {
+    action: 'saveBooking',
+    title: document.getElementById('fieldTitle').value.trim() || 'Untitled',
+    teacher_name: document.getElementById('fieldTeacher').value.trim(),
+    day_date: dayToDateStr(dayVal),
+    start_time: document.getElementById('fieldStart').value,
+    end_time: document.getElementById('fieldEnd').value,
+    room: document.getElementById('fieldRoom').value,
+    pax: parseInt(document.getElementById('fieldPax').value) || 0,
+    setup_notes: document.getElementById('fieldNotes').value.trim(),
+    status: document.getElementById('fieldStatus').value,
+    category: document.getElementById('fieldCategory').value,
+    group_id: getApiGroupId(grpVal),
+    is_shared: isShared,
+    is_optional: document.getElementById('fieldOptional').checked,
+    price: document.getElementById('fieldPrice').value.trim(),
+    subtitle: '',
+  };
+  if (editingId) data.id = editingId;
+
+  // Optimistic local update
+  const localBooking = {
+    id: editingId || Date.now(),
+    group: grpVal,
+    day: dayVal,
+    day_date: data.day_date,
+    start: data.start_time,
+    end: data.end_time,
+    title: data.title,
+    subtitle: '',
+    teacher: data.teacher_name,
+    room: data.room,
+    pax: data.pax,
+    notes: data.setup_notes,
+    status: data.status,
+    category: data.category,
+    optional: data.is_optional,
+    price: data.price,
+    is_shared: data.is_shared,
+  };
+
+  if (editingId) {
+    const idx = bookings.findIndex(b => b.id === editingId);
+    if (idx >= 0) bookings[idx] = { ...bookings[idx], ...localBooking };
+  } else {
+    bookings.push(localBooking);
+  }
+  closeModal();
+  render();
+
+  // API call
+  const result = await apiPost(data);
+  if (result.success) {
+    showToast('\u2713 Saved');
+    if (!editingId && result.data && result.data.id) {
+      const b = bookings.find(x => x.id === localBooking.id);
+      if (b) b.id = result.data.id;
+    }
+  } else {
+    showToast('Error: ' + (result.error || 'Save failed'));
+  }
+}
+
+async function deleteBooking() {
+  if (!editingId) return;
+  if (!confirm('Delete this booking?')) return;
+  const id = editingId;
+  bookings = bookings.filter(b => b.id !== id);
+  closeModal();
+  render();
+  const result = await apiPost({ action: 'deleteBooking', id: id });
+  if (result.success) showToast('\u2713 Deleted');
+  else showToast('Error: ' + (result.error || 'Delete failed'));
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// MODALS: RETREAT
+// ═══════════════════════════════════════════════════════════════════════
+function openRetreatModal(id) {
+  editingRetreatId = id || null;
+  document.getElementById('retreatModalTitle').textContent = id ? 'Edit Retreat' : 'New Retreat';
+  if (id) {
+    const r = RETREATS.find(x => String(x.id) === String(id));
+    if (r) {
+      document.getElementById('retreatName').value = r.name || '';
+      document.getElementById('retreatStart').value = (r.week_start || '').slice(0, 10);
+      document.getElementById('retreatEnd').value = (r.week_end || '').slice(0, 10);
+      document.getElementById('retreatNotes').value = r.notes || '';
+    }
+  } else {
+    document.getElementById('retreatName').value = '';
+    document.getElementById('retreatStart').value = '';
+    document.getElementById('retreatEnd').value = '';
+    document.getElementById('retreatNotes').value = '';
+  }
+  document.getElementById('retreatModalOverlay').classList.add('open');
+}
+
+function closeRetreatModal() { document.getElementById('retreatModalOverlay').classList.remove('open'); }
+
+async function saveRetreat() {
+  const data = {
+    action: 'saveRetreat',
+    name: document.getElementById('retreatName').value.trim() || 'Untitled Retreat',
+    week_start: document.getElementById('retreatStart').value,
+    week_end: document.getElementById('retreatEnd').value,
+    notes: document.getElementById('retreatNotes').value.trim(),
+  };
+  if (editingRetreatId) data.id = editingRetreatId;
+  closeRetreatModal();
+  const result = await apiPost(data);
+  if (result.success) {
+    showToast('\u2713 Retreat saved');
+    if (result.data && result.data.id) activeRetreatId = result.data.id;
+    await loadAllData(activeRetreatId);
+    render();
+  } else {
+    showToast('Error: ' + (result.error || 'Save failed'));
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// MODALS: GROUP
+// ═══════════════════════════════════════════════════════════════════════
+let addingGroupRetreatId = null;
+function openGroupModal(retreatId) {
+  addingGroupRetreatId = retreatId;
+  document.getElementById('groupName').value = '';
+  document.getElementById('groupPax').value = '';
+  document.getElementById('groupColor').value = NW_PALETTE[GROUPS.length % NW_PALETTE.length];
+  document.getElementById('groupArrival').value = '';
+  document.getElementById('groupDeparture').value = '';
+  document.getElementById('groupPackage').value = '';
+  // Populate teacher select
+  const sel = document.getElementById('groupTeacher');
+  sel.innerHTML = '<option value="">None</option>' + TEACHERS.map(t => '<option value="' + t.id + '">' + t.name + '</option>').join('');
+  // Pre-fill dates from retreat
+  const r = RETREATS.find(x => String(x.id) === String(retreatId));
+  if (r) {
+    document.getElementById('groupArrival').value = (r.week_start || '').slice(0, 10);
+    document.getElementById('groupDeparture').value = (r.week_end || '').slice(0, 10);
+  }
+  document.getElementById('groupModalOverlay').classList.add('open');
+}
+
+function closeGroupModal() { document.getElementById('groupModalOverlay').classList.remove('open'); }
+
+async function saveGroup() {
+  const data = {
+    action: 'saveGroup',
+    retreat_id: addingGroupRetreatId,
+    name: document.getElementById('groupName').value.trim() || 'New Group',
+    pax: parseInt(document.getElementById('groupPax').value) || 0,
+    color: document.getElementById('groupColor').value,
+    arrival_date: document.getElementById('groupArrival').value,
+    departure_date: document.getElementById('groupDeparture').value,
+    teacher_id: document.getElementById('groupTeacher').value || '',
+    package_type: document.getElementById('groupPackage').value.trim(),
+  };
+  closeGroupModal();
+  const result = await apiPost(data);
+  if (result.success) {
+    showToast('\u2713 Group saved');
+    await loadAllData(activeRetreatId);
+    render();
+  } else {
+    showToast('Error: ' + (result.error || 'Save failed'));
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// FORM / SUBMISSIONS
+// ═══════════════════════════════════════════════════════════════════════
+async function sendForm(groupId) {
+  const result = await apiPost({ action: 'sendFormEmail', group_id: groupId });
+  if (result.success) {
+    showToast('\u2713 Form sent to ' + (result.data.email || 'teacher'));
+    await loadAllData(activeRetreatId);
+    render();
+  } else {
+    showToast('Error: ' + (result.error || 'Send failed'));
+  }
+}
+
+function openReviewModal(submissionId) {
+  reviewingSubmissionId = submissionId;
+  const sub = PENDING_SUBMISSIONS.find(s => String(s.id) === String(submissionId));
+  const rc = document.getElementById('reviewContent');
+  if (!sub) { rc.innerHTML = '<div class="empty-state">Submission not found.</div>'; }
+  else {
+    let formData = {};
+    try { formData = JSON.parse(sub.form_data_json || '{}'); } catch (e) {}
+    const group = GROUPS.find(g => String(g.id) === String(sub.group_id));
+    rc.innerHTML = '<div style="margin-bottom:16px"><strong>Group:</strong> ' + (group ? group.label : 'Unknown') + '</div>' +
+      '<div style="margin-bottom:16px"><strong>Submitted:</strong> ' + (sub.submitted_at || 'N/A') + '</div>' +
+      '<div style="margin-bottom:16px"><strong>Dietary:</strong> ' + (sub.vegans || 0) + ' vegan, ' + (sub.vegetarians || 0) + ' veg, ' + (sub.gluten_free || 0) + ' GF</div>' +
+      (sub.allergies ? '<div style="margin-bottom:16px"><strong>Allergies:</strong> ' + sub.allergies + '</div>' : '') +
+      (sub.equipment_notes ? '<div style="margin-bottom:16px"><strong>Equipment:</strong> ' + sub.equipment_notes + '</div>' : '') +
+      (sub.general_notes ? '<div style="margin-bottom:16px"><strong>Notes:</strong> ' + sub.general_notes + '</div>' : '') +
+      '<div style="background:var(--bg);border-radius:8px;padding:12px;font-size:12px;max-height:200px;overflow-y:auto"><pre style="white-space:pre-wrap">' + JSON.stringify(formData, null, 2) + '</pre></div>';
+  }
+  document.getElementById('reviewModalOverlay').classList.add('open');
+}
+
+function closeReviewModal() { document.getElementById('reviewModalOverlay').classList.remove('open'); reviewingSubmissionId = null; }
+
+async function approveSubmission() {
+  if (!reviewingSubmissionId) return;
+  closeReviewModal();
+  const result = await apiPost({ action: 'approveSubmission', submission_id: reviewingSubmissionId });
+  if (result.success) {
+    showToast('\u2713 Approved \u2014 ' + (result.data.bookings_created || 0) + ' bookings created');
+    await loadAllData(activeRetreatId);
+    render();
+  } else {
+    showToast('Error: ' + (result.error || 'Approve failed'));
+  }
+}
+
+async function declineSubmission() {
+  if (!reviewingSubmissionId) return;
+  const note = prompt('Decline reason (optional):');
+  closeReviewModal();
+  const result = await apiPost({ action: 'declineSubmission', submission_id: reviewingSubmissionId, note: note || '' });
+  if (result.success) {
+    showToast('\u2713 Declined');
+    await loadAllData(activeRetreatId);
+    render();
+  } else {
+    showToast('Error: ' + (result.error || 'Decline failed'));
+  }
+}
+
+
+// ═══════════════════════════════════════════════════════════════════════
+// TAB SWITCHING & CONTROLS
+// ═══════════════════════════════════════════════════════════════════════
+function switchTopTab(tab) {
+  activeTopTab = tab;
+  document.querySelectorAll('#topTabs .tab').forEach((t, i) => {
+    t.classList.toggle('active', (i === 0 && tab === 'week') || (i === 1 && tab === 'retreats') || (i === 2 && tab === 'reports'));
+  });
+  const weekControls = document.getElementById('weekViewControls');
+  const weekSubTabs = document.getElementById('weekSubTabs');
+  if (tab === 'week') {
+    weekControls.style.display = '';
+    weekSubTabs.style.display = '';
+    render();
+  } else {
+    weekControls.style.display = 'none';
+    weekSubTabs.style.display = 'none';
+    if (tab === 'retreats') renderRetreatsTab();
+    else if (tab === 'reports') renderReportsTab();
+  }
+}
+
+function switchWeekSub(tab) {
+  activeTab = tab;
+  document.querySelectorAll('#weekSubTabs .tab').forEach((t, i) => {
+    t.classList.toggle('active', (i === 0 && tab === 'day') || (i === 1 && tab === 'room') || (i === 2 && tab === 'teacher'));
+  });
+  render();
+}
+
+function setCat(c) { activeCategory = c; render(); }
+function setGroup(g) { activeGroup = g; render(); }
+function setDay(d) { activeDay = d; render(); }
+function setRoom(r) { activeRoom = r; render(); }
+function setTeacher(t) { activeTeacher = t; render(); }
+function onTeacherSearch(val) {
+  teacherSearchQuery = val; activeTeacher = 'All'; render();
+  setTimeout(function() { const el = document.getElementById('teacherSearch'); if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); } }, 10);
+}
+function clearTeacherSearch() { teacherSearchQuery = ''; activeTeacher = 'All'; render(); }
+
+// ═══════════════════════════════════════════════════════════════════════
+// MAIN RENDER
+// ═══════════════════════════════════════════════════════════════════════
+function render() {
+  if (activeTopTab !== 'week') return;
+  renderGroupBar();
+  renderCatTabs();
+  renderFilterBar();
+  setTimeout(updateConflictPill, 0);
+  if (activeTab === 'day') renderByDay();
+  else if (activeTab === 'room') renderByRoom();
+  else renderByTeacher();
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// MODAL OVERLAY CLOSE HANDLERS
+// ═══════════════════════════════════════════════════════════════════════
+document.getElementById('modalOverlay').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
+document.getElementById('retreatModalOverlay').addEventListener('click', function(e) { if (e.target === this) closeRetreatModal(); });
+document.getElementById('groupModalOverlay').addEventListener('click', function(e) { if (e.target === this) closeGroupModal(); });
+document.getElementById('reviewModalOverlay').addEventListener('click', function(e) { if (e.target === this) closeReviewModal(); });
+
+// ═══════════════════════════════════════════════════════════════════════
+// AUTO-SYNC & DEPARTURE CHECK
+// ═══════════════════════════════════════════════════════════════════════
+setInterval(function() {
+  loadAllData(activeRetreatId).then(function() {
+    if (activeTopTab === 'week') render();
+    else if (activeTopTab === 'retreats') renderRetreatsTab();
+    else if (activeTopTab === 'reports') renderReportsTab();
+  });
+}, CONFIG.SYNC_INTERVAL);
+
+setInterval(function() {
+  let changed = false;
+  GROUPS.forEach(g => {
+    if (g.id === 'all' || g.removed) return;
+    if (groupStatus(g) === 'departed' && !g.autoDeparted) {
+      g.autoDeparted = true;
+      changed = true;
+    }
+  });
+  if (changed) render();
+}, 60000);
+
+// ═══════════════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════════════
+(async function init() {
+  try {
+    // First load all retreats
+    const result = await apiGet({ action: 'all' });
+    if (result.success && result.data) {
+      const retreats = result.data.retreats || [];
+      // Pick active or most recent upcoming retreat
+      let selected = retreats.find(r => r.status === 'active');
+      if (!selected) selected = retreats.find(r => r.status === 'upcoming');
+      if (!selected && retreats.length > 0) selected = retreats[0];
+      if (selected) activeRetreatId = selected.id;
+
+      // Now load with retreat filter
+      await loadAllData(activeRetreatId);
+    }
+  } catch (e) {
+    console.error('Init error:', e);
+    setSyncStatus('Connection failed');
+  }
+
+  // Hide loading overlay
+  const overlay = document.getElementById('loadingOverlay');
+  if (overlay) overlay.style.display = 'none';
+
+  // Show week sub tabs
+  document.getElementById('weekSubTabs').style.display = '';
+
+  render();
+})();
+
+</script>
+</body>
+</html>
