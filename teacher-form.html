@@ -144,7 +144,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--deep);
         <div class="f"><label>Group Size</label><input id="iSize" type="text" readonly></div>
         <div class="f"><label>Retreat Dates</label><input id="iDates" type="text" readonly></div>
         <div class="f"><label>Group Leader</label><input id="iCoord" type="text" placeholder="e.g. Maria"></div>
-        <div class="f full"><label>Special Requests / Class Notes</label><textarea id="iNotes" placeholder="e.g. Morning classes need shade. Music preferred. Needs bluetooth speaker."></textarea></div>
+        <div class="f full"><label>Any Special Needs?</label><textarea id="iNotes" placeholder="e.g. Need bluetooth speaker, mats in circle, bolsters, candles, blocks, special room setup..."></textarea></div>
       </div>
     </div>
 
@@ -194,6 +194,17 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--deep);
 
     <!-- PER-DAY CARDS (built by JS) -->
     <div class="days-area" id="daysArea"></div>
+
+    <!-- TOURS & EXPERIENCES -->
+    <div class="info-card">
+      <div class="card-title">Tours &amp; Experiences</div>
+      <div style="font-size:.78rem;color:var(--earth);margin-bottom:16px;line-height:1.6">
+        Select the day and time for any tours or experiences you'd like to include. Leave blank if not needed. <strong>Pre-book: $75 pp &middot; On-site: $95 pp.</strong>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px" id="experiences-area">
+        <!-- Built by JS -->
+      </div>
+    </div>
 
     <!-- SUBMIT -->
     <div class="info-card">
@@ -290,10 +301,8 @@ function roomSel(id,val){
 }
 function tInp(id,val){ return '<input type="time" id="'+id+'" value="'+(val||'')+'">'; }
 function gv(id){ var el=document.getElementById(id); return el?el.value:''; }
-function sv(n){ var el=document.querySelector('input[name="'+n+'"]:checked'); return el?el.value:'opt'; }
 function escHtml(s){ var d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
 function checkAllergyInput(el){ document.getElementById('epiReminder').style.display=el.value.trim().length>0?'block':'none'; }
-function stepEq(id,delta){ var el=document.getElementById(id); if(!el)return; el.value=Math.max(0,(parseInt(el.value)||0)+delta); }
 
 function formatDateShort(dateStr) {
   if (!dateStr) return '';
@@ -303,31 +312,16 @@ function formatDateShort(dateStr) {
   return months[d.getUTCMonth()] + ' ' + d.getUTCDate();
 }
 
-// ── PER-CLASS NOISE + EQUIPMENT ──────────────────────────────────────
+// ── PER-CLASS NOISE LEVEL ─────────────────────────────────────────────
 function classExtras(pfx){
   var noiseId = pfx+'_noise';
-  var eqItems=[['mats','Mats'],['blocks','Blocks'],['straps','Straps'],['blankets','Blankets'],['speaker','Speaker'],['candles','Candles'],['weights','Weights'],['chairs','Chairs']];
-  var steppers = eqItems.map(function(item){
-    var k=item[0], l=item[1], id=pfx+'_eq_'+k;
-    return '<div style="display:flex;align-items:center;gap:4px;background:var(--cream);border:1.5px solid var(--warm);border-radius:8px;padding:4px 8px">'
-      +'<span style="font-size:.7rem;color:var(--earth);white-space:nowrap">'+l+'</span>'
-      +'<div style="display:flex;align-items:center;gap:2px;margin-left:4px">'
-      +'<button type="button" onclick="stepEq(\''+id+'\',-1)" style="width:20px;height:20px;border:1px solid var(--warm);border-radius:4px;background:var(--sand);cursor:pointer;font-size:.8rem;line-height:1;color:var(--earth);padding:0">&minus;</button>'
-      +'<input type="number" id="'+id+'" value="0" min="0" max="50" style="width:32px;text-align:center;border:1px solid var(--warm);border-radius:4px;font-size:.75rem;font-family:inherit;background:#fff;color:var(--deep);padding:2px 0">'
-      +'<button type="button" onclick="stepEq(\''+id+'\',1)" style="width:20px;height:20px;border:1px solid var(--warm);border-radius:4px;background:var(--sand);cursor:pointer;font-size:.8rem;line-height:1;color:var(--earth);padding:0">+</button>'
-      +'</div></div>';
-  }).join('');
-  return '<div style="margin-top:10px;background:var(--sand);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:10px">'
+  return '<div style="margin-top:10px;background:var(--sand);border-radius:8px;padding:10px 14px">'
     +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'
     +'<span style="font-size:.58rem;letter-spacing:.18em;text-transform:uppercase;color:var(--earth);font-weight:500;white-space:nowrap">Noise Level</span>'
     +'<div style="display:flex;border:1.5px solid var(--warm);border-radius:6px;overflow:hidden;flex-shrink:0">'
     +'<input type="radio" name="'+noiseId+'" id="'+noiseId+'_q" value="quiet" class="tog"><label for="'+noiseId+'_q" class="noise-lbl" style="padding:5px 11px;font-size:.72rem;font-weight:500;cursor:pointer;background:var(--cream);color:var(--earth);border-right:1px solid var(--warm);transition:all .15s;user-select:none;white-space:nowrap">Quiet</label>'
     +'<input type="radio" name="'+noiseId+'" id="'+noiseId+'_m" value="medium" checked class="tog"><label for="'+noiseId+'_m" class="noise-lbl" style="padding:5px 11px;font-size:.72rem;font-weight:500;cursor:pointer;background:var(--cream);color:var(--earth);border-right:1px solid var(--warm);transition:all .15s;user-select:none;white-space:nowrap">Medium</label>'
     +'<input type="radio" name="'+noiseId+'" id="'+noiseId+'_h" value="high" class="tog"><label for="'+noiseId+'_h" class="noise-lbl" style="padding:5px 11px;font-size:.72rem;font-weight:500;cursor:pointer;background:var(--cream);color:var(--earth);transition:all .15s;user-select:none;white-space:nowrap">High Energy</label>'
-    +'</div></div>'
-    +'<div><div style="font-size:.58rem;letter-spacing:.18em;text-transform:uppercase;color:var(--earth);font-weight:500;margin-bottom:6px">Equipment Needed</div>'
-    +'<div style="display:flex;flex-wrap:wrap;gap:6px">'+steppers
-    +'<div style="display:flex;align-items:center;gap:4px;background:var(--cream);border:1.5px solid var(--warm);border-radius:8px;padding:4px 8px"><input type="text" id="'+pfx+'_eq_other" placeholder="other..." style="border:none;outline:none;font-size:.7rem;font-family:inherit;background:transparent;color:var(--deep);width:90px"></div>'
     +'</div></div></div>';
 }
 
@@ -373,11 +367,6 @@ function buildForms(){
         body += '<div class="g4"><div class="f"><label>Light Breakfast</label>'+tInp('d'+i+'_light',d.defMeals.light)+'</div><div class="f"><label>Brunch</label>'+tInp('d'+i+'_brunch',d.defMeals.brunch)+'</div><div class="f"><label>Snack</label>'+tInp('d'+i+'_snack',d.defMeals.snack)+'</div><div class="f"><label>Dinner</label>'+tInp('d'+i+'_dinner',d.defMeals.dinner)+'</div></div>';
       }
 
-      var daySvcs = d.svcs.filter(function(k){ return SVC_META[k]; });
-      var SOUL_KEYS = ['ice','cacao','temazcal','clay'];
-      var tourSvcs = daySvcs.filter(function(k){ return SOUL_KEYS.indexOf(k)===-1; });
-      var soulSvcs = daySvcs.filter(function(k){ return SOUL_KEYS.indexOf(k)!==-1; });
-
       // Morning class
       if(d.hasMorning){
         body += '<div class="div-line"></div><div class="sec-lbl">Morning Class</div>'
@@ -389,14 +378,6 @@ function buildForms(){
           +classExtras('d'+i+'_m');
       }
 
-      // Tours
-      if(tourSvcs.length){
-        body += '<div class="div-line"></div><div class="sec-lbl" style="color:var(--teal)">Tours &mdash; between classes</div>'
-          +'<div style="display:flex;flex-direction:column;gap:8px">';
-        tourSvcs.forEach(function(k){ body += svcRow(i, k); });
-        body += '</div>';
-      }
-
       // Afternoon class
       if(d.hasAfternoon){
         body += '<div class="div-line"></div><div class="sec-lbl">Afternoon / Evening Class</div>'
@@ -406,14 +387,6 @@ function buildForms(){
           +'<div class="f"><label>Room</label>'+roomSel('d'+i+'_ar',d.defA.r)+'</div>'
           +'</div>'
           +classExtras('d'+i+'_a');
-      }
-
-      // Soul services
-      if(soulSvcs.length){
-        body += '<div class="div-line"></div><div class="sec-lbl" style="color:var(--clay)">Soul Services &mdash; after evening class</div>'
-          +'<div style="display:flex;flex-direction:column;gap:8px">';
-        soulSvcs.forEach(function(k){ body += svcRow(i, k); });
-        body += '</div>';
       }
 
       // Dinner note
@@ -439,61 +412,64 @@ function buildForms(){
       if(radio && radio.checked){ lbl.style.background='var(--teal)'; lbl.style.color='#fff'; }
     });
   }, 50);
-  // Init service toggle styling
-  initSvcToggles();
+  // Build experiences section
+  buildExperiences();
 }
 
-function svcRow(dayIdx, k){
-  var m = SVC_META[k];
-  var icons = {cenote:'&#127946;',tulum:'&#127963;',float:'&#128676;',mang:'&#127807;',ice:'&#129482;',cacao:'&#127851;',temazcal:'&#128293;',clay:'&#127802;',closing:'&#10024;'};
-  var rid = 'd'+dayIdx+'_'+k+'_status';
-  return '<div style="background:var(--cream);border:1.5px solid var(--warm);border-radius:8px;padding:10px 14px;display:flex;flex-direction:column;gap:8px" id="svc-row-'+dayIdx+'-'+k+'">'
-    +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'
-    +'<span style="font-size:.84rem;font-weight:600;color:var(--earth);flex:1;white-space:nowrap">'+(icons[k]||'')+' '+m.lbl+'</span>'
-    +'<div style="display:flex;border:1.5px solid var(--warm);border-radius:6px;overflow:hidden">'
-    +'<input type="radio" name="'+rid+'" id="'+rid+'_inc" value="inc" class="tog svc-tog" data-day="'+dayIdx+'" data-svc="'+k+'"><label for="'+rid+'_inc" class="svc-tog-lbl" style="padding:4px 11px;font-size:.7rem;font-weight:600;cursor:pointer;border-right:1px solid var(--warm);transition:all .15s;user-select:none;white-space:nowrap;background:var(--sand);color:var(--earth)">Included</label>'
-    +'<input type="radio" name="'+rid+'" id="'+rid+'_opt" value="opt" class="tog svc-tog" data-day="'+dayIdx+'" data-svc="'+k+'" checked><label for="'+rid+'_opt" class="svc-tog-lbl" style="padding:4px 11px;font-size:.7rem;font-weight:600;cursor:pointer;border-right:1px solid var(--warm);transition:all .15s;user-select:none;white-space:nowrap;background:var(--sand);color:var(--earth)">Optional</label>'
-    +'<input type="radio" name="'+rid+'" id="'+rid+'_off" value="off" class="tog svc-tog" data-day="'+dayIdx+'" data-svc="'+k+'"><label for="'+rid+'_off" class="svc-tog-lbl" style="padding:4px 11px;font-size:.7rem;font-weight:600;cursor:pointer;transition:all .15s;user-select:none;white-space:nowrap;background:var(--sand);color:var(--earth)">Remove</label>'
-    +'</div></div>'
-    +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap" id="svc-times-'+dayIdx+'-'+k+'">'
-    +'<label style="font-size:.7rem;color:#9a7a62;white-space:nowrap">Start</label>'
-    +tInp('d'+dayIdx+'_'+k+'S',m.defS)
-    +(m.defE?'<label style="font-size:.7rem;color:#9a7a62;white-space:nowrap">End</label>'+tInp('d'+dayIdx+'_'+k+'E',m.defE):'')
-    +'</div></div>';
-}
+// ── TOURS & EXPERIENCES ──────────────────────────────────────────────
+var EXPERIENCES = [
+  {key:'cenote',   icon:'&#127946;', lbl:'Cenote Swim',             defS:'11:45', defE:'14:00'},
+  {key:'tulum',    icon:'&#127963;', lbl:'Mayan Ruins Tour',        defS:'11:45', defE:'14:00'},
+  {key:'mang',     icon:'&#127807;', lbl:'Mangrove Tour',           defS:'11:45', defE:'14:00'},
+  {key:'float',    icon:'&#128676;', lbl:'Float Tour',              defS:'11:45', defE:'14:00'},
+  {key:'ice',      icon:'&#129482;', lbl:'Ice Bath',                defS:'15:00', defE:'17:00'},
+  {key:'temazcal', icon:'&#128293;', lbl:'Temazcal',                defS:'19:15', defE:''},
+  {key:'cacao',    icon:'&#127851;', lbl:'Sound Healing',           defS:'19:15', defE:''},
+  {key:'clay',     icon:'&#127802;', lbl:'Mayan Clay',              defS:'15:30', defE:'16:00'},
+];
 
-function initSvcToggles(){
-  document.querySelectorAll('.svc-tog').forEach(function(r){
-    r.addEventListener('change', function(){
-      var dayIdx = this.dataset.day, svc = this.dataset.svc;
-      syncSvcRow(dayIdx, svc);
-    });
+function buildExperiences(){
+  var area = document.getElementById('experiences-area');
+  if(!area) return;
+  var dayOpts = '<option value="">— Not including —</option>';
+  DDAYS.forEach(function(d, i){
+    if(i === 0) return; // skip Saturday arrival
+    if(i === 5) return; // skip Thursday departure
+    dayOpts += '<option value="'+i+'">'+d.lbl+'</option>';
   });
-  // Initial sync
-  document.querySelectorAll('.svc-tog:checked').forEach(function(r){
-    if(r.dataset.day !== undefined) syncSvcRow(r.dataset.day, r.dataset.svc);
+
+  var html = '';
+  EXPERIENCES.forEach(function(exp){
+    html += '<div style="background:var(--sand);border:1px solid var(--warm);border-radius:10px;padding:14px 18px">'
+      +'<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">'
+      +'<span style="font-size:1.1rem">'+exp.icon+'</span>'
+      +'<span style="font-size:.88rem;font-weight:600;color:var(--deep)">'+exp.lbl+'</span>'
+      +'<span style="font-size:.68rem;color:#9a7a62;margin-left:auto">$75 pre &middot; $95 on-site</span>'
+      +'</div>'
+      +'<div class="g3">'
+      +'<div class="f"><label>Day</label><select id="exp_'+exp.key+'_day">'+dayOpts+'</select></div>'
+      +'<div class="f"><label>Start Time</label>'+tInp('exp_'+exp.key+'_start', exp.defS)+'</div>'
+      +'<div class="f"><label>End Time</label>'+tInp('exp_'+exp.key+'_end', exp.defE)+'</div>'
+      +'</div></div>';
   });
+  area.innerHTML = html;
 }
 
-function syncSvcRow(dayIdx, svc){
-  var rid = 'd'+dayIdx+'_'+svc+'_status';
-  var checked = document.querySelector('input[name="'+rid+'"]:checked');
-  var v = checked ? checked.value : 'opt';
-  var row = document.getElementById('svc-row-'+dayIdx+'-'+svc);
-  var times = document.getElementById('svc-times-'+dayIdx+'-'+svc);
-  if(row) row.style.opacity = v==='off' ? '0.4' : '1';
-  if(times) times.style.display = v==='off' ? 'none' : 'flex';
-  ['inc','opt','off'].forEach(function(val){
-    var lbl = document.querySelector('label[for="'+rid+'_'+val+'"]');
-    if(!lbl) return;
-    if(val===v){
-      lbl.style.background = val==='inc'?'#2e7d32':val==='opt'?'#e65100':'#888';
-      lbl.style.color = '#fff';
-    } else {
-      lbl.style.background = 'var(--sand)';
-      lbl.style.color = 'var(--earth)';
+function collectExperiences(){
+  var result = {};
+  EXPERIENCES.forEach(function(exp){
+    var dayVal = gv('exp_'+exp.key+'_day');
+    if(dayVal){
+      result[exp.key] = {
+        label: exp.lbl,
+        day: parseInt(dayVal),
+        dayLabel: DDAYS[parseInt(dayVal)].lbl,
+        start: gv('exp_'+exp.key+'_start'),
+        end: gv('exp_'+exp.key+'_end')
+      };
     }
   });
+  return result;
 }
 
 function updateDates(){
@@ -536,17 +512,7 @@ function renderForm() {
 // ── COLLECT DATA ─────────────────────────────────────────────────────
 function getClassSetup(pfx){
   var noise = (document.querySelector('input[name="'+pfx+'_noise"]:checked') || {}).value || 'medium';
-  var eqKeys = ['mats','blocks','straps','blankets','speaker','candles','weights','chairs'];
-  var eqLabels = {mats:'Mats',blocks:'Blocks',straps:'Straps',blankets:'Blankets',speaker:'Speaker',candles:'Candles',weights:'Weights',chairs:'Chairs'};
-  var selected = [];
-  eqKeys.forEach(function(k){
-    var el = document.getElementById(pfx+'_eq_'+k);
-    var qty = el ? parseInt(el.value)||0 : 0;
-    if(qty > 0) selected.push(qty > 1 ? qty+'x '+eqLabels[k] : eqLabels[k]);
-  });
-  var other = (document.getElementById(pfx+'_eq_other') || {}).value;
-  if(other && other.trim()) selected.push(other.trim());
-  return { noise: noise, equipment: selected };
+  return { noise: noise };
 }
 
 function collectFormData(){
@@ -581,17 +547,6 @@ function collectFormData(){
         day.classSetup_a = getClassSetup('d'+i+'_a');
       }
 
-      // Services
-      day.services = {};
-      d.svcs.forEach(function(k){
-        var rid = 'd'+i+'_'+k+'_status';
-        var checked = document.querySelector('input[name="'+rid+'"]:checked');
-        day.services[k] = {
-          status: checked ? checked.value : 'opt',
-          start: gv('d'+i+'_'+k+'S'),
-          end: gv('d'+i+'_'+k+'E') || ''
-        };
-      });
     }
     days.push(day);
   });
@@ -602,11 +557,7 @@ function collectFormData(){
     vegans: parseInt(document.getElementById('dVegan').value) || 0,
     vegetarians: parseInt(document.getElementById('dVeg').value) || 0,
     allergies: (document.getElementById('dAllergy').value || '').trim(),
-    globalServices: {
-      mangrove: sv('sv-mang'), tulum: sv('sv-tulum'), cenote: sv('sv-cenote'),
-      float: sv('sv-float'), temazcal: sv('sv-tem'), clay: sv('sv-clay'),
-      cacao: sv('sv-cacao'), ice: sv('sv-ice'), closing: sv('sv-close')
-    },
+    experiences: collectExperiences(),
     days: days
   };
 }
