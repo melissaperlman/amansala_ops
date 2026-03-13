@@ -961,7 +961,7 @@ function doPost(e) {
 
         // Build form URL — uses the teacher-form.html hosted location
         // The CONFIG.TEACHER_FORM_URL should be set by the operator
-        const formBaseUrl = payload.form_base_url || 'https://YOUR-HOST/teacher-form.html';
+        const formBaseUrl = payload.form_base_url || 'https://melissaperlman.github.io/amansala_ops/teacher-form.html';
         const formUrl = formBaseUrl + '?token=' + token;
 
         // Send email
