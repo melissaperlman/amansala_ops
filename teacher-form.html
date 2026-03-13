@@ -31,9 +31,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--deep);
 
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:14px 24px;}
 .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px 18px;}
+.g4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px 14px;}
 .full{grid-column:1/-1;}
-@media(max-width:640px){.g2,.g3{grid-template-columns:1fr 1fr;}}
-@media(max-width:420px){.g2,.g3{grid-template-columns:1fr;}}
+@media(max-width:640px){.g2,.g3,.g4{grid-template-columns:1fr 1fr;}}
+@media(max-width:420px){.g2,.g3,.g4{grid-template-columns:1fr;}}
 
 .f{display:flex;flex-direction:column;gap:5px;}
 .f label{font-size:.6rem;letter-spacing:.18em;text-transform:uppercase;color:var(--earth);font-weight:500;}
@@ -56,30 +57,13 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--deep);
 .sec-lbl{font-size:.58rem;letter-spacing:.22em;text-transform:uppercase;color:var(--teal);margin:14px 0 8px;font-weight:500;}
 .sec-lbl:first-child{margin-top:0;}
 .div-line{height:1px;background:var(--warm);margin:14px 0;}
+.class-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+@media(max-width:480px){.class-row{grid-template-columns:1fr 1fr;}}
 
-/* Schedule rows */
-.sched-row{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid rgba(234,217,196,.35);}
-.sched-row:last-child{border-bottom:none;}
-.sched-time{min-width:78px;color:var(--teal);font-size:.84rem;font-weight:500;flex-shrink:0;}
-.sched-sep{color:rgba(196,133,90,.5);font-size:.8rem;flex-shrink:0;}
-.sched-event{font-size:.86rem;color:var(--deep);}
-.sched-auto{font-style:italic;color:var(--earth);font-size:.76rem;margin-left:6px;}
-
-/* Class block */
-.class-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
-@media(max-width:480px){.class-grid{grid-template-columns:1fr 1fr;}}
-.class-extras{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px;}
-
-/* Toggle radios */
 .tog{display:none;}
-.seg-group{display:flex;border:1.5px solid var(--warm);border-radius:6px;overflow:hidden;}
-.seg-lbl{padding:6px 13px;font-size:.74rem;font-weight:500;cursor:pointer;background:var(--cream);color:var(--earth);border-right:1px solid var(--warm);transition:all .15s;user-select:none;white-space:nowrap;}
-.seg-lbl:last-of-type{border-right:none;}
-.tog:checked+.seg-lbl{background:var(--teal);color:#fff;}
-
-/* Activity rows */
-.activity-row{display:flex;gap:12px;align-items:end;flex-wrap:wrap;padding:4px 0;}
-.activity-row .f{min-width:140px;}
+.tlbl{padding:6px 13px;border:1.5px solid var(--warm);border-radius:20px;cursor:pointer;font-size:.75rem;color:var(--earth);transition:all .16s;background:var(--cream);user-select:none;}
+.tlbl:hover{border-color:var(--teal);color:var(--teal);}
+.tog:checked+.tlbl{background:var(--teal);border-color:var(--teal);color:white;}
 
 .gen-btn{width:100%;padding:16px;background:var(--deep);color:var(--sand);border:none;border-radius:9px;font-family:'DM Sans',sans-serif;font-size:.7rem;letter-spacing:.28em;text-transform:uppercase;cursor:pointer;transition:background .2s;margin-top:4px;}
 .gen-btn:hover{background:var(--earth);}
@@ -100,6 +84,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--deep);
   .form-header{padding:28px 16px 24px;}
   .form-header .teacher-name{font-size:1.8rem;}
   .day-body{padding:16px 14px;}
+  .class-row{grid-template-columns:1fr;}
 }
 </style>
 </head>
@@ -226,28 +211,18 @@ var FORM_DATA = null;
 var ROOMS = ['','Heaven','Sky','Beachfront (BF)','Grande','Chica','Beach','Pool Deck'];
 
 var DDAYS = [
-  {lbl:'Saturday',  type:'arrival'},
-  {lbl:'Sunday',    type:'full', amStart:'08:00', amDur:60, amRoom:'Heaven',            pmStart:'17:00', pmDur:90, pmRoom:'Heaven'},
-  {lbl:'Monday',    type:'full', amStart:'08:00', amDur:60, amRoom:'Beachfront (BF)',    pmStart:'17:00', pmDur:60, pmRoom:'Heaven'},
-  {lbl:'Tuesday',   type:'full', amStart:'08:00', amDur:60, amRoom:'Beachfront (BF)',    pmStart:'17:00', pmDur:60, pmRoom:'Heaven'},
-  {lbl:'Wednesday', type:'full', amStart:'08:00', amDur:60, amRoom:'Heaven',             pmStart:'17:00', pmDur:60, pmRoom:'Heaven'},
-  {lbl:'Thursday',  type:'departure', amStart:'08:00', amDur:60, amRoom:'Grande'},
-];
-
-var TOUR_OPTS = [
-  {key:'',          lbl:'— No Tour —'},
-  {key:'cenote',    lbl:'Cenote Swim'},
-  {key:'ruins',     lbl:'Mayan Ruins'},
-  {key:'mangrove',  lbl:'Mangrove Tour'},
-  {key:'float',     lbl:'Float Tour'},
-];
-
-var EXP_OPTS = [
-  {key:'',          lbl:'— None —',      defTime:''},
-  {key:'ice',       lbl:'Ice Bath',       defTime:'15:00'},
-  {key:'clay',      lbl:'Mayan Clay',     defTime:'15:30'},
-  {key:'temazcal',  lbl:'Temazcal',       defTime:'19:15'},
-  {key:'sound',     lbl:'Sound Healing',  defTime:'19:15'},
+  {lbl:'Saturday',  hasMorning:false, hasAfternoon:true,
+   defMeals:{welcome:'14:30',ceremony:'19:00',dinner:'19:30'}, defM:null, defA:{s:'19:00',e:'20:00',r:'Heaven'}},
+  {lbl:'Sunday',    hasMorning:true,  hasAfternoon:true,
+   defMeals:{light:'07:00',brunch:'10:30',snack:'14:30',dinner:'19:30'}, defM:{s:'08:00',e:'09:00',r:'Heaven'}, defA:{s:'17:00',e:'18:30',r:'Heaven'}},
+  {lbl:'Monday',    hasMorning:true,  hasAfternoon:true,
+   defMeals:{light:'07:00',brunch:'10:30',snack:'14:30',dinner:'19:30'}, defM:{s:'08:00',e:'09:00',r:'Beachfront (BF)'}, defA:{s:'17:00',e:'18:00',r:'Heaven'}},
+  {lbl:'Tuesday',   hasMorning:true,  hasAfternoon:true,
+   defMeals:{light:'07:00',brunch:'10:30',snack:'14:30',dinner:'19:30'}, defM:{s:'08:00',e:'09:00',r:'Beachfront (BF)'}, defA:{s:'17:00',e:'18:00',r:'Heaven'}},
+  {lbl:'Wednesday', hasMorning:true,  hasAfternoon:true,
+   defMeals:{light:'07:00',brunch:'10:30',snack:'14:30',dinner:'19:30'}, defM:{s:'08:00',e:'09:00',r:'Heaven'}, defA:{s:'17:00',e:'18:00',r:'Heaven'}},
+  {lbl:'Thursday',  hasMorning:true,  hasAfternoon:false,
+   defMeals:{light:'07:00',brunch:'10:30'}, defM:{s:'08:00',e:'09:00',r:'Grande'}, defA:null},
 ];
 
 // ── INIT ────────────────────────────────────────────────────────────────
@@ -259,14 +234,14 @@ document.addEventListener('DOMContentLoaded', function(){
 });
 
 async function loadFormData(){
-  try{
+  try {
     var url = APPS_SCRIPT_URL + '?action=formData&token=' + encodeURIComponent(TOKEN);
     var resp = await fetch(url);
     var json = await resp.json();
     if(!json.success){ showError(json.error || 'This link is not valid.'); return; }
     FORM_DATA = json.data;
     if(FORM_DATA.alreadySubmitted){ renderConfirmation(); }
-    else{ renderForm(); }
+    else { renderForm(); }
   } catch(err){
     showError('Could not connect to the server. Please try again later.');
   }
@@ -283,21 +258,42 @@ function gv(id){ var el = document.getElementById(id); return el ? el.value : ''
 function escHtml(s){ var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 function checkAllergyInput(el){ document.getElementById('epiReminder').style.display = el.value.trim().length > 0 ? 'block' : 'none'; }
 
-function addMins(t, mins){
-  var p = t.split(':').map(Number);
-  var total = p[0] * 60 + (p[1]||0) + mins;
-  var h = Math.floor(total / 60) % 24;
-  var m = total % 60;
-  return String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
+function roomSel(id, val){
+  return '<select id="'+id+'">' + ROOMS.map(function(r){
+    return '<option value="'+r+'"'+(r===val?' selected':'')+'>'+(r||'— Room —')+'</option>';
+  }).join('') + '</select>';
 }
 
-function fmt12(t){
-  if(!t) return '';
-  var p = t.split(':').map(Number);
-  var h = p[0], m = p[1]||0;
-  var ampm = h >= 12 ? 'PM' : 'AM';
-  var h12 = h % 12 || 12;
-  return h12 + ':' + String(m).padStart(2,'0') + ' ' + ampm;
+function tInp(id, val){
+  return '<input type="time" id="'+id+'" value="'+(val||'')+'">';
+}
+
+function tourSel(id){
+  return '<select id="'+id+'">'
+    +'<option value="">— No Tour —</option>'
+    +'<option value="cenote">Cenote Swim</option>'
+    +'<option value="ruins">Mayan Ruins</option>'
+    +'<option value="mangrove">Mangrove Tour</option>'
+    +'<option value="float">Float Tour</option>'
+    +'</select>';
+}
+
+function expSel(id){
+  return '<select id="'+id+'" onchange="autoExpTime(this)">'
+    +'<option value="">— None —</option>'
+    +'<option value="ice">Ice Bath</option>'
+    +'<option value="clay">Mayan Clay</option>'
+    +'<option value="temazcal">Temazcal</option>'
+    +'<option value="sound">Sound Healing</option>'
+    +'</select>';
+}
+
+function autoExpTime(sel){
+  var pfx = sel.id.replace('_exp','');
+  var timeEl = document.getElementById(pfx+'_exp_time');
+  if(!timeEl) return;
+  var defaults = {ice:'15:00', clay:'15:30', temazcal:'19:15', sound:'19:15'};
+  timeEl.value = defaults[sel.value] || '';
 }
 
 function formatDateShort(dateStr){
@@ -308,91 +304,34 @@ function formatDateShort(dateStr){
   return months[d.getUTCMonth()] + ' ' + d.getUTCDate();
 }
 
-function roomSel(id, val){
-  return '<select id="'+id+'">' + ROOMS.map(function(r){
-    return '<option value="'+r+'"'+(r===val?' selected':'')+'>'+(r||'— Room —')+'</option>';
-  }).join('') + '</select>';
-}
-
-function getRadio(name){
-  var el = document.querySelector('input[name="'+name+'"]:checked');
-  return el ? el.value : '';
-}
-
-// ── SCHEDULE ROW BUILDERS ───────────────────────────────────────────────
-function fixedRow(time24, label){
-  return '<div class="sched-row">'
-    +'<span class="sched-time">'+fmt12(time24)+'</span>'
-    +'<span class="sched-sep">|</span>'
-    +'<span class="sched-event">'+label+'</span>'
+// ── NOISE LEVEL WIDGET ──────────────────────────────────────────────────
+function classExtras(pfx){
+  var noiseId = pfx+'_noise';
+  return '<div style="margin-top:10px;background:var(--sand);border-radius:8px;padding:10px 14px">'
+    +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'
+    +'<span style="font-size:.58rem;letter-spacing:.18em;text-transform:uppercase;color:var(--earth);font-weight:500;white-space:nowrap">Noise Level</span>'
+    +'<div style="display:flex;border:1.5px solid var(--warm);border-radius:6px;overflow:hidden;flex-shrink:0">'
+    +'<input type="radio" name="'+noiseId+'" id="'+noiseId+'_q" value="quiet" class="tog"><label for="'+noiseId+'_q" class="noise-lbl" style="padding:5px 11px;font-size:.72rem;font-weight:500;cursor:pointer;background:var(--cream);color:var(--earth);border-right:1px solid var(--warm);transition:all .15s;user-select:none;white-space:nowrap">Quiet</label>'
+    +'<input type="radio" name="'+noiseId+'" id="'+noiseId+'_m" value="medium" checked class="tog"><label for="'+noiseId+'_m" class="noise-lbl" style="padding:5px 11px;font-size:.72rem;font-weight:500;cursor:pointer;background:var(--cream);color:var(--earth);border-right:1px solid var(--warm);transition:all .15s;user-select:none;white-space:nowrap">Medium</label>'
+    +'<input type="radio" name="'+noiseId+'" id="'+noiseId+'_h" value="high" class="tog"><label for="'+noiseId+'_h" class="noise-lbl" style="padding:5px 11px;font-size:.72rem;font-weight:500;cursor:pointer;background:var(--cream);color:var(--earth);transition:all .15s;user-select:none;white-space:nowrap">High Energy</label>'
+    +'</div></div>'
+    +'<div class="f" style="margin-top:8px"><label>Special Needs / Notes</label><input type="text" id="'+pfx+'_notes" placeholder="e.g. mats in circle, need speaker, bolsters..."></div>'
     +'</div>';
 }
 
-function brunchRow(dayIdx){
-  return '<div class="sched-row">'
-    +'<span class="sched-time" id="d'+dayIdx+'_brunch_time">—</span>'
-    +'<span class="sched-sep">|</span>'
-    +'<span class="sched-event">Brunch</span>'
-    +'<span class="sched-auto">(15 min after class)</span>'
-    +'</div>';
-}
+// Highlight noise radio labels
+document.addEventListener('change', function(e){
+  if(e.target.type==='radio' && e.target.name && e.target.name.indexOf('_noise')!==-1){
+    var name = e.target.name;
+    document.querySelectorAll('input[name="'+name+'"] + label.noise-lbl').forEach(function(lbl){
+      var radio = document.getElementById(lbl.getAttribute('for'));
+      lbl.style.background = radio && radio.checked ? 'var(--teal)' : 'var(--cream)';
+      lbl.style.color = radio && radio.checked ? '#fff' : 'var(--earth)';
+    });
+  }
+});
 
-function durToggle(pfx, defDur){
-  var name = pfx + '_dur';
-  return '<div class="seg-group">'
-    +'<input type="radio" name="'+name+'" id="'+name+'_60" value="60" '+(defDur===60?'checked':'')+' class="tog" onchange="recalcBrunch(\''+pfx+'\')">'
-    +'<label for="'+name+'_60" class="seg-lbl">60 min</label>'
-    +'<input type="radio" name="'+name+'" id="'+name+'_90" value="90" '+(defDur===90?'checked':'')+' class="tog" onchange="recalcBrunch(\''+pfx+'\')">'
-    +'<label for="'+name+'_90" class="seg-lbl">90 min</label>'
-    +'</div>';
-}
-
-function noiseToggle(pfx){
-  var name = pfx + '_noise';
-  return '<div class="seg-group">'
-    +'<input type="radio" name="'+name+'" id="'+name+'_q" value="quiet" class="tog"><label for="'+name+'_q" class="seg-lbl">Quiet</label>'
-    +'<input type="radio" name="'+name+'" id="'+name+'_m" value="medium" checked class="tog"><label for="'+name+'_m" class="seg-lbl">Medium</label>'
-    +'<input type="radio" name="'+name+'" id="'+name+'_h" value="high" class="tog"><label for="'+name+'_h" class="seg-lbl">High Energy</label>'
-    +'</div>';
-}
-
-function classBlock(pfx, defStart, defDur, defRoom){
-  return '<div class="class-grid">'
-    +'<div class="f"><label>Start Time</label><input type="time" id="'+pfx+'_start" value="'+defStart+'" onchange="recalcBrunch(\''+pfx+'\')"></div>'
-    +'<div class="f"><label>Duration</label>'+durToggle(pfx, defDur)+'</div>'
-    +'<div class="f"><label>Room</label>'+roomSel(pfx+'_room', defRoom)+'</div>'
-    +'</div>'
-    +'<div class="class-extras">'
-    +'<span style="font-size:.58rem;letter-spacing:.18em;text-transform:uppercase;color:var(--earth);font-weight:500">Noise</span>'
-    +noiseToggle(pfx)
-    +'</div>'
-    +'<div class="f" style="margin-top:8px"><label>Class Notes</label>'
-    +'<input type="text" id="'+pfx+'_notes" placeholder="e.g. mats in circle, need speaker, bolsters..."></div>';
-}
-
-function tourSelect(dayIdx){
-  var pfx = 'd'+dayIdx;
-  var opts = TOUR_OPTS.map(function(t){
-    return '<option value="'+t.key+'">'+t.lbl+'</option>';
-  }).join('');
-  return '<div class="activity-row">'
-    +'<div class="f" style="flex:1"><label>Tour</label><select id="'+pfx+'_tour">'+opts+'</select></div>'
-    +'<div class="f" style="width:115px"><label>Depart</label><input type="time" id="'+pfx+'_tour_time" value="11:30"></div>'
-    +'</div>';
-}
-
-function expSelect(dayIdx){
-  var pfx = 'd'+dayIdx;
-  var opts = EXP_OPTS.map(function(e){
-    return '<option value="'+e.key+'">'+e.lbl+'</option>';
-  }).join('');
-  return '<div class="activity-row" style="margin-top:8px">'
-    +'<div class="f" style="flex:1"><label>Experience</label><select id="'+pfx+'_exp" onchange="autoExpTime('+dayIdx+')">'+opts+'</select></div>'
-    +'<div class="f" style="width:115px"><label>Time</label><input type="time" id="'+pfx+'_exp_time" value=""></div>'
-    +'</div>';
-}
-
-// ── BUILD DAY CARDS ────────────────────────────────────────────────────
+// ── BUILD DAY CARDS ─────────────────────────────────────────────────────
 function buildForms(){
   var area = document.getElementById('daysArea');
   area.innerHTML = '';
@@ -402,45 +341,83 @@ function buildForms(){
     dc.className = 'day-card' + (i===0 ? ' open' : '');
     var body = '';
 
-    if(d.type === 'arrival'){
-      // Saturday
-      body += fixedRow('14:30', 'Welcome Snack');
-      body += '<div class="div-line"></div>';
-      body += '<div class="sec-lbl">Opening Ceremony</div>';
-      body += classBlock('d'+i+'_ceremony', '19:00', 60, 'Heaven');
-      body += '<div class="div-line"></div>';
-      body += fixedRow('19:30', 'Dinner');
-
-    } else if(d.type === 'departure'){
-      // Thursday
-      body += fixedRow('07:00', 'Light Breakfast');
-      body += '<div class="div-line"></div>';
-      body += '<div class="sec-lbl">Morning Class</div>';
-      body += classBlock('d'+i+'_am', d.amStart, d.amDur, d.amRoom);
-      body += '<div style="margin-top:10px">'+brunchRow(i)+'</div>';
-      body += '<div class="div-line"></div>';
-      body += '<div style="text-align:center;padding:8px 0;font-size:.82rem;color:var(--earth);font-style:italic">Checkout &amp; Departure</div>';
+    if(d.lbl === 'Saturday'){
+      body += '<div class="sec-lbl">Arrival & Welcome</div>'
+        +'<div class="g3">'
+        +'<div class="f"><label>Welcome Snack</label>'+tInp('d'+i+'_welcome', d.defMeals.welcome)+'</div>'
+        +'<div class="f"><label>Opening Ceremony Start</label>'+tInp('d'+i+'_ceremony', d.defMeals.ceremony)+'</div>'
+        +'<div class="f"><label>Ceremony Room</label>'+roomSel('d'+i+'_cr', 'Heaven')+'</div>'
+        +'</div>'
+        +classExtras('d'+i+'_a')
+        +'<div class="g2" style="margin-top:10px">'
+        +'<div class="f"><label>Dinner Time</label>'+tInp('d'+i+'_dinner', d.defMeals.dinner)+'</div>'
+        +'<div class="f"><label>Dinner Note</label><input type="text" id="d'+i+'_dnote" placeholder="e.g. on Beach"></div>'
+        +'</div>';
 
     } else {
-      // Full day (Sun–Wed)
-      body += fixedRow('07:00', 'Light Breakfast');
-      body += '<div class="div-line"></div>';
-      body += '<div class="sec-lbl">Morning Class</div>';
-      body += classBlock('d'+i+'_am', d.amStart, d.amDur, d.amRoom);
-      body += '<div style="margin-top:10px">'+brunchRow(i)+'</div>';
-      body += '<div class="div-line"></div>';
-      body += '<div class="sec-lbl">Midday Activity</div>';
-      body += tourSelect(i);
-      body += '<div class="div-line"></div>';
-      body += fixedRow('14:30', 'Snack');
-      body += '<div class="div-line"></div>';
-      body += '<div class="sec-lbl">Afternoon / Evening</div>';
-      body += classBlock('d'+i+'_pm', d.pmStart, d.pmDur, d.pmRoom);
-      body += '<div class="div-line"></div>';
-      body += '<div class="sec-lbl">Evening Experience</div>';
-      body += expSelect(i);
-      body += '<div class="div-line"></div>';
-      body += fixedRow('19:30', 'Dinner');
+      // ── Meals ──
+      body += '<div class="sec-lbl">Meals</div>';
+      if(d.lbl === 'Thursday'){
+        body += '<div class="g2">'
+          +'<div class="f"><label>Light Breakfast</label>'+tInp('d'+i+'_light', d.defMeals.light)+'</div>'
+          +'<div class="f"><label>Brunch (after class)</label>'+tInp('d'+i+'_brunch', d.defMeals.brunch)+'</div>'
+          +'</div>';
+      } else {
+        body += '<div class="g4">'
+          +'<div class="f"><label>Light Breakfast</label>'+tInp('d'+i+'_light', d.defMeals.light)+'</div>'
+          +'<div class="f"><label>Brunch</label>'+tInp('d'+i+'_brunch', d.defMeals.brunch)+'</div>'
+          +'<div class="f"><label>Snack</label>'+tInp('d'+i+'_snack', d.defMeals.snack)+'</div>'
+          +'<div class="f"><label>Dinner</label>'+tInp('d'+i+'_dinner', d.defMeals.dinner)+'</div>'
+          +'</div>';
+      }
+
+      // ── Morning Class ──
+      if(d.hasMorning){
+        body += '<div class="div-line"></div><div class="sec-lbl">Morning Class</div>'
+          +'<div class="class-row">'
+          +'<div class="f"><label>Start</label>'+tInp('d'+i+'_ms', d.defM.s)+'</div>'
+          +'<div class="f"><label>End</label>'+tInp('d'+i+'_me', d.defM.e)+'</div>'
+          +'<div class="f"><label>Room</label>'+roomSel('d'+i+'_mr', d.defM.r)+'</div>'
+          +'</div>'
+          +classExtras('d'+i+'_m');
+      }
+
+      // ── Tour (midday) ── only on full days
+      if(d.lbl !== 'Thursday'){
+        body += '<div class="div-line"></div><div class="sec-lbl">Midday Tour</div>'
+          +'<div class="class-row">'
+          +'<div class="f"><label>Tour</label>'+tourSel('d'+i+'_tour')+'</div>'
+          +'<div class="f"><label>Depart</label>'+tInp('d'+i+'_tour_time', '11:30')+'</div>'
+          +'<div class="f"><label>Return</label>'+tInp('d'+i+'_tour_return', '14:00')+'</div>'
+          +'</div>';
+      }
+
+      // ── Afternoon / Evening Class ──
+      if(d.hasAfternoon){
+        body += '<div class="div-line"></div><div class="sec-lbl">Afternoon / Evening Class</div>'
+          +'<div class="class-row">'
+          +'<div class="f"><label>Start</label>'+tInp('d'+i+'_as', d.defA.s)+'</div>'
+          +'<div class="f"><label>End</label>'+tInp('d'+i+'_ae', d.defA.e)+'</div>'
+          +'<div class="f"><label>Room</label>'+roomSel('d'+i+'_ar', d.defA.r)+'</div>'
+          +'</div>'
+          +classExtras('d'+i+'_a');
+      }
+
+      // ── Experience (evening) ── only on full days
+      if(d.lbl !== 'Thursday'){
+        body += '<div class="div-line"></div><div class="sec-lbl">Experience</div>'
+          +'<div class="class-row">'
+          +'<div class="f"><label>Activity</label>'+expSel('d'+i+'_exp')+'</div>'
+          +'<div class="f"><label>Time</label>'+tInp('d'+i+'_exp_time', '')+'</div>'
+          +'<div class="f"></div>'
+          +'</div>';
+      }
+
+      // ── Dinner note ──
+      if(d.lbl !== 'Thursday'){
+        body += '<div class="div-line"></div>'
+          +'<div class="f"><label>Dinner / Evening Note</label><input type="text" id="d'+i+'_dnote" placeholder="e.g. Dinner on Beach, late dinner..."></div>';
+      }
     }
 
     dc.innerHTML = '<div class="day-card-head" onclick="this.parentElement.classList.toggle(\'open\')">'
@@ -451,67 +428,14 @@ function buildForms(){
   });
 
   updateDates();
-  initToggles();
-  initAllBrunch();
-}
-
-// ── BRUNCH AUTO-CALC ────────────────────────────────────────────────────
-function recalcBrunch(pfx){
-  // pfx is like "d1_am" — extract day index
-  var m = pfx.match(/d(\d+)/);
-  if(!m) return;
-  var i = m[1];
-  var startEl = document.getElementById('d'+i+'_am_start');
-  var durEl = document.querySelector('input[name="d'+i+'_am_dur"]:checked');
-  var brunchEl = document.getElementById('d'+i+'_brunch_time');
-  if(!startEl || !durEl || !brunchEl) return;
-  var dur = parseInt(durEl.value) || 60;
-  var brunchTime = addMins(startEl.value, dur + 15);
-  brunchEl.textContent = fmt12(brunchTime);
-}
-
-function initAllBrunch(){
-  DDAYS.forEach(function(d, i){
-    if(d.type === 'arrival') return;
-    var startEl = document.getElementById('d'+i+'_am_start');
-    var durEl = document.querySelector('input[name="d'+i+'_am_dur"]:checked');
-    var brunchEl = document.getElementById('d'+i+'_brunch_time');
-    if(!startEl || !durEl || !brunchEl) return;
-    var dur = parseInt(durEl.value) || 60;
-    brunchEl.textContent = fmt12(addMins(startEl.value, dur + 15));
-  });
-}
-
-// ── EXPERIENCE DEFAULT TIME ─────────────────────────────────────────────
-function autoExpTime(dayIdx){
-  var sel = document.getElementById('d'+dayIdx+'_exp');
-  var timeEl = document.getElementById('d'+dayIdx+'_exp_time');
-  if(!sel || !timeEl) return;
-  var key = sel.value;
-  for(var j = 0; j < EXP_OPTS.length; j++){
-    if(EXP_OPTS[j].key === key){ timeEl.value = EXP_OPTS[j].defTime || ''; break; }
-  }
-}
-
-// ── TOGGLE HIGHLIGHT ────────────────────────────────────────────────────
-function initToggles(){
-  // Highlight all initially checked toggles
-  document.querySelectorAll('.tog:checked + .seg-lbl').forEach(function(lbl){
-    lbl.style.background = 'var(--teal)';
-    lbl.style.color = '#fff';
-  });
-}
-
-document.addEventListener('change', function(e){
-  if(e.target.classList.contains('tog')){
-    var name = e.target.name;
-    document.querySelectorAll('input[name="'+name+'"] + .seg-lbl').forEach(function(lbl){
+  // Init noise label highlighting
+  setTimeout(function(){
+    document.querySelectorAll('.noise-lbl').forEach(function(lbl){
       var radio = document.getElementById(lbl.getAttribute('for'));
-      lbl.style.background = radio && radio.checked ? 'var(--teal)' : 'var(--cream)';
-      lbl.style.color = radio && radio.checked ? '#fff' : 'var(--earth)';
+      if(radio && radio.checked){ lbl.style.background='var(--teal)'; lbl.style.color='#fff'; }
     });
-  }
-});
+  }, 50);
+}
 
 // ── DATES ───────────────────────────────────────────────────────────────
 function updateDates(){
@@ -548,33 +472,49 @@ function renderForm(){
 }
 
 // ── COLLECT DATA ────────────────────────────────────────────────────────
-function collectClassData(pfx){
-  return {
-    start: gv(pfx+'_start'),
-    duration: getRadio(pfx+'_dur') || '60',
-    room: gv(pfx+'_room'),
-    noise: getRadio(pfx+'_noise') || 'medium',
-    notes: gv(pfx+'_notes')
-  };
-}
-
 function collectFormData(){
   var days = [];
   DDAYS.forEach(function(d, i){
-    var day = { dayIndex: i, label: d.lbl, type: d.type };
+    var day = { dayIndex: i, label: d.lbl };
 
-    if(d.type === 'arrival'){
-      day.ceremony = collectClassData('d'+i+'_ceremony');
-    } else if(d.type === 'departure'){
-      day.morning = collectClassData('d'+i+'_am');
+    if(d.lbl === 'Saturday'){
+      day.welcome = gv('d'+i+'_welcome');
+      day.ceremony = gv('d'+i+'_ceremony');
+      day.ceremonyRoom = gv('d'+i+'_cr');
+      day.ceremonyNoise = (document.querySelector('input[name="d'+i+'_a_noise"]:checked')||{}).value || 'medium';
+      day.ceremonyNotes = gv('d'+i+'_a_notes');
+      day.dinner = gv('d'+i+'_dinner');
+      day.dinnerNote = gv('d'+i+'_dnote');
     } else {
-      day.morning = collectClassData('d'+i+'_am');
-      day.afternoon = collectClassData('d'+i+'_pm');
+      day.light = gv('d'+i+'_light');
+      day.brunch = gv('d'+i+'_brunch');
+      day.snack = gv('d'+i+'_snack') || '';
+      day.dinner = gv('d'+i+'_dinner') || '';
+      day.dinnerNote = gv('d'+i+'_dnote') || '';
 
+      if(d.hasMorning){
+        day.morningStart = gv('d'+i+'_ms');
+        day.morningEnd = gv('d'+i+'_me');
+        day.morningRoom = gv('d'+i+'_mr');
+        day.morningNoise = (document.querySelector('input[name="d'+i+'_m_noise"]:checked')||{}).value || 'medium';
+        day.morningNotes = gv('d'+i+'_m_notes');
+      }
+
+      if(d.hasAfternoon){
+        day.afternoonStart = gv('d'+i+'_as');
+        day.afternoonEnd = gv('d'+i+'_ae');
+        day.afternoonRoom = gv('d'+i+'_ar');
+        day.afternoonNoise = (document.querySelector('input[name="d'+i+'_a_noise"]:checked')||{}).value || 'medium';
+        day.afternoonNotes = gv('d'+i+'_a_notes');
+      }
+
+      // Tour
       var tourVal = gv('d'+i+'_tour');
       if(tourVal){
-        day.tour = { type: tourVal, time: gv('d'+i+'_tour_time') };
+        day.tour = { type: tourVal, depart: gv('d'+i+'_tour_time'), return: gv('d'+i+'_tour_return') };
       }
+
+      // Experience
       var expVal = gv('d'+i+'_exp');
       if(expVal){
         day.experience = { type: expVal, time: gv('d'+i+'_exp_time') };
@@ -615,7 +555,7 @@ async function submitForm(){
     schedule_data: formData
   };
 
-  try{
+  try {
     var resp = await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -624,7 +564,7 @@ async function submitForm(){
     });
     var json = await resp.json();
     if(json.success){ renderConfirmation(); }
-    else{
+    else {
       btn.disabled = false;
       btn.textContent = '\u2726 SUBMIT SCHEDULE TO MELISSA';
       showServerErrors(json);
