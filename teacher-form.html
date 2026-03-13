@@ -4,33 +4,30 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Amansala · Teacher Schedule Form</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #f5f3ef;
-    --card: #ffffff;
-    --border: #e8e4df;
-    --text: #1a1a1a;
-    --muted: #9a9490;
-    --heaven: #a8c5da;
-    --chica: #e8a5b0;
-    --bf: #b8d4b0;
-    --grande: #d4b896;
-    --sky: #c5b8d4;
-    --beach: #e8d8a8;
-    --pool: #a8d8e8;
-    --green: #4a8c5c;
-    --darkgreen: #2d6e40;
+    --sand: #f7efe3;
+    --warm: #ead9c4;
+    --clay: #c4855a;
+    --earth: #8b5e3c;
+    --deep: #2e1f14;
+    --teal: #3d7a7c;
+    --sage: #6b9470;
+    --cream: #fdf9f4;
+    --white: #fff;
+    --shadow: rgba(46,31,20,.10);
     --error: #c0392b;
     --error-bg: #fdf0ef;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     font-family: 'DM Sans', sans-serif;
-    background: var(--bg);
-    color: var(--text);
+    background: var(--cream);
+    color: var(--deep);
     min-height: 100vh;
     line-height: 1.5;
+    font-size: 15px;
   }
 
   /* LOADING / ERROR / STATES */
@@ -44,305 +41,292 @@
     text-align: center;
   }
   .state-screen .logo {
-    font-family: 'Playfair Display', serif;
-    font-size: 24px;
-    font-weight: 600;
-    margin-bottom: 8px;
-    letter-spacing: 0.04em;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 2.6rem;
+    font-weight: 300;
+    letter-spacing: 0.12em;
+    margin-bottom: 6px;
   }
   .state-screen .sub {
-    font-size: 13px;
-    color: var(--muted);
-    letter-spacing: 0.12em;
+    font-size: .68rem;
+    color: var(--clay);
+    letter-spacing: 0.32em;
     text-transform: uppercase;
     margin-bottom: 40px;
   }
   .spinner {
     width: 36px; height: 36px;
-    border: 3px solid var(--border);
-    border-top-color: var(--text);
+    border: 3px solid var(--warm);
+    border-top-color: var(--clay);
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
     margin-bottom: 20px;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
-  .state-msg { font-size: 15px; color: var(--muted); }
+  .state-msg { font-size: 15px; color: var(--earth); }
   .state-error { font-size: 15px; color: var(--error); max-width: 400px; }
 
   /* HEADER */
   .form-header {
-    background: var(--card);
-    border-bottom: 1px solid var(--border);
-    padding: 32px 24px 28px;
+    background: var(--deep);
+    color: var(--sand);
+    padding: 40px 24px 36px;
     text-align: center;
   }
   .form-header .logo {
-    font-family: 'Playfair Display', serif;
-    font-size: 20px;
-    font-weight: 600;
-    letter-spacing: 0.1em;
-    color: var(--muted);
-    margin-bottom: 24px;
+    font-size: .62rem;
+    letter-spacing: .32em;
+    text-transform: uppercase;
+    color: var(--clay);
+    margin-bottom: 20px;
   }
   .form-header .teacher-name {
-    font-family: 'Playfair Display', serif;
-    font-size: 32px;
-    font-weight: 600;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 2.4rem;
+    font-weight: 300;
+    letter-spacing: .08em;
     margin-bottom: 4px;
   }
   .form-header .group-name {
-    font-size: 16px;
-    font-weight: 500;
-    color: var(--muted);
-    margin-bottom: 16px;
+    font-size: .85rem;
+    font-weight: 400;
+    color: var(--warm);
+    margin-bottom: 20px;
   }
   .header-meta {
     display: flex;
     justify-content: center;
-    gap: 24px;
+    gap: 28px;
     flex-wrap: wrap;
-    font-size: 14px;
-    color: var(--muted);
+    font-size: .78rem;
+    color: var(--warm);
   }
   .header-meta span { display: flex; align-items: center; gap: 6px; }
+  .header-meta strong { color: var(--sand); }
 
   /* MAIN CONTAINER */
   .form-container {
-    max-width: 720px;
+    max-width: 780px;
     margin: 0 auto;
-    padding: 28px 20px 60px;
+    padding: 28px 18px 80px;
   }
 
-  /* SECTION */
-  .section {
-    background: var(--card);
-    border: 1px solid var(--border);
+  /* INFO CARD / SECTION */
+  .info-card {
+    background: var(--white);
+    border: 1px solid var(--warm);
     border-radius: 12px;
-    padding: 28px 24px;
-    margin-bottom: 20px;
+    padding: 24px 28px;
+    margin-bottom: 18px;
+    box-shadow: 0 2px 14px var(--shadow);
   }
-  .section-label {
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.12em;
+  .card-title {
+    font-size: .62rem;
+    letter-spacing: .26em;
     text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 6px;
-  }
-  .section-title {
-    font-family: 'Playfair Display', serif;
-    font-size: 22px;
-    font-weight: 600;
-    margin-bottom: 20px;
+    color: var(--clay);
+    padding-bottom: 12px;
+    margin-bottom: 18px;
+    border-bottom: 1px solid var(--warm);
+    font-weight: 500;
   }
   .section-note {
-    font-size: 13px;
-    color: var(--muted);
+    font-size: .82rem;
+    color: var(--earth);
     margin-bottom: 20px;
-    line-height: 1.6;
-    border-left: 3px solid var(--border);
+    line-height: 1.65;
+    border-left: 3px solid var(--warm);
     padding-left: 14px;
+    background: var(--sand);
+    padding: 12px 16px;
+    border-radius: 0 8px 8px 0;
   }
 
   /* FORM ELEMENTS */
-  label.field-label {
-    display: block;
-    font-size: 13px;
+  .f { display: flex; flex-direction: column; gap: 5px; }
+  .f label {
+    font-size: .6rem;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--earth);
     font-weight: 500;
-    margin-bottom: 6px;
-    color: var(--text);
   }
-  .field-row {
-    display: flex;
-    gap: 16px;
-    margin-bottom: 16px;
-    flex-wrap: wrap;
-  }
-  .field-group {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    min-width: 140px;
-  }
-  .field-group.small { max-width: 120px; min-width: 80px; flex: 0 0 auto; }
-  input[type="text"], input[type="number"], textarea, select {
+  .f input, .f select, .f textarea {
+    padding: 9px 11px;
+    border: 1.5px solid var(--warm);
+    border-radius: 6px;
     font-family: 'DM Sans', sans-serif;
-    font-size: 14px;
-    padding: 10px 14px;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    background: var(--card);
-    color: var(--text);
+    font-size: .86rem;
+    color: var(--deep);
+    background: var(--cream);
     outline: none;
-    transition: border-color 0.15s;
+    transition: border-color .18s;
     width: 100%;
   }
-  input:focus, select:focus, textarea:focus {
-    border-color: #bbb;
-  }
-  input.error, select.error, textarea.error {
-    border-color: var(--error);
-    background: var(--error-bg);
-  }
-  .error-msg {
-    font-size: 12px;
-    color: var(--error);
-    margin-top: 4px;
-  }
-  textarea { resize: vertical; min-height: 80px; }
-  input[type="number"] { -moz-appearance: textfield; }
-  input[type="number"]::-webkit-outer-spin-button,
-  input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .f input:focus, .f select:focus, .f textarea:focus { border-color: var(--teal); }
+  .f textarea { resize: vertical; min-height: 58px; }
+  .f input.error, .f select.error { border-color: var(--error); background: var(--error-bg); }
+  .error-msg { font-size: .72rem; color: var(--error); margin-top: 4px; }
+
+  .g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 24px; }
+  .g3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px 18px; }
+  .full { grid-column: 1/-1; }
+  @media(max-width:640px) { .g2, .g3 { grid-template-columns: 1fr 1fr; } }
+  @media(max-width:420px) { .g2, .g3 { grid-template-columns: 1fr; } }
 
   /* STEPPER */
   .stepper {
     display: flex;
     align-items: center;
-    gap: 0;
-    border: 1px solid var(--border);
-    border-radius: 8px;
+    border: 1.5px solid var(--warm);
+    border-radius: 6px;
     overflow: hidden;
     width: fit-content;
+    background: var(--cream);
   }
   .stepper button {
-    width: 36px; height: 38px;
-    background: var(--bg);
+    width: 36px; height: 36px;
+    background: var(--sand);
     border: none;
     font-size: 18px;
     cursor: pointer;
-    color: var(--text);
+    color: var(--deep);
     font-family: inherit;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: background 0.1s;
+    transition: background 0.15s;
   }
-  .stepper button:hover { background: var(--border); }
+  .stepper button:hover { background: var(--warm); }
   .stepper input {
     width: 48px;
     text-align: center;
     border: none;
-    border-left: 1px solid var(--border);
-    border-right: 1px solid var(--border);
+    border-left: 1.5px solid var(--warm);
+    border-right: 1.5px solid var(--warm);
     border-radius: 0;
     font-size: 15px;
     font-weight: 600;
-    padding: 8px 4px;
+    padding: 7px 4px;
+    background: var(--cream);
+    color: var(--deep);
+    -moz-appearance: textfield;
   }
+  .stepper input::-webkit-outer-spin-button,
+  .stepper input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 
-  /* RADIO GROUP */
-  .radio-group {
-    display: flex;
-    gap: 0;
-    border: 1px solid var(--border);
+  /* EPI-PEN REMINDER */
+  .epi-reminder {
+    display: none;
+    background: #fff0f0;
+    border: 1.5px solid #f0a0a0;
     border-radius: 8px;
+    padding: 10px 14px;
+    font-size: .78rem;
+    color: #8b2020;
+    margin-top: 10px;
+    line-height: 1.6;
+  }
+
+  /* DAY CARDS */
+  .days-area { display: flex; flex-direction: column; gap: 14px; margin-top: 4px; }
+  .day-card {
+    background: var(--white);
+    border: 1px solid var(--warm);
+    border-radius: 12px;
     overflow: hidden;
+    box-shadow: 0 2px 12px var(--shadow);
   }
-  .radio-group label {
-    flex: 1;
-    padding: 8px 14px;
-    text-align: center;
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    border-right: 1px solid var(--border);
-    transition: all 0.15s;
-    background: var(--card);
-    color: var(--muted);
-  }
-  .radio-group label:last-child { border-right: none; }
-  .radio-group input { display: none; }
-  .radio-group input:checked + span {
-    /* handled via JS by adding .active to label */
-  }
-  .radio-group label.active {
-    background: var(--text);
-    color: #fff;
-  }
-
-  /* CHECKBOX */
-  .checkbox-row {
+  .day-card-head {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: 10px;
-    margin-bottom: 12px;
+    padding: 13px 22px;
     cursor: pointer;
+    background: var(--deep);
+    color: var(--sand);
+    user-select: none;
   }
-  .checkbox-row input[type="checkbox"] {
-    width: 18px; height: 18px;
-    accent-color: var(--text);
-    cursor: pointer;
+  .dch-left { display: flex; align-items: baseline; gap: 10px; }
+  .dch-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.2rem;
+    font-weight: 300;
+    letter-spacing: .08em;
   }
-  .checkbox-row span {
-    font-size: 14px;
-  }
-  .checkbox-sub {
-    margin-left: 28px;
-    margin-bottom: 16px;
-  }
-
-  /* DAY BANNER */
-  .day-banner {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 14px 0 10px;
-    margin-bottom: 4px;
-    border-bottom: 2px solid var(--border);
-  }
-  .day-banner:first-child { padding-top: 0; }
-  .day-number {
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.1em;
+  .dch-date {
+    font-size: .62rem;
+    letter-spacing: .2em;
     text-transform: uppercase;
-    color: var(--muted);
+    color: var(--clay);
   }
-  .day-label {
-    font-family: 'Playfair Display', serif;
-    font-size: 18px;
-    font-weight: 600;
+  .dch-sub {
+    font-size: .68rem;
+    color: var(--warm);
+    opacity: .7;
   }
-  .day-sublabel {
-    font-size: 13px;
-    color: var(--muted);
+  .dch-arr {
+    font-size: .7rem;
+    color: var(--clay);
+    transition: transform .2s;
   }
+  .day-card.open .dch-arr { transform: rotate(180deg); }
+  .day-body {
+    display: none;
+    padding: 20px 22px;
+    border-top: 1px solid var(--warm);
+  }
+  .day-card.open .day-body { display: block; }
 
-  /* FIXED MEAL ROW */
+  .sec-lbl {
+    font-size: .58rem;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: var(--teal);
+    margin: 14px 0 8px;
+    font-weight: 500;
+  }
+  .sec-lbl:first-child { margin-top: 0; }
+  .div-line { height: 1px; background: var(--warm); margin: 14px 0; }
+
+  .class-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+  @media(max-width:480px) { .class-row { grid-template-columns: 1fr 1fr; } }
+
+  /* MEAL ROW */
   .meal-row {
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 10px 0;
-    font-size: 13px;
-    color: var(--muted);
-    border-bottom: 1px dashed var(--border);
+    padding: 8px 0;
+    font-size: .8rem;
+    color: var(--earth);
+    border-bottom: 1px dashed rgba(234,217,196,.5);
   }
-  .meal-row .meal-time {
+  .meal-row:last-child { border-bottom: none; }
+  .meal-time {
     font-weight: 600;
     min-width: 80px;
-    font-size: 13px;
-    color: var(--muted);
+    font-size: .78rem;
+    color: var(--teal);
   }
-  .meal-row .meal-name {
-    font-style: italic;
-  }
-  .meal-row .meal-tag {
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 0.06em;
+  .meal-name { font-style: italic; }
+  .meal-tag {
+    font-size: .56rem;
+    font-weight: 500;
+    letter-spacing: .12em;
     text-transform: uppercase;
-    background: var(--bg);
-    border-radius: 4px;
-    padding: 2px 8px;
-    color: var(--muted);
+    background: var(--sand);
+    border: 1px solid var(--warm);
+    border-radius: 12px;
+    padding: 2px 10px;
+    color: var(--clay);
     margin-left: auto;
   }
 
   /* SLOT CARD */
   .slot-card {
-    background: var(--bg);
-    border: 1px solid var(--border);
+    background: var(--sand);
+    border: 1px solid var(--warm);
     border-radius: 10px;
     padding: 18px 20px;
     margin: 12px 0;
@@ -356,60 +340,161 @@
     gap: 8px;
   }
   .slot-label {
-    font-size: 15px;
+    font-size: .9rem;
     font-weight: 600;
+    color: var(--deep);
   }
   .slot-category {
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.08em;
+    font-size: .56rem;
+    font-weight: 500;
+    letter-spacing: .12em;
     text-transform: uppercase;
-    color: var(--muted);
-    background: var(--card);
-    border: 1px solid var(--border);
+    color: var(--teal);
+    background: rgba(61,122,124,.08);
+    border: 1px solid rgba(61,122,124,.2);
     padding: 3px 10px;
     border-radius: 999px;
   }
   .slot-window {
-    font-size: 12px;
-    color: var(--muted);
-    margin-bottom: 14px;
+    font-size: .72rem;
+    color: var(--earth);
+    margin-bottom: 12px;
   }
 
-  /* TOUR / SOUL SERVICE CARD */
-  .activity-card {
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 16px 20px;
-    margin: 10px 0;
+  /* NOISE TOGGLE */
+  .noise-bar {
+    display: flex;
+    gap: 0;
+    border: 1.5px solid var(--warm);
+    border-radius: 6px;
+    overflow: hidden;
+    width: fit-content;
   }
-  .activity-card .act-title {
+  .noise-bar label {
+    padding: 7px 16px;
+    cursor: pointer;
+    font-size: .75rem;
+    font-weight: 500;
+    color: var(--earth);
+    background: var(--cream);
+    border-right: 1px solid var(--warm);
+    transition: all .15s;
+    user-select: none;
+  }
+  .noise-bar label:last-child { border-right: none; }
+  .noise-bar label:hover { background: var(--sand); color: var(--teal); }
+  .noise-bar input { display: none; }
+  .noise-bar input:checked + span { /* JS adds .active to label */ }
+  .noise-bar label.active {
+    background: var(--teal);
+    color: white;
+  }
+
+  /* EQUIPMENT STEPPERS */
+  .eq-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+  @media(max-width:600px) { .eq-grid { grid-template-columns: repeat(2, 1fr); } }
+  .eq-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--cream);
+    border: 1px solid var(--warm);
+    border-radius: 6px;
+    padding: 6px 10px;
+  }
+  .eq-item .eq-name {
+    font-size: .72rem;
+    color: var(--earth);
+    flex: 1;
+    min-width: 50px;
+  }
+  .eq-item .eq-stepper {
+    display: flex;
+    align-items: center;
+    gap: 0;
+  }
+  .eq-item .eq-stepper button {
+    width: 24px; height: 24px;
+    background: var(--sand);
+    border: 1px solid var(--warm);
     font-size: 14px;
-    font-weight: 600;
-    margin-bottom: 10px;
+    cursor: pointer;
+    color: var(--deep);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background .12s;
   }
+  .eq-item .eq-stepper button:first-child { border-radius: 4px 0 0 4px; }
+  .eq-item .eq-stepper button:last-child { border-radius: 0 4px 4px 0; }
+  .eq-item .eq-stepper button:hover { background: var(--warm); }
+  .eq-item .eq-stepper .eq-val {
+    width: 28px;
+    text-align: center;
+    font-size: .78rem;
+    font-weight: 600;
+    color: var(--deep);
+    border-top: 1px solid var(--warm);
+    border-bottom: 1px solid var(--warm);
+    height: 24px;
+    line-height: 24px;
+    background: var(--white);
+  }
+
+  /* TOGGLE BUTTONS (services) */
+  .tog { display: none; }
+  .tlbl {
+    padding: 6px 13px;
+    border: 1.5px solid var(--warm);
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: .75rem;
+    color: var(--earth);
+    transition: all .16s;
+    background: var(--cream);
+    user-select: none;
+  }
+  .tlbl:hover { border-color: var(--teal); color: var(--teal); }
+  .tog:checked + .tlbl { background: var(--teal); border-color: var(--teal); color: white; }
+
+  /* SOUL SERVICE BLOCK */
+  .svc-block {
+    background: var(--sand);
+    border: 1px solid var(--warm);
+    border-radius: 8px;
+    padding: 12px 14px;
+  }
+  .svc-name { font-size: .78rem; font-weight: 500; color: var(--deep); margin-bottom: 8px; }
+  .svc-opts { display: flex; gap: 7px; flex-wrap: wrap; }
+  .soul-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  @media(max-width:520px) { .soul-grid { grid-template-columns: 1fr; } }
 
   /* SUBMIT BUTTON */
-  .submit-row {
-    text-align: center;
-    padding: 16px 0 32px;
-  }
-  .submit-btn {
-    font-family: 'DM Sans', sans-serif;
-    font-size: 16px;
-    font-weight: 600;
-    padding: 14px 48px;
-    background: var(--text);
-    color: #fff;
+  .submit-row { text-align: center; padding: 20px 0 40px; }
+  .gen-btn {
+    width: 100%;
+    padding: 16px;
+    background: var(--deep);
+    color: var(--sand);
     border: none;
-    border-radius: 10px;
+    border-radius: 9px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: .7rem;
+    letter-spacing: .28em;
+    text-transform: uppercase;
     cursor: pointer;
-    transition: all 0.2s;
-    letter-spacing: 0.02em;
+    transition: background .2s;
   }
-  .submit-btn:hover { background: #333; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(0,0,0,0.12); }
-  .submit-btn:disabled { background: #ccc; cursor: not-allowed; transform: none; box-shadow: none; }
+  .gen-btn:hover { background: var(--earth); }
+  .gen-btn:disabled { background: var(--warm); cursor: not-allowed; color: var(--earth); }
 
   /* CONFIRMATION */
   .confirmation {
@@ -419,8 +504,8 @@
   .confirmation .check {
     width: 64px; height: 64px;
     border-radius: 50%;
-    background: var(--bf);
-    color: var(--darkgreen);
+    background: rgba(107,148,112,.15);
+    color: var(--sage);
     font-size: 32px;
     display: flex;
     align-items: center;
@@ -428,44 +513,46 @@
     margin: 0 auto 24px;
   }
   .confirmation h2 {
-    font-family: 'Playfair Display', serif;
-    font-size: 28px;
-    font-weight: 600;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.8rem;
+    font-weight: 300;
+    letter-spacing: .06em;
     margin-bottom: 12px;
   }
   .confirmation p {
-    font-size: 15px;
-    color: var(--muted);
+    font-size: .85rem;
+    color: var(--earth);
     max-width: 440px;
     margin: 0 auto;
-    line-height: 1.6;
+    line-height: 1.65;
   }
 
   /* READ-ONLY VIEW */
   .readonly-value {
-    font-size: 14px;
+    font-size: .85rem;
     padding: 8px 0;
-    color: var(--text);
+    color: var(--deep);
   }
   .readonly-pill {
     display: inline-block;
-    padding: 4px 12px;
+    padding: 3px 12px;
     border-radius: 999px;
-    font-size: 13px;
+    font-size: .75rem;
     font-weight: 500;
-    background: var(--bg);
-    border: 1px solid var(--border);
+    background: rgba(61,122,124,.08);
+    border: 1px solid rgba(61,122,124,.2);
+    color: var(--teal);
   }
 
   /* SERVER ERROR BANNER */
   .server-error-banner {
     background: var(--error-bg);
-    border: 1px solid var(--error);
+    border: 1.5px solid var(--error);
     border-radius: 10px;
     padding: 16px 20px;
-    margin-bottom: 20px;
+    margin-bottom: 18px;
     color: var(--error);
-    font-size: 14px;
+    font-size: .82rem;
   }
   .server-error-banner strong { display: block; margin-bottom: 4px; }
   .server-error-banner ul { margin: 8px 0 0 20px; }
@@ -473,14 +560,12 @@
   /* RESPONSIVE */
   @media (max-width: 600px) {
     .form-container { padding: 16px 12px 40px; }
-    .section { padding: 20px 16px; }
-    .form-header { padding: 24px 16px 20px; }
-    .form-header .teacher-name { font-size: 26px; }
-    .field-row { flex-direction: column; gap: 12px; }
-    .field-group.small { max-width: 100%; }
-    .header-meta { gap: 12px; }
-    .day-label { font-size: 16px; }
-    .slot-card { padding: 14px 16px; }
+    .info-card { padding: 20px 16px; }
+    .form-header { padding: 28px 16px 24px; }
+    .form-header .teacher-name { font-size: 1.8rem; }
+    .day-body { padding: 16px 14px; }
+    .class-row { grid-template-columns: 1fr; }
+    .eq-grid { grid-template-columns: repeat(2, 1fr); }
   }
 </style>
 </head>
@@ -488,15 +573,15 @@
 
 <!-- LOADING STATE -->
 <div id="loading-screen" class="state-screen">
-  <div class="logo">AMANSALA</div>
-  <div class="sub">Tulum</div>
+  <div class="logo">Amansala</div>
+  <div class="sub">Retreat Schedule Form</div>
   <div class="spinner"></div>
   <div class="state-msg">Loading your schedule form...</div>
 </div>
 
 <!-- ERROR STATE -->
 <div id="error-screen" class="state-screen" style="display:none;">
-  <div class="logo">AMANSALA</div>
+  <div class="logo">Amansala</div>
   <div class="sub">Tulum</div>
   <div class="state-error" id="error-message">This link is not valid.</div>
 </div>
@@ -518,76 +603,80 @@
     <!-- Server error banner (hidden) -->
     <div id="server-error-banner" class="server-error-banner" style="display:none;"></div>
 
-    <!-- SECTION A: DIETARY -->
-    <div class="section">
-      <div class="section-label">Section A</div>
-      <div class="section-title">Dietary Requirements</div>
+    <!-- SECTION: DIETARY -->
+    <div class="info-card">
+      <div class="card-title">Dietary Requirements</div>
       <div class="section-note">
-        We do not need gluten-free, dairy-free, or no-red-meat counts &mdash; only vegetarian/vegan totals and severe allergies.
-        If any guest has a life-threatening allergy, they must travel with an EpiPen.
+        We only need vegetarian/vegan totals and severe allergies. Gluten-free, dairy-free, and no-red-meat are handled by our default menu.
+        If any guest has a life-threatening allergy, they <strong>must</strong> travel with an EpiPen.
       </div>
-      <div class="field-row">
-        <div class="field-group small">
-          <label class="field-label">Vegetarians</label>
+      <div class="g2">
+        <div class="f">
+          <label>Vegetarians</label>
           <div class="stepper">
             <button type="button" onclick="stepDown('diet-veg')">&#8722;</button>
             <input type="number" id="diet-veg" min="0" value="0">
             <button type="button" onclick="stepUp('diet-veg')">+</button>
           </div>
         </div>
-        <div class="field-group small">
-          <label class="field-label">Vegans</label>
+        <div class="f">
+          <label>Vegans</label>
           <div class="stepper">
             <button type="button" onclick="stepDown('diet-vegan')">&#8722;</button>
             <input type="number" id="diet-vegan" min="0" value="0">
             <button type="button" onclick="stepUp('diet-vegan')">+</button>
           </div>
         </div>
-      </div>
-      <div class="field-group" style="margin-bottom:0;">
-        <label class="field-label">Severe allergies</label>
-        <input type="text" id="diet-allergies" placeholder="e.g., severe nut allergy, shellfish allergy">
+        <div class="f full">
+          <label>Severe Allergies</label>
+          <input type="text" id="diet-allergies" placeholder="e.g., severe nut allergy, shellfish allergy" oninput="checkAllergyInput(this)">
+          <div class="epi-reminder" id="epiReminder">
+            <strong>Important:</strong> All guests with life-threatening allergies must carry their own epi-pen at all times. Amansala is not an allergen-free facility.
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- SECTION B: SCHEDULE -->
-    <div class="section">
-      <div class="section-label">Section B</div>
-      <div class="section-title">Your Weekly Schedule</div>
+    <!-- SECTION: SCHEDULE (day cards rendered by JS) -->
+    <div class="info-card">
+      <div class="card-title">Your Weekly Schedule</div>
       <div class="section-note">
-        Choose your preferred times and rooms for each class. Meals and fixed activities are shown for context.
+        Choose your preferred times and rooms for each class. Meals and fixed activities are shown for reference.
         Room assignments are subject to Melissa's final confirmation.
       </div>
-      <div id="schedule-container">
-        <!-- Dynamically rendered -->
+      <div class="days-area" id="schedule-container">
+        <!-- Dynamically rendered day cards -->
       </div>
     </div>
 
     <!-- SOUL SERVICES (rendered if any) -->
-    <div class="section" id="soul-services-section" style="display:none;">
-      <div class="section-label">Add-on Experiences</div>
-      <div class="section-title">Soul Services</div>
+    <div class="info-card" id="soul-services-section" style="display:none;">
+      <div class="card-title">Soul Services &amp; Experiences</div>
       <div class="section-note">
         Let us know if you'd like any of these experiences included or offered as optional add-ons for your guests.
       </div>
-      <div id="soul-services-container"></div>
+      <div class="soul-grid" id="soul-services-container"></div>
     </div>
 
-    <!-- SECTION C: EQUIPMENT -->
-    <div class="section">
-      <div class="section-label">Section C</div>
-      <div class="section-title">Equipment</div>
-      <div class="checkbox-row">
-        <input type="checkbox" id="eq-speaker">
-        <span>Bluetooth speaker needed</span>
+    <!-- SECTION: EQUIPMENT -->
+    <div class="info-card">
+      <div class="card-title">Equipment</div>
+      <div class="section-note">
+        Select any equipment you'll need for your classes. We'll have everything set up in the room before each session.
       </div>
-      <div class="checkbox-row">
-        <input type="checkbox" id="eq-mats" onchange="toggleMatCount()">
-        <span>Yoga mats provided by Amansala</span>
+      <div class="g2" style="margin-bottom:14px;">
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:.82rem;">
+          <input type="checkbox" id="eq-speaker" style="width:18px;height:18px;accent-color:var(--teal);">
+          Bluetooth speaker needed
+        </label>
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:.82rem;">
+          <input type="checkbox" id="eq-mats" onchange="toggleMatCount()" style="width:18px;height:18px;accent-color:var(--teal);">
+          Yoga mats provided by Amansala
+        </label>
       </div>
-      <div class="checkbox-sub" id="mat-count-row" style="display:none;">
-        <div class="field-group small">
-          <label class="field-label">How many?</label>
+      <div id="mat-count-row" style="display:none;margin-bottom:14px;">
+        <div class="f" style="max-width:160px;">
+          <label>How many mats?</label>
           <div class="stepper">
             <button type="button" onclick="stepDown('eq-mat-count')">&#8722;</button>
             <input type="number" id="eq-mat-count" min="0" value="0">
@@ -595,25 +684,24 @@
           </div>
         </div>
       </div>
-      <div class="field-group">
-        <label class="field-label">Other equipment notes</label>
-        <input type="text" id="eq-notes" placeholder="e.g., bolsters, blocks, straps">
+      <div class="f">
+        <label>Other equipment notes</label>
+        <input type="text" id="eq-notes" placeholder="e.g., bolsters, blocks, straps, resistance bands">
       </div>
     </div>
 
-    <!-- SECTION D: NOTES -->
-    <div class="section">
-      <div class="section-label">Section D</div>
-      <div class="section-title">Anything Else</div>
-      <div class="field-group" style="margin-bottom:0;">
-        <label class="field-label">Additional notes for Melissa</label>
+    <!-- SECTION: NOTES -->
+    <div class="info-card">
+      <div class="card-title">Anything Else</div>
+      <div class="f">
+        <label>Additional notes for Melissa</label>
         <textarea id="general-notes" placeholder="Any special requests, questions, or things we should know..."></textarea>
       </div>
     </div>
 
     <!-- SUBMIT -->
     <div class="submit-row">
-      <button class="submit-btn" id="submit-btn" onclick="submitForm()">Submit Schedule</button>
+      <button class="gen-btn" id="submit-btn" onclick="submitForm()">Submit Schedule</button>
     </div>
   </div>
 </div>
@@ -696,9 +784,17 @@ function stepDown(id) {
   const el = document.getElementById(id);
   el.value = Math.max(0, parseInt(el.value || 0) - 1);
 }
+function stepEq(id, delta) {
+  const el = document.getElementById(id);
+  const v = Math.max(0, parseInt(el.textContent || 0) + delta);
+  el.textContent = v;
+}
 function toggleMatCount() {
   document.getElementById('mat-count-row').style.display =
     document.getElementById('eq-mats').checked ? '' : 'none';
+}
+function checkAllergyInput(el) {
+  document.getElementById('epiReminder').style.display = el.value.trim().length > 0 ? 'block' : 'none';
 }
 
 function formatDate(dateStr) {
@@ -726,9 +822,7 @@ function dateDiffDays(a, b) {
 function getDateStr(dateVal) {
   if (!dateVal) return '';
   if (typeof dateVal === 'string') return dateVal.substring(0, 10);
-  if (dateVal instanceof Date) {
-    return dateVal.toISOString().substring(0, 10);
-  }
+  if (dateVal instanceof Date) return dateVal.toISOString().substring(0, 10);
   return String(dateVal).substring(0, 10);
 }
 
@@ -736,6 +830,13 @@ function escHtml(s) {
   const div = document.createElement('div');
   div.textContent = s;
   return div.innerHTML;
+}
+
+function getDayName(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  if (isNaN(d)) return '';
+  return ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][d.getUTCDay()];
 }
 
 // ── RENDER FORM ────────────────────────────────────────────────────────
@@ -756,6 +857,7 @@ function renderForm() {
     document.getElementById('diet-veg').value = sd.vegetarians || 0;
     document.getElementById('diet-vegan').value = sd.vegans || 0;
     document.getElementById('diet-allergies').value = sd.allergies || '';
+    if (sd.allergies) document.getElementById('epiReminder').style.display = 'block';
     document.getElementById('eq-speaker').checked = !!sd.needs_speaker;
     document.getElementById('eq-mats').checked = !!sd.needs_mats;
     if (sd.needs_mats) {
@@ -766,7 +868,7 @@ function renderForm() {
     document.getElementById('general-notes').value = sd.general_notes || '';
   }
 
-  // Build schedule
+  // Build schedule as collapsible day cards
   renderSchedule(slots, group, roomOptions);
 
   // Soul services
@@ -781,7 +883,7 @@ function renderSchedule(slots, group, roomOptions) {
   const container = document.getElementById('schedule-container');
 
   if (!slots || slots.length === 0) {
-    container.innerHTML = '<div style="text-align:center;padding:32px 0;color:var(--muted);font-size:14px;">No schedule slots have been set up yet. Melissa will add them soon.</div>';
+    container.innerHTML = '<div style="text-align:center;padding:32px 0;color:var(--earth);font-size:.85rem;">No schedule slots have been set up yet. Melissa will add them soon.</div>';
     return;
   }
 
@@ -797,7 +899,6 @@ function renderSchedule(slots, group, roomOptions) {
 
   const arrival = getDateStr(group.arrival_date);
   const departure = getDateStr(group.departure_date);
-  const totalDays = dateDiffDays(arrival, departure);
 
   let html = '';
   for (let i = 0; i < dayOrder.length; i++) {
@@ -805,38 +906,41 @@ function renderSchedule(slots, group, roomOptions) {
     const dayNum = dateDiffDays(arrival, dd) + 1;
     const isArrival = dd === arrival;
     const isDeparture = dd === departure;
-    const dayLabel = isArrival ? 'Arrival' : (isDeparture ? 'Departures' : '');
+    const dayLabel = isArrival ? 'Arrival Day' : (isDeparture ? 'Departure Day' : '');
+    const dayName = getDayName(dd) || formatDate(dd);
 
-    html += '<div class="day-banner">';
-    html += '<span class="day-number">Day ' + dayNum + (dayLabel ? ' &mdash; ' + dayLabel : '') + '</span>';
-    html += '<span class="day-label">' + formatDate(dd) + '</span>';
+    html += '<div class="day-card' + (i === 0 ? ' open' : '') + '">';
+    html += '<div class="day-card-head" onclick="this.parentElement.classList.toggle(\'open\')">';
+    html += '<div class="dch-left">';
+    html += '<span class="dch-name">Day ' + dayNum + ' &mdash; ' + dayName + '</span>';
+    if (dayLabel) html += '<span class="dch-date">' + dayLabel + '</span>';
     html += '</div>';
+    html += '<span class="dch-arr">&#9660;</span>';
+    html += '</div>';
+    html += '<div class="day-body">';
 
-    // Sort slots by window_start or a reasonable order
+    // Sort slots
     const daySlots = dayMap[dd].sort((a, b) => {
       const ta = a.window_start || a.label || '';
       const tb = b.window_start || b.label || '';
       return String(ta).localeCompare(String(tb));
     });
 
-    // Insert fixed meals contextually
+    // Fixed meals
     if (isArrival) {
-      html += mealRow('4:00 PM', 'Welcome snack', 'All groups');
+      html += mealRow('4:00 PM', 'Welcome snack', 'Fixed');
     } else {
-      html += mealRow('7:00 AM', 'Light breakfast', 'Set by Amansala');
+      html += mealRow('7:00 AM', 'Light breakfast', 'Fixed');
     }
 
     for (const slot of daySlots) {
       if (slot.slot_type === 'meal' || slot.category === 'meal') {
-        // Render as fixed meal
         const time = formatTimeDisplay(slot.window_start) || slot.label;
-        html += mealRow(time, slot.label || slot.requested_name || 'Meal', 'Set by Amansala');
+        html += mealRow(time, slot.label || slot.requested_name || 'Meal', 'Fixed');
       } else if (slot.slot_type === 'tour' || slot.category === 'tour') {
-        html += renderTourSlot(slot);
-      } else if (slot.slot_type === 'ceremony' || slot.category === 'ceremony' || slot.category === 'wellness') {
-        html += renderClassSlot(slot, roomOptions);
+        // Tours are managed by Melissa, not shown on teacher form
+        continue;
       } else {
-        // class or other editable slot
         html += renderClassSlot(slot, roomOptions);
       }
     }
@@ -844,19 +948,21 @@ function renderSchedule(slots, group, roomOptions) {
     // Fixed meals after classes
     if (!isDeparture) {
       if (!isArrival) {
-        html += mealRow('10:45 AM', 'Brunch', 'Set by Amansala');
-        html += mealRow('2:30 PM', 'Snack', 'Set by Amansala');
+        html += mealRow('10:45 AM', 'Brunch', 'Fixed');
+        html += mealRow('2:30 PM', 'Snack', 'Fixed');
       }
-      html += mealRow('7:30 PM', 'Dinner', 'Set by Amansala');
+      html += mealRow('7:30 PM', 'Dinner', 'Fixed');
     } else {
-      html += mealRow('', 'Full breakfast &mdash; departures', 'Set by Amansala');
+      html += mealRow('', 'Full breakfast & departures', 'Fixed');
     }
+
+    html += '</div></div>';
   }
 
   container.innerHTML = html;
 
-  // Bind radio group clicks
-  container.querySelectorAll('.radio-group label').forEach(lbl => {
+  // Bind noise-bar clicks
+  container.querySelectorAll('.noise-bar label').forEach(lbl => {
     lbl.addEventListener('click', function() {
       const grp = this.parentElement;
       grp.querySelectorAll('label').forEach(l => l.classList.remove('active'));
@@ -902,7 +1008,6 @@ function renderClassSlot(slot, roomOptions) {
   const slotId = slot.id;
   const isMorning = (slot.window_start && parseInt(slot.window_start) < 12) ||
                     (slot.label && slot.label.toLowerCase().includes('morning'));
-  const isAfternoon = !isMorning;
 
   // Determine time options
   let timeOptions = '';
@@ -924,10 +1029,7 @@ function renderClassSlot(slot, roomOptions) {
     roomOpts += '<option value="' + escHtml(r) + '"' + sel + '>' + escHtml(r) + '</option>';
   }
 
-  // Noise pre-select
   const noise = slot.noise_level || '';
-
-  // Custom time display
   const showCustom = isOtherTime(slot, isMorning);
 
   let html = '<div class="slot-card" data-slot-id="' + slotId + '">';
@@ -940,94 +1042,46 @@ function renderClassSlot(slot, roomOptions) {
   }
 
   // Class name
-  html += '<div class="field-row">';
-  html += '<div class="field-group">';
-  html += '<label class="field-label">Class name *</label>';
-  html += '<input type="text" class="slot-name" data-slot-id="' + slotId + '" value="' + escHtml(slot.requested_name || '') + '" placeholder="e.g., Morning Vinyasa">';
-  html += '</div>';
-  html += '</div>';
+  html += '<div class="sec-lbl">Class Details</div>';
+  html += '<div class="class-row">';
+  html += '<div class="f"><label>Class name *</label>';
+  html += '<input type="text" class="slot-name" data-slot-id="' + slotId + '" value="' + escHtml(slot.requested_name || '') + '" placeholder="e.g., Morning Vinyasa"></div>';
 
-  // Time + Room
-  html += '<div class="field-row">';
-  html += '<div class="field-group">';
-  html += '<label class="field-label">Time</label>';
-  html += '<select class="time-select" data-slot-id="' + slotId + '">' + timeOptions + '</select>';
-  html += '</div>';
-  html += '<div class="field-group">';
-  html += '<label class="field-label">Room preference</label>';
-  html += '<select class="room-select" data-slot-id="' + slotId + '">' + roomOpts + '</select>';
-  html += '<div style="font-size:11px;color:var(--muted);margin-top:4px;">Subject to Melissa\'s confirmation</div>';
-  html += '</div>';
+  // Time
+  html += '<div class="f"><label>Time</label>';
+  html += '<select class="time-select" data-slot-id="' + slotId + '">' + timeOptions + '</select></div>';
+
+  // Room
+  html += '<div class="f"><label>Room preference</label>';
+  html += '<select class="room-select" data-slot-id="' + slotId + '">' + roomOpts + '</select></div>';
   html += '</div>';
 
   // Custom time row
-  html += '<div class="field-row" id="custom-time-' + slotId + '" style="display:' + (showCustom ? '' : 'none') + ';">';
-  html += '<div class="field-group small">';
-  html += '<label class="field-label">Start</label>';
-  html += '<input type="text" class="custom-start" data-slot-id="' + slotId + '" placeholder="HH:MM" value="' + escHtml(showCustom && slot.requested_start ? slot.requested_start : '') + '">';
-  html += '</div>';
-  html += '<div class="field-group small">';
-  html += '<label class="field-label">End</label>';
-  html += '<input type="text" class="custom-end" data-slot-id="' + slotId + '" placeholder="HH:MM" value="' + escHtml(showCustom && slot.requested_end ? slot.requested_end : '') + '">';
-  html += '</div>';
+  html += '<div class="g2" id="custom-time-' + slotId + '" style="display:' + (showCustom ? '' : 'none') + ';margin-top:10px;">';
+  html += '<div class="f"><label>Start</label><input type="text" class="custom-start" data-slot-id="' + slotId + '" placeholder="HH:MM" value="' + escHtml(showCustom && slot.requested_start ? slot.requested_start : '') + '"></div>';
+  html += '<div class="f"><label>End</label><input type="text" class="custom-end" data-slot-id="' + slotId + '" placeholder="HH:MM" value="' + escHtml(showCustom && slot.requested_end ? slot.requested_end : '') + '"></div>';
   html += '</div>';
 
   // Noise level
-  html += '<div class="field-row">';
-  html += '<div class="field-group">';
-  html += '<label class="field-label">Noise level</label>';
-  html += '<div class="radio-group" data-slot-id="' + slotId + '">';
-  html += '<label' + (noise === 'Low' ? ' class="active"' : '') + '><input type="radio" name="noise-' + slotId + '" value="Low"' + (noise === 'Low' ? ' checked' : '') + '><span>Low</span></label>';
+  html += '<div style="margin-top:12px;">';
+  html += '<div class="sec-lbl">Noise Level</div>';
+  html += '<div class="noise-bar">';
+  html += '<label' + (noise === 'Low' ? ' class="active"' : '') + '><input type="radio" name="noise-' + slotId + '" value="Low"' + (noise === 'Low' ? ' checked' : '') + '><span>Quiet</span></label>';
   html += '<label' + (noise === 'Medium' ? ' class="active"' : '') + '><input type="radio" name="noise-' + slotId + '" value="Medium"' + (noise === 'Medium' ? ' checked' : '') + '><span>Medium</span></label>';
-  html += '<label' + (noise === 'High' ? ' class="active"' : '') + '><input type="radio" name="noise-' + slotId + '" value="High"' + (noise === 'High' ? ' checked' : '') + '><span>High</span></label>';
-  html += '</div>';
-  html += '</div>';
-  html += '</div>';
+  html += '<label' + (noise === 'High' ? ' class="active"' : '') + '><input type="radio" name="noise-' + slotId + '" value="High"' + (noise === 'High' ? ' checked' : '') + '><span>High Energy</span></label>';
+  html += '</div></div>';
 
   // Special requests
-  html += '<div class="field-group">';
-  html += '<label class="field-label">Special requests</label>';
-  html += '<input type="text" class="slot-notes" data-slot-id="' + slotId + '" value="' + escHtml(slot.special_notes || '') + '" placeholder="e.g., Mats in circle, candles">';
+  html += '<div class="f" style="margin-top:12px;">';
+  html += '<label>Special requests</label>';
+  html += '<input type="text" class="slot-notes" data-slot-id="' + slotId + '" value="' + escHtml(slot.special_notes || '') + '" placeholder="e.g., Mats in circle, candles, bolsters">';
   html += '</div>';
 
   html += '</div>';
   return html;
 }
 
-function renderTourSlot(slot) {
-  const slotId = slot.id;
-  let html = '<div class="activity-card" data-slot-id="' + slotId + '">';
-  html += '<div class="act-title">' + escHtml(slot.label || 'Tour / Excursion') + '</div>';
-
-  html += '<div class="field-row">';
-  html += '<div class="field-group">';
-  html += '<label class="field-label">Tour selection</label>';
-  html += '<select class="tour-select" data-slot-id="' + slotId + '">';
-  html += '<option value="">Select tour...</option>';
-  const tours = ['Tulum Ruins', 'Grande Cenote', 'Mangroves'];
-  for (const t of tours) {
-    const sel = (slot.requested_name === t) ? ' selected' : '';
-    html += '<option value="' + t + '"' + sel + '>' + t + '</option>';
-  }
-  html += '</select>';
-  html += '</div>';
-
-  html += '<div class="field-group">';
-  html += '<label class="field-label">Payment status</label>';
-  html += '<select class="tour-paid" data-slot-id="' + slotId + '">';
-  html += '<option value="">Select...</option>';
-  const paidOpts = ['Prepaid / Included', 'Optional $65', 'Optional $75', 'Optional $85', 'Optional $___'];
-  for (const p of paidOpts) {
-    const sel = (slot.special_notes === p) ? ' selected' : '';
-    html += '<option value="' + escHtml(p) + '"' + sel + '>' + escHtml(p) + '</option>';
-  }
-  html += '</select>';
-  html += '</div>';
-  html += '</div>';
-
-  html += '</div>';
-  return html;
-}
+// Tours removed from teacher form — managed by Melissa in ops scheduler
 
 function isTimeMatch(slot, start, end) {
   if (!slot.requested_start || !slot.requested_end) return false;
@@ -1056,47 +1110,35 @@ function renderSoulServices() {
 
   for (const svc of services) {
     const svcId = svc.id;
-    html += '<div class="activity-card" data-service-id="' + svcId + '">';
-    html += '<div class="act-title">' + escHtml(svc.name || svc.service_type || 'Service') + '</div>';
-    if (svc.facilitator) {
-      html += '<div style="font-size:13px;color:var(--muted);margin-bottom:10px;">Facilitator: ' + escHtml(svc.facilitator) + '</div>';
-    }
+    const uid = 'svc_' + svcId;
+    html += '<div class="svc-block" data-service-id="' + svcId + '">';
+    html += '<div class="svc-name">' + escHtml(svc.name || svc.service_type || 'Service') + '</div>';
     if (svc.price_per_person) {
-      html += '<div style="font-size:13px;color:var(--muted);margin-bottom:10px;">$' + svc.price_per_person + ' per person</div>';
+      html += '<div style="font-size:.72rem;color:var(--earth);margin-bottom:8px;">$' + svc.price_per_person + ' per person</div>';
     }
-
-    html += '<div class="field-row">';
-    html += '<div class="field-group">';
-    html += '<label class="field-label">Selection</label>';
-    html += '<select class="svc-selection" data-service-id="' + svcId + '">';
-    html += '<option value="none">Not including</option>';
-    html += '<option value="included">Included in package</option>';
-    html += '<option value="optional">Optional for guests</option>';
-    html += '</select>';
+    html += '<div class="svc-opts">';
+    html += '<input type="radio" name="' + uid + '" value="none" id="' + uid + '_none" class="tog" checked><label for="' + uid + '_none" class="tlbl">Not Including</label>';
+    html += '<input type="radio" name="' + uid + '" value="included" id="' + uid + '_inc" class="tog"><label for="' + uid + '_inc" class="tlbl">Pre-booked</label>';
+    html += '<input type="radio" name="' + uid + '" value="optional" id="' + uid + '_opt" class="tog"><label for="' + uid + '_opt" class="tlbl">Optional</label>';
     html += '</div>';
 
     // Preferred day
     if (svc.available_days) {
       const days = String(svc.available_days).split(',').map(d => d.trim()).filter(Boolean);
       if (days.length > 0) {
-        html += '<div class="field-group">';
-        html += '<label class="field-label">Preferred day</label>';
+        html += '<div class="f" style="margin-top:10px;"><label>Preferred day</label>';
         html += '<select class="svc-day" data-service-id="' + svcId + '">';
         html += '<option value="">Select day...</option>';
         for (const day of days) {
           html += '<option value="' + escHtml(day) + '">' + escHtml(day) + '</option>';
         }
-        html += '</select>';
-        html += '</div>';
+        html += '</select></div>';
       }
     }
-    html += '</div>';
 
-    html += '<div class="field-group">';
-    html += '<label class="field-label">Notes</label>';
-    html += '<input type="text" class="svc-notes" data-service-id="' + svcId + '" placeholder="Any preferences or notes...">';
+    html += '<div class="f" style="margin-top:8px;"><label>Notes</label>';
+    html += '<input type="text" class="svc-notes" data-service-id="' + svcId + '" placeholder="Any preferences...">';
     html += '</div>';
-
     html += '</div>';
   }
 
@@ -1172,14 +1214,14 @@ function collectSoulServices() {
   const services = FORM_DATA.soulServices || [];
   const result = [];
   for (const svc of services) {
-    const card = document.querySelector('[data-service-id="' + svc.id + '"]');
-    if (!card) continue;
-    const sel = card.querySelector('.svc-selection');
-    const day = card.querySelector('.svc-day');
-    const notes = card.querySelector('.svc-notes');
+    const svcId = svc.id;
+    const uid = 'svc_' + svcId;
+    const checked = document.querySelector('input[name="' + uid + '"]:checked');
+    const day = document.querySelector('.svc-day[data-service-id="' + svcId + '"]');
+    const notes = document.querySelector('.svc-notes[data-service-id="' + svcId + '"]');
     result.push({
-      service_id: svc.id,
-      selection: sel ? sel.value : 'none',
+      service_id: svcId,
+      selection: checked ? checked.value : 'none',
       preferred_day: day ? day.value : '',
       notes: notes ? notes.value.trim() : ''
     });
@@ -1189,11 +1231,9 @@ function collectSoulServices() {
 
 function validateForm() {
   let valid = true;
-  // Clear previous errors
   document.querySelectorAll('.error').forEach(el => el.classList.remove('error'));
   document.querySelectorAll('.error-msg').forEach(el => el.remove());
 
-  // Validate class slots have names
   const slots = FORM_DATA.slots || [];
   for (const slot of slots) {
     if (slot.slot_type === 'meal' || slot.category === 'meal') continue;
@@ -1223,7 +1263,6 @@ function validateForm() {
       valid = false;
     }
 
-    // If "Other" time, validate custom inputs
     if (timeSel && timeSel.value === 'other') {
       const cs = card.querySelector('.custom-start');
       const ce = card.querySelector('.custom-end');
@@ -1247,9 +1286,13 @@ function validateForm() {
   }
 
   if (!valid) {
-    // Scroll to first error
+    // Open the day card containing the first error
     const firstErr = document.querySelector('.error');
-    if (firstErr) firstErr.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (firstErr) {
+      const dayCard = firstErr.closest('.day-card');
+      if (dayCard && !dayCard.classList.contains('open')) dayCard.classList.add('open');
+      firstErr.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
   }
   return valid;
 }
@@ -1261,7 +1304,7 @@ async function submitForm() {
 
   const btn = document.getElementById('submit-btn');
   btn.disabled = true;
-  btn.textContent = 'Submitting...';
+  btn.textContent = 'SUBMITTING...';
   document.getElementById('server-error-banner').style.display = 'none';
 
   const slotsData = collectSlots();
@@ -1300,12 +1343,12 @@ async function submitForm() {
       renderConfirmation(false);
     } else {
       btn.disabled = false;
-      btn.textContent = 'Submit Schedule';
+      btn.textContent = 'SUBMIT SCHEDULE';
       showServerErrors(json);
     }
   } catch (err) {
     btn.disabled = false;
-    btn.textContent = 'Submit Schedule';
+    btn.textContent = 'SUBMIT SCHEDULE';
     showServerErrors({ error: 'Network error. Please check your connection and try again.' });
   }
 }
@@ -1320,12 +1363,8 @@ function showServerErrors(json) {
       const msgs = e.errors || [];
       for (const m of msgs) {
         html += '<li>' + escHtml(label) + ': ' + escHtml(m) + '</li>';
-
-        // Highlight the field if possible
         const card = document.querySelector('[data-slot-id="' + e.slot_id + '"]');
-        if (card) {
-          card.style.borderColor = 'var(--error)';
-        }
+        if (card) card.style.borderColor = 'var(--error)';
       }
     }
     html += '</ul>';
@@ -1365,54 +1404,54 @@ function renderReadOnlyData(sub) {
   let html = '';
 
   // Dietary
-  html += '<div class="section">';
-  html += '<div class="section-label">Dietary</div>';
-  html += '<div class="field-row">';
-  html += '<div class="field-group small"><label class="field-label">Vegetarians</label><div class="readonly-value">' + (sub.vegetarians || 0) + '</div></div>';
-  html += '<div class="field-group small"><label class="field-label">Vegans</label><div class="readonly-value">' + (sub.vegans || 0) + '</div></div>';
+  html += '<div class="info-card">';
+  html += '<div class="card-title">Dietary</div>';
+  html += '<div class="g2">';
+  html += '<div class="f"><label>Vegetarians</label><div class="readonly-value">' + (sub.vegetarians || 0) + '</div></div>';
+  html += '<div class="f"><label>Vegans</label><div class="readonly-value">' + (sub.vegans || 0) + '</div></div>';
   html += '</div>';
   if (sub.allergies) {
-    html += '<div class="field-group"><label class="field-label">Allergies</label><div class="readonly-value">' + escHtml(sub.allergies) + '</div></div>';
+    html += '<div class="f" style="margin-top:10px;"><label>Allergies</label><div class="readonly-value">' + escHtml(sub.allergies) + '</div></div>';
   }
   html += '</div>';
 
   // Slots
   if (formData.slots && formData.slots.length > 0) {
-    html += '<div class="section">';
-    html += '<div class="section-label">Schedule</div>';
+    html += '<div class="info-card">';
+    html += '<div class="card-title">Schedule</div>';
     for (const s of formData.slots) {
-      html += '<div class="activity-card">';
+      html += '<div class="slot-card" style="margin-bottom:10px;">';
       html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">';
-      html += '<strong>' + escHtml(s.requested_name || s.label || 'Slot') + '</strong>';
+      html += '<strong style="font-size:.88rem;">' + escHtml(s.requested_name || s.label || 'Slot') + '</strong>';
       if (s.requested_room) html += '<span class="readonly-pill">' + escHtml(s.requested_room) + '</span>';
       html += '</div>';
       const timeStr = (s.requested_start && s.requested_end)
         ? formatTimeDisplay(s.requested_start) + ' \u2013 ' + formatTimeDisplay(s.requested_end)
         : '';
-      if (timeStr) html += '<div style="font-size:13px;color:var(--muted);">' + timeStr + '</div>';
-      if (s.noise_level) html += '<div style="font-size:13px;color:var(--muted);">Noise: ' + escHtml(s.noise_level) + '</div>';
-      if (s.special_notes) html += '<div style="font-size:13px;color:var(--muted);font-style:italic;">' + escHtml(s.special_notes) + '</div>';
+      if (timeStr) html += '<div style="font-size:.78rem;color:var(--earth);">' + timeStr + '</div>';
+      if (s.noise_level) html += '<div style="font-size:.78rem;color:var(--earth);">Noise: ' + escHtml(s.noise_level) + '</div>';
+      if (s.special_notes) html += '<div style="font-size:.78rem;color:var(--earth);font-style:italic;">' + escHtml(s.special_notes) + '</div>';
       html += '</div>';
     }
     html += '</div>';
   }
 
   // Equipment
-  html += '<div class="section">';
-  html += '<div class="section-label">Equipment</div>';
+  html += '<div class="info-card">';
+  html += '<div class="card-title">Equipment</div>';
   html += '<div class="readonly-value">';
   const eqItems = [];
   if (sub.needs_speaker) eqItems.push('Bluetooth speaker');
   if (sub.needs_mats) eqItems.push('Yoga mats' + (formData.mat_count ? ' (' + formData.mat_count + ')' : ''));
   if (sub.equipment_notes) eqItems.push(sub.equipment_notes);
-  html += eqItems.length > 0 ? escHtml(eqItems.join(' \u00b7 ')) : '<span style="color:var(--muted);">None specified</span>';
+  html += eqItems.length > 0 ? escHtml(eqItems.join(' \u00b7 ')) : '<span style="color:var(--earth);">None specified</span>';
   html += '</div>';
   html += '</div>';
 
   // Notes
   if (sub.general_notes) {
-    html += '<div class="section">';
-    html += '<div class="section-label">Additional Notes</div>';
+    html += '<div class="info-card">';
+    html += '<div class="card-title">Additional Notes</div>';
     html += '<div class="readonly-value" style="font-style:italic;">' + escHtml(sub.general_notes) + '</div>';
     html += '</div>';
   }
