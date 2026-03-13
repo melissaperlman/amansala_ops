@@ -32,16 +32,18 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--deep);
 
 .doc-row{display:flex;padding:8px 0;border-bottom:1px solid rgba(234,217,196,.45);line-height:1.5;font-size:.92rem;align-items:baseline;}
 .doc-row:last-child{border-bottom:none;}
-.doc-time{min-width:145px;flex-shrink:0;color:var(--teal);font-size:.88rem;font-weight:500;}
+.doc-time{min-width:155px;flex-shrink:0;color:var(--teal);font-size:.88rem;font-weight:500;}
 .doc-sep{color:rgba(196,133,90,.5);margin:0 10px 0 0;font-size:.8rem;flex-shrink:0;}
 .doc-main{flex:1;}
 .doc-event{color:var(--deep);}
 .doc-room{color:var(--earth);font-size:.88rem;}
 .doc-sub{display:block;font-size:.78rem;color:#9a7a62;margin-top:3px;font-style:italic;}
+.doc-approved{min-width:70px;flex-shrink:0;text-align:right;margin-left:10px;}
 
 /* INLINE EDITABLE ELEMENTS — blend into doc-row */
-.e-time{border:none;border-bottom:1.5px dashed rgba(61,122,124,.35);background:transparent;font-family:'DM Sans',sans-serif;font-size:.88rem;color:var(--teal);font-weight:500;padding:2px 2px;outline:none;width:80px;cursor:pointer;}
+.e-time{border:none;border-bottom:1.5px dashed rgba(61,122,124,.35);background:transparent;font-family:'DM Sans',sans-serif;font-size:.88rem;color:var(--teal);font-weight:500;padding:2px 2px;outline:none;width:82px;cursor:pointer;}
 .e-time:focus{border-bottom-color:var(--teal);border-bottom-style:solid;}
+.e-status{border:none;border-bottom:1.5px dashed rgba(61,122,124,.35);background:transparent;font-family:'DM Sans',sans-serif;font-size:.72rem;color:var(--sage);font-weight:600;padding:2px 0;outline:none;cursor:pointer;text-transform:uppercase;letter-spacing:.06em;}
 .e-sel{border:none;border-bottom:1.5px dashed rgba(61,122,124,.35);background:transparent;font-family:'DM Sans',sans-serif;font-size:.88rem;color:var(--earth);padding:2px 0;outline:none;cursor:pointer;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238b5e3c'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 4px center;padding-right:18px;}
 .e-sel:focus{border-bottom-color:var(--teal);border-bottom-style:solid;}
 .e-text{border:none;border-bottom:1.5px dashed rgba(196,133,90,.35);background:transparent;font-family:'DM Sans',sans-serif;font-size:.78rem;color:var(--earth);padding:2px 2px;outline:none;width:100%;font-style:italic;}
@@ -279,12 +281,23 @@ function notesInput(id){
   return '<input type="text" class="e-text" id="'+id+'" placeholder="special needs for this class...">';
 }
 
+function statusSel(id){
+  return '<select class="e-status" id="'+id+'">'
+    +'<option value="included">Included</option>'
+    +'<option value="optional" selected>Optional</option>'
+    +'</select>';
+}
+function approvedCol(){
+  return '<span class="doc-approved" style="font-size:.65rem;letter-spacing:.08em;text-transform:uppercase;color:var(--warm)">—</span>';
+}
+
 // ── FIXED ROW ───────────────────────────────────────────────────────────
 function fixedRow(time, label){
   return '<div class="doc-row">'
     +'<span class="doc-time">'+fmt(time)+'</span>'
     +'<span class="doc-sep">|</span>'
     +'<span class="doc-main"><span class="doc-event">'+label+'</span></span>'
+    +approvedCol()
     +'</div>';
 }
 
@@ -296,15 +309,18 @@ function classRow(pfx, startVal, endVal, roomVal, label){
     +'<span class="doc-main">'
     +'<span class="doc-event">'+label+' | '+roomOpts(pfx+'_r',roomVal)+'</span>'
     +'<span class="doc-sub">'+noise(pfx)+' &nbsp; '+notesInput(pfx+'_notes')+'</span>'
-    +'</span></div>';
+    +'</span>'
+    +approvedCol()
+    +'</div>';
 }
 
 // ── TOUR ROW (editable) ────────────────────────────────────────────────
 function tourRow(pfx){
   return '<div class="doc-row">'
-    +'<span class="doc-time">'+timeSel(pfx+'_tour_time','11:30')+'</span>'
+    +'<span class="doc-time" style="font-size:.88rem;font-weight:500">'+timeSel(pfx+'_tour_time','11:30')+'</span>'
     +'<span class="doc-sep">|</span>'
-    +'<span class="doc-main"><span class="doc-event">'+tourOpts(pfx+'_tour')+'<span class="badge-opt">$75 pre &middot; $95 on-site</span></span></span>'
+    +'<span class="doc-main"><span class="doc-event">'+tourOpts(pfx+'_tour')+' '+statusSel(pfx+'_tour_status')+'</span></span>'
+    +approvedCol()
     +'</div>';
 }
 
@@ -313,7 +329,8 @@ function expRow(pfx){
   return '<div class="doc-row">'
     +'<span class="doc-time">'+timeSel(pfx+'_exp_time','')+'</span>'
     +'<span class="doc-sep">|</span>'
-    +'<span class="doc-main"><span class="doc-event">'+expOpts(pfx+'_exp')+'</span></span>'
+    +'<span class="doc-main"><span class="doc-event">'+expOpts(pfx+'_exp')+' '+statusSel(pfx+'_exp_status')+'</span></span>'
+    +approvedCol()
     +'</div>';
 }
 
@@ -334,6 +351,13 @@ function buildSchedule(){
 
     html += '<div class="doc-day">';
     html += '<div class="doc-day-head">'+d.lbl+dateLbl+'</div>';
+    // Column header
+    html += '<div class="doc-row" style="border-bottom:1px solid var(--warm);padding:4px 0">'
+      +'<span class="doc-time" style="font-size:.58rem;letter-spacing:.15em;text-transform:uppercase;color:var(--earth);font-weight:500">Time</span>'
+      +'<span class="doc-sep"></span>'
+      +'<span class="doc-main" style="font-size:.58rem;letter-spacing:.15em;text-transform:uppercase;color:var(--earth);font-weight:500">Event &middot; Location</span>'
+      +'<span class="doc-approved" style="font-size:.58rem;letter-spacing:.15em;text-transform:uppercase;color:var(--earth);font-weight:500">Approved</span>'
+      +'</div>';
 
     if(d.type === 'arrival'){
       html += fixedRow('14:30','Welcome Snack');
@@ -396,9 +420,9 @@ function collectFormData(){
           noise:(document.querySelector('input[name="d'+i+'_a_noise"]:checked')||{}).value||'medium',
           notes:gv('d'+i+'_a_notes')};
         var tour=gv('d'+i+'_tour');
-        if(tour) day.tour={type:tour, time:gv('d'+i+'_tour_time')};
+        if(tour) day.tour={type:tour, time:gv('d'+i+'_tour_time'), status:gv('d'+i+'_tour_status')};
         var exp=gv('d'+i+'_exp');
-        if(exp) day.experience={type:exp, time:gv('d'+i+'_exp_time')};
+        if(exp) day.experience={type:exp, time:gv('d'+i+'_exp_time'), status:gv('d'+i+'_exp_status')};
       }
     }
     days.push(day);
