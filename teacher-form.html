@@ -2,571 +2,104 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Amansala · Teacher Schedule Form</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --sand: #f7efe3;
-    --warm: #ead9c4;
-    --clay: #c4855a;
-    --earth: #8b5e3c;
-    --deep: #2e1f14;
-    --teal: #3d7a7c;
-    --sage: #6b9470;
-    --cream: #fdf9f4;
-    --white: #fff;
-    --shadow: rgba(46,31,20,.10);
-    --error: #c0392b;
-    --error-bg: #fdf0ef;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: 'DM Sans', sans-serif;
-    background: var(--cream);
-    color: var(--deep);
-    min-height: 100vh;
-    line-height: 1.5;
-    font-size: 15px;
-  }
+:root{--sand:#f7efe3;--warm:#ead9c4;--clay:#c4855a;--earth:#8b5e3c;--deep:#2e1f14;--teal:#3d7a7c;--sage:#6b9470;--cream:#fdf9f4;--white:#fff;--shadow:rgba(46,31,20,.10);--error:#c0392b;--error-bg:#fdf0ef;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--deep);font-size:15px;}
 
-  /* LOADING / ERROR / STATES */
-  .state-screen {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 80vh;
-    padding: 40px 24px;
-    text-align: center;
-  }
-  .state-screen .logo {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 2.6rem;
-    font-weight: 300;
-    letter-spacing: 0.12em;
-    margin-bottom: 6px;
-  }
-  .state-screen .sub {
-    font-size: .68rem;
-    color: var(--clay);
-    letter-spacing: 0.32em;
-    text-transform: uppercase;
-    margin-bottom: 40px;
-  }
-  .spinner {
-    width: 36px; height: 36px;
-    border: 3px solid var(--warm);
-    border-top-color: var(--clay);
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-    margin-bottom: 20px;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .state-msg { font-size: 15px; color: var(--earth); }
-  .state-error { font-size: 15px; color: var(--error); max-width: 400px; }
+/* LOADING / ERROR */
+.state-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:80vh;padding:40px 24px;text-align:center;}
+.state-screen .logo{font-family:'Cormorant Garamond',serif;font-size:2.6rem;font-weight:300;letter-spacing:.12em;margin-bottom:6px;}
+.state-screen .sub{font-size:.68rem;color:var(--clay);letter-spacing:.32em;text-transform:uppercase;margin-bottom:40px;}
+.spinner{width:36px;height:36px;border:3px solid var(--warm);border-top-color:var(--clay);border-radius:50%;animation:spin .8s linear infinite;margin-bottom:20px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.state-msg{font-size:15px;color:var(--earth);}
+.state-error{font-size:15px;color:var(--error);max-width:400px;}
 
-  /* HEADER */
-  .form-header {
-    background: var(--deep);
-    color: var(--sand);
-    padding: 40px 24px 36px;
-    text-align: center;
-  }
-  .form-header .logo {
-    font-size: .62rem;
-    letter-spacing: .32em;
-    text-transform: uppercase;
-    color: var(--clay);
-    margin-bottom: 20px;
-  }
-  .form-header .teacher-name {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 2.4rem;
-    font-weight: 300;
-    letter-spacing: .08em;
-    margin-bottom: 4px;
-  }
-  .form-header .group-name {
-    font-size: .85rem;
-    font-weight: 400;
-    color: var(--warm);
-    margin-bottom: 20px;
-  }
-  .header-meta {
-    display: flex;
-    justify-content: center;
-    gap: 28px;
-    flex-wrap: wrap;
-    font-size: .78rem;
-    color: var(--warm);
-  }
-  .header-meta span { display: flex; align-items: center; gap: 6px; }
-  .header-meta strong { color: var(--sand); }
+/* HEADER */
+.form-header{background:var(--deep);color:var(--sand);padding:40px 24px 36px;text-align:center;}
+.form-header .logo-text{font-size:.62rem;letter-spacing:.32em;text-transform:uppercase;color:var(--clay);margin-bottom:20px;}
+.form-header .teacher-name{font-family:'Cormorant Garamond',serif;font-size:2.4rem;font-weight:300;letter-spacing:.08em;margin-bottom:4px;}
+.form-header .group-name{font-size:.85rem;color:var(--warm);margin-bottom:20px;}
+.header-meta{display:flex;justify-content:center;gap:28px;flex-wrap:wrap;font-size:.78rem;color:var(--warm);}
+.header-meta strong{color:var(--sand);}
 
-  /* MAIN CONTAINER */
-  .form-container {
-    max-width: 780px;
-    margin: 0 auto;
-    padding: 28px 18px 80px;
-  }
+/* LAYOUT */
+#setup{max-width:900px;margin:0 auto;padding:28px 18px 80px;}
 
-  /* INFO CARD / SECTION */
-  .info-card {
-    background: var(--white);
-    border: 1px solid var(--warm);
-    border-radius: 12px;
-    padding: 24px 28px;
-    margin-bottom: 18px;
-    box-shadow: 0 2px 14px var(--shadow);
-  }
-  .card-title {
-    font-size: .62rem;
-    letter-spacing: .26em;
-    text-transform: uppercase;
-    color: var(--clay);
-    padding-bottom: 12px;
-    margin-bottom: 18px;
-    border-bottom: 1px solid var(--warm);
-    font-weight: 500;
-  }
-  .section-note {
-    font-size: .82rem;
-    color: var(--earth);
-    margin-bottom: 20px;
-    line-height: 1.65;
-    border-left: 3px solid var(--warm);
-    padding-left: 14px;
-    background: var(--sand);
-    padding: 12px 16px;
-    border-radius: 0 8px 8px 0;
-  }
+.info-card{background:var(--white);border:1px solid var(--warm);border-radius:12px;padding:24px 28px;margin-bottom:18px;box-shadow:0 2px 14px var(--shadow);}
+.card-title{font-size:.62rem;letter-spacing:.26em;text-transform:uppercase;color:var(--clay);padding-bottom:12px;margin-bottom:18px;border-bottom:1px solid var(--warm);font-weight:500;}
 
-  /* FORM ELEMENTS */
-  .f { display: flex; flex-direction: column; gap: 5px; }
-  .f label {
-    font-size: .6rem;
-    letter-spacing: .18em;
-    text-transform: uppercase;
-    color: var(--earth);
-    font-weight: 500;
-  }
-  .f input, .f select, .f textarea {
-    padding: 9px 11px;
-    border: 1.5px solid var(--warm);
-    border-radius: 6px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: .86rem;
-    color: var(--deep);
-    background: var(--cream);
-    outline: none;
-    transition: border-color .18s;
-    width: 100%;
-  }
-  .f input:focus, .f select:focus, .f textarea:focus { border-color: var(--teal); }
-  .f textarea { resize: vertical; min-height: 58px; }
-  .f input.error, .f select.error { border-color: var(--error); background: var(--error-bg); }
-  .error-msg { font-size: .72rem; color: var(--error); margin-top: 4px; }
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px 24px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px 18px;}
+.g4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px 14px;}
+.full{grid-column:1/-1;}
+@media(max-width:640px){.g2,.g3,.g4{grid-template-columns:1fr 1fr;}}
+@media(max-width:420px){.g2,.g3,.g4{grid-template-columns:1fr;}}
 
-  .g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 24px; }
-  .g3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px 18px; }
-  .full { grid-column: 1/-1; }
-  @media(max-width:640px) { .g2, .g3 { grid-template-columns: 1fr 1fr; } }
-  @media(max-width:420px) { .g2, .g3 { grid-template-columns: 1fr; } }
+.f{display:flex;flex-direction:column;gap:5px;}
+.f label{font-size:.6rem;letter-spacing:.18em;text-transform:uppercase;color:var(--earth);font-weight:500;}
+.f input,.f select,.f textarea{padding:9px 11px;border:1.5px solid var(--warm);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:.86rem;color:var(--deep);background:var(--cream);outline:none;transition:border-color .18s;width:100%;}
+.f input:focus,.f select:focus,.f textarea:focus{border-color:var(--teal);}
+.f textarea{resize:vertical;min-height:58px;}
+.f input.error,.f select.error{border-color:var(--error);background:var(--error-bg);}
+.error-msg{font-size:.72rem;color:var(--error);margin-top:4px;}
 
-  /* STEPPER */
-  .stepper {
-    display: flex;
-    align-items: center;
-    border: 1.5px solid var(--warm);
-    border-radius: 6px;
-    overflow: hidden;
-    width: fit-content;
-    background: var(--cream);
-  }
-  .stepper button {
-    width: 36px; height: 36px;
-    background: var(--sand);
-    border: none;
-    font-size: 18px;
-    cursor: pointer;
-    color: var(--deep);
-    font-family: inherit;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background 0.15s;
-  }
-  .stepper button:hover { background: var(--warm); }
-  .stepper input {
-    width: 48px;
-    text-align: center;
-    border: none;
-    border-left: 1.5px solid var(--warm);
-    border-right: 1.5px solid var(--warm);
-    border-radius: 0;
-    font-size: 15px;
-    font-weight: 600;
-    padding: 7px 4px;
-    background: var(--cream);
-    color: var(--deep);
-    -moz-appearance: textfield;
-  }
-  .stepper input::-webkit-outer-spin-button,
-  .stepper input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+/* DAY CARDS */
+.days-area{display:flex;flex-direction:column;gap:14px;margin-bottom:18px;}
+.day-card{background:var(--white);border:1px solid var(--warm);border-radius:12px;overflow:hidden;box-shadow:0 2px 12px var(--shadow);}
+.day-card-head{display:flex;justify-content:space-between;align-items:center;padding:13px 22px;cursor:pointer;background:var(--deep);color:var(--sand);user-select:none;}
+.dch-left{display:flex;align-items:baseline;gap:10px;}
+.dch-name{font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-weight:300;letter-spacing:.08em;}
+.dch-date{font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;color:var(--clay);}
+.dch-arr{font-size:.7rem;color:var(--clay);transition:transform .2s;}
+.day-card.open .dch-arr{transform:rotate(180deg);}
+.day-body{display:none;padding:20px 22px;border-top:1px solid var(--warm);}
+.day-card.open .day-body{display:block;}
 
-  /* EPI-PEN REMINDER */
-  .epi-reminder {
-    display: none;
-    background: #fff0f0;
-    border: 1.5px solid #f0a0a0;
-    border-radius: 8px;
-    padding: 10px 14px;
-    font-size: .78rem;
-    color: #8b2020;
-    margin-top: 10px;
-    line-height: 1.6;
-  }
+.sec-lbl{font-size:.58rem;letter-spacing:.22em;text-transform:uppercase;color:var(--teal);margin:14px 0 8px;font-weight:500;}
+.sec-lbl:first-child{margin-top:0;}
+.div-line{height:1px;background:var(--warm);margin:14px 0;}
+.class-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+@media(max-width:480px){.class-row{grid-template-columns:1fr 1fr;}}
 
-  /* DAY CARDS */
-  .days-area { display: flex; flex-direction: column; gap: 14px; margin-top: 4px; }
-  .day-card {
-    background: var(--white);
-    border: 1px solid var(--warm);
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 2px 12px var(--shadow);
-  }
-  .day-card-head {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 13px 22px;
-    cursor: pointer;
-    background: var(--deep);
-    color: var(--sand);
-    user-select: none;
-  }
-  .dch-left { display: flex; align-items: baseline; gap: 10px; }
-  .dch-name {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 1.2rem;
-    font-weight: 300;
-    letter-spacing: .08em;
-  }
-  .dch-date {
-    font-size: .62rem;
-    letter-spacing: .2em;
-    text-transform: uppercase;
-    color: var(--clay);
-  }
-  .dch-sub {
-    font-size: .68rem;
-    color: var(--warm);
-    opacity: .7;
-  }
-  .dch-arr {
-    font-size: .7rem;
-    color: var(--clay);
-    transition: transform .2s;
-  }
-  .day-card.open .dch-arr { transform: rotate(180deg); }
-  .day-body {
-    display: none;
-    padding: 20px 22px;
-    border-top: 1px solid var(--warm);
-  }
-  .day-card.open .day-body { display: block; }
+/* TOGGLE BUTTONS */
+.tog{display:none;}
+.tlbl{padding:6px 13px;border:1.5px solid var(--warm);border-radius:20px;cursor:pointer;font-size:.75rem;color:var(--earth);transition:all .16s;background:var(--cream);user-select:none;}
+.tlbl:hover{border-color:var(--teal);color:var(--teal);}
+.tog:checked+.tlbl{background:var(--teal);border-color:var(--teal);color:white;}
 
-  .sec-lbl {
-    font-size: .58rem;
-    letter-spacing: .22em;
-    text-transform: uppercase;
-    color: var(--teal);
-    margin: 14px 0 8px;
-    font-weight: 500;
-  }
-  .sec-lbl:first-child { margin-top: 0; }
-  .div-line { height: 1px; background: var(--warm); margin: 14px 0; }
+.svc-block{background:var(--sand);border:1px solid var(--warm);border-radius:8px;padding:12px 14px;}
+.svc-name{font-size:.78rem;font-weight:500;color:var(--deep);margin-bottom:8px;}
+.svc-opts{display:flex;gap:7px;flex-wrap:wrap;}
 
-  .class-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
-  @media(max-width:480px) { .class-row { grid-template-columns: 1fr 1fr; } }
+/* SUBMIT */
+.gen-btn{width:100%;padding:16px;background:var(--deep);color:var(--sand);border:none;border-radius:9px;font-family:'DM Sans',sans-serif;font-size:.7rem;letter-spacing:.28em;text-transform:uppercase;cursor:pointer;transition:background .2s;margin-top:4px;}
+.gen-btn:hover{background:var(--earth);}
+.gen-btn:disabled{background:var(--warm);cursor:not-allowed;color:var(--earth);}
 
-  /* MEAL ROW */
-  .meal-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 8px 0;
-    font-size: .8rem;
-    color: var(--earth);
-    border-bottom: 1px dashed rgba(234,217,196,.5);
-  }
-  .meal-row:last-child { border-bottom: none; }
-  .meal-time {
-    font-weight: 600;
-    min-width: 80px;
-    font-size: .78rem;
-    color: var(--teal);
-  }
-  .meal-name { font-style: italic; }
-  .meal-tag {
-    font-size: .56rem;
-    font-weight: 500;
-    letter-spacing: .12em;
-    text-transform: uppercase;
-    background: var(--sand);
-    border: 1px solid var(--warm);
-    border-radius: 12px;
-    padding: 2px 10px;
-    color: var(--clay);
-    margin-left: auto;
-  }
+/* ERROR BANNER */
+.server-error-banner{background:var(--error-bg);border:1.5px solid var(--error);border-radius:10px;padding:16px 20px;margin-bottom:18px;color:var(--error);font-size:.82rem;}
+.server-error-banner strong{display:block;margin-bottom:4px;}
+.server-error-banner ul{margin:8px 0 0 20px;}
 
-  /* SLOT CARD */
-  .slot-card {
-    background: var(--sand);
-    border: 1px solid var(--warm);
-    border-radius: 10px;
-    padding: 18px 20px;
-    margin: 12px 0;
-  }
-  .slot-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 14px;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-  .slot-label {
-    font-size: .9rem;
-    font-weight: 600;
-    color: var(--deep);
-  }
-  .slot-category {
-    font-size: .56rem;
-    font-weight: 500;
-    letter-spacing: .12em;
-    text-transform: uppercase;
-    color: var(--teal);
-    background: rgba(61,122,124,.08);
-    border: 1px solid rgba(61,122,124,.2);
-    padding: 3px 10px;
-    border-radius: 999px;
-  }
-  .slot-window {
-    font-size: .72rem;
-    color: var(--earth);
-    margin-bottom: 12px;
-  }
+/* CONFIRMATION */
+.confirmation{text-align:center;padding:60px 24px;}
+.confirmation .check{width:64px;height:64px;border-radius:50%;background:rgba(107,148,112,.15);color:var(--sage);font-size:32px;display:flex;align-items:center;justify-content:center;margin:0 auto 24px;}
+.confirmation h2{font-family:'Cormorant Garamond',serif;font-size:1.8rem;font-weight:300;letter-spacing:.06em;margin-bottom:12px;}
+.confirmation p{font-size:.85rem;color:var(--earth);max-width:440px;margin:0 auto;line-height:1.65;}
 
-  /* NOISE TOGGLE */
-  .noise-bar {
-    display: flex;
-    gap: 0;
-    border: 1.5px solid var(--warm);
-    border-radius: 6px;
-    overflow: hidden;
-    width: fit-content;
-  }
-  .noise-bar label {
-    padding: 7px 16px;
-    cursor: pointer;
-    font-size: .75rem;
-    font-weight: 500;
-    color: var(--earth);
-    background: var(--cream);
-    border-right: 1px solid var(--warm);
-    transition: all .15s;
-    user-select: none;
-  }
-  .noise-bar label:last-child { border-right: none; }
-  .noise-bar label:hover { background: var(--sand); color: var(--teal); }
-  .noise-bar input { display: none; }
-  .noise-bar input:checked + span { /* JS adds .active to label */ }
-  .noise-bar label.active {
-    background: var(--teal);
-    color: white;
-  }
-
-  /* EQUIPMENT STEPPERS */
-  .eq-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 8px;
-  }
-  @media(max-width:600px) { .eq-grid { grid-template-columns: repeat(2, 1fr); } }
-  .eq-item {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    background: var(--cream);
-    border: 1px solid var(--warm);
-    border-radius: 6px;
-    padding: 6px 10px;
-  }
-  .eq-item .eq-name {
-    font-size: .72rem;
-    color: var(--earth);
-    flex: 1;
-    min-width: 50px;
-  }
-  .eq-item .eq-stepper {
-    display: flex;
-    align-items: center;
-    gap: 0;
-  }
-  .eq-item .eq-stepper button {
-    width: 24px; height: 24px;
-    background: var(--sand);
-    border: 1px solid var(--warm);
-    font-size: 14px;
-    cursor: pointer;
-    color: var(--deep);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background .12s;
-  }
-  .eq-item .eq-stepper button:first-child { border-radius: 4px 0 0 4px; }
-  .eq-item .eq-stepper button:last-child { border-radius: 0 4px 4px 0; }
-  .eq-item .eq-stepper button:hover { background: var(--warm); }
-  .eq-item .eq-stepper .eq-val {
-    width: 28px;
-    text-align: center;
-    font-size: .78rem;
-    font-weight: 600;
-    color: var(--deep);
-    border-top: 1px solid var(--warm);
-    border-bottom: 1px solid var(--warm);
-    height: 24px;
-    line-height: 24px;
-    background: var(--white);
-  }
-
-  /* TOGGLE BUTTONS (services) */
-  .tog { display: none; }
-  .tlbl {
-    padding: 6px 13px;
-    border: 1.5px solid var(--warm);
-    border-radius: 20px;
-    cursor: pointer;
-    font-size: .75rem;
-    color: var(--earth);
-    transition: all .16s;
-    background: var(--cream);
-    user-select: none;
-  }
-  .tlbl:hover { border-color: var(--teal); color: var(--teal); }
-  .tog:checked + .tlbl { background: var(--teal); border-color: var(--teal); color: white; }
-
-  /* SOUL SERVICE BLOCK */
-  .svc-block {
-    background: var(--sand);
-    border: 1px solid var(--warm);
-    border-radius: 8px;
-    padding: 12px 14px;
-  }
-  .svc-name { font-size: .78rem; font-weight: 500; color: var(--deep); margin-bottom: 8px; }
-  .svc-opts { display: flex; gap: 7px; flex-wrap: wrap; }
-  .soul-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-  }
-  @media(max-width:520px) { .soul-grid { grid-template-columns: 1fr; } }
-
-  /* SUBMIT BUTTON */
-  .submit-row { text-align: center; padding: 20px 0 40px; }
-  .gen-btn {
-    width: 100%;
-    padding: 16px;
-    background: var(--deep);
-    color: var(--sand);
-    border: none;
-    border-radius: 9px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: .7rem;
-    letter-spacing: .28em;
-    text-transform: uppercase;
-    cursor: pointer;
-    transition: background .2s;
-  }
-  .gen-btn:hover { background: var(--earth); }
-  .gen-btn:disabled { background: var(--warm); cursor: not-allowed; color: var(--earth); }
-
-  /* CONFIRMATION */
-  .confirmation {
-    text-align: center;
-    padding: 60px 24px;
-  }
-  .confirmation .check {
-    width: 64px; height: 64px;
-    border-radius: 50%;
-    background: rgba(107,148,112,.15);
-    color: var(--sage);
-    font-size: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto 24px;
-  }
-  .confirmation h2 {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 1.8rem;
-    font-weight: 300;
-    letter-spacing: .06em;
-    margin-bottom: 12px;
-  }
-  .confirmation p {
-    font-size: .85rem;
-    color: var(--earth);
-    max-width: 440px;
-    margin: 0 auto;
-    line-height: 1.65;
-  }
-
-  /* READ-ONLY VIEW */
-  .readonly-value {
-    font-size: .85rem;
-    padding: 8px 0;
-    color: var(--deep);
-  }
-  .readonly-pill {
-    display: inline-block;
-    padding: 3px 12px;
-    border-radius: 999px;
-    font-size: .75rem;
-    font-weight: 500;
-    background: rgba(61,122,124,.08);
-    border: 1px solid rgba(61,122,124,.2);
-    color: var(--teal);
-  }
-
-  /* SERVER ERROR BANNER */
-  .server-error-banner {
-    background: var(--error-bg);
-    border: 1.5px solid var(--error);
-    border-radius: 10px;
-    padding: 16px 20px;
-    margin-bottom: 18px;
-    color: var(--error);
-    font-size: .82rem;
-  }
-  .server-error-banner strong { display: block; margin-bottom: 4px; }
-  .server-error-banner ul { margin: 8px 0 0 20px; }
-
-  /* RESPONSIVE */
-  @media (max-width: 600px) {
-    .form-container { padding: 16px 12px 40px; }
-    .info-card { padding: 20px 16px; }
-    .form-header { padding: 28px 16px 24px; }
-    .form-header .teacher-name { font-size: 1.8rem; }
-    .day-body { padding: 16px 14px; }
-    .class-row { grid-template-columns: 1fr; }
-    .eq-grid { grid-template-columns: repeat(2, 1fr); }
-  }
+@media(max-width:600px){
+  #setup{padding:16px 12px 40px;}
+  .info-card{padding:20px 16px;}
+  .form-header{padding:28px 16px 24px;}
+  .form-header .teacher-name{font-size:1.8rem;}
+  .day-body{padding:16px 14px;}
+  .class-row{grid-template-columns:1fr;}
+}
 </style>
 </head>
 <body>
@@ -586,11 +119,11 @@
   <div class="state-error" id="error-message">This link is not valid.</div>
 </div>
 
-<!-- MAIN FORM (hidden until loaded) -->
+<!-- MAIN FORM -->
 <div id="form-app" style="display:none;">
 
   <div class="form-header">
-    <div class="logo">AMANSALA &middot; TULUM</div>
+    <div class="logo-text">AMANSALA &middot; TULUM</div>
     <div class="teacher-name" id="hdr-teacher"></div>
     <div class="group-name" id="hdr-group"></div>
     <div class="header-meta">
@@ -599,142 +132,158 @@
     </div>
   </div>
 
-  <div class="form-container">
-    <!-- Server error banner (hidden) -->
+  <div id="setup">
+    <!-- Server error banner -->
     <div id="server-error-banner" class="server-error-banner" style="display:none;"></div>
 
-    <!-- SECTION: DIETARY -->
+    <!-- GROUP INFO (read-only from API) -->
     <div class="info-card">
-      <div class="card-title">Dietary Requirements</div>
-      <div class="section-note">
-        We only need vegetarian/vegan totals and severe allergies. Gluten-free, dairy-free, and no-red-meat are handled by our default menu.
-        If any guest has a life-threatening allergy, they <strong>must</strong> travel with an EpiPen.
-      </div>
+      <div class="card-title">Group Information</div>
       <div class="g2">
-        <div class="f">
-          <label>Vegetarians</label>
-          <div class="stepper">
-            <button type="button" onclick="stepDown('diet-veg')">&#8722;</button>
-            <input type="number" id="diet-veg" min="0" value="0">
-            <button type="button" onclick="stepUp('diet-veg')">+</button>
-          </div>
-        </div>
-        <div class="f">
-          <label>Vegans</label>
-          <div class="stepper">
-            <button type="button" onclick="stepDown('diet-vegan')">&#8722;</button>
-            <input type="number" id="diet-vegan" min="0" value="0">
-            <button type="button" onclick="stepUp('diet-vegan')">+</button>
-          </div>
-        </div>
-        <div class="f full">
-          <label>Severe Allergies</label>
-          <input type="text" id="diet-allergies" placeholder="e.g., severe nut allergy, shellfish allergy" oninput="checkAllergyInput(this)">
-          <div class="epi-reminder" id="epiReminder">
-            <strong>Important:</strong> All guests with life-threatening allergies must carry their own epi-pen at all times. Amansala is not an allergen-free facility.
-          </div>
-        </div>
+        <div class="f"><label>Leader / Group Name</label><input id="iName" type="text" readonly></div>
+        <div class="f"><label>Group Size</label><input id="iSize" type="text" readonly></div>
+        <div class="f"><label>Retreat Dates</label><input id="iDates" type="text" readonly></div>
+        <div class="f"><label>Group Leader</label><input id="iCoord" type="text" placeholder="e.g. Maria"></div>
+        <div class="f full"><label>Special Requests / Class Notes</label><textarea id="iNotes" placeholder="e.g. Morning classes need shade. Music preferred. Needs bluetooth speaker."></textarea></div>
       </div>
     </div>
 
-    <!-- SECTION: SCHEDULE (day cards rendered by JS) -->
+    <!-- DIETARY -->
+    <div class="info-card" id="dietCard">
+      <div class="card-title">Dietary &amp; Allergy Information</div>
+      <div style="background:#fdf5e8;border:1px solid #f0d9a8;border-radius:8px;padding:12px 16px;margin-bottom:18px;font-size:.82rem;color:#7a5020;line-height:1.7">
+        <strong>What we need to know &mdash; and what we don't:</strong><br>
+        Our kitchen is already <strong>dairy-light, pork-free, and gluten-conscious</strong> &mdash; we do not serve red meat, pork, or heavy gluten. You do <em>not</em> need to tell us about lactose intolerance, gluten sensitivity, or beef/pork avoidance.<br><br>
+        <strong>Please only flag:</strong> true severe allergies (nuts, shellfish, soy, eggs, etc.) and vegetarians or vegans, so our kitchen can plan portions and protein alternatives.
+      </div>
+      <div class="g2" style="margin-bottom:16px">
+        <div class="f"><label>Vegetarians in group</label><input type="number" id="dVeg" min="0" placeholder="0" style="max-width:120px"></div>
+        <div class="f"><label>Vegans in group</label><input type="number" id="dVegan" min="0" placeholder="0" style="max-width:120px"></div>
+      </div>
+      <div class="f" style="margin-bottom:10px">
+        <label>Severe / Life-Threatening Allergies <span style="color:var(--clay);font-size:.72rem;letter-spacing:0">(nut, shellfish, soy, egg, etc.)</span></label>
+        <textarea id="dAllergy" placeholder="e.g. 1 guest — severe tree nut allergy (epi-pen carried). 1 guest — shellfish allergy." oninput="checkAllergyInput(this)" style="min-height:68px"></textarea>
+      </div>
+      <div id="epiReminder" style="display:none;background:#fff0f0;border:1.5px solid #f0a0a0;border-radius:8px;padding:12px 16px;font-size:.82rem;color:#8b2020;line-height:1.7;margin-top:2px">
+        &#9888;&#65039; <strong>Important:</strong> Amansala will do our best to accommodate all severe allergies, however we are not a nut-free or allergen-free facility. <strong>Any guest with a life-threatening allergy must carry their own epi-pen at all times</strong>, including during all activities, tours, and off-site excursions. Please confirm this with your group before arrival.
+      </div>
+      <button onclick="document.getElementById('dietHelpModal').style.display='flex'" style="margin-top:12px;background:none;border:none;font-family:'DM Sans',sans-serif;font-size:.78rem;color:var(--teal);cursor:pointer;text-decoration:underline;padding:0">Not sure what to include? Click here &rarr;</button>
+    </div>
+
+    <!-- DIETARY HELP MODAL -->
+    <div id="dietHelpModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:300;align-items:center;justify-content:center">
+      <div style="background:#fff;border-radius:16px;padding:32px;width:520px;max-width:95vw;box-shadow:0 24px 64px rgba(0,0,0,0.2);max-height:90vh;overflow-y:auto">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:400;color:#2e1f14;margin-bottom:16px">What does our kitchen need to know?</div>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px">
+          <div style="background:#f0faf0;border:1px solid #b0d9b0;border-radius:8px;padding:12px 16px">
+            <div style="font-size:.7rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:#2e7d32;margin-bottom:4px">&#10003; Please tell us</div>
+            <div style="font-size:.84rem;color:#1a4a1a;line-height:1.7"><strong>Vegetarians</strong> &mdash; we'll plan plant-based protein<br><strong>Vegans</strong> &mdash; fully plant-based, no eggs or dairy<br><strong>Severe nut allergy</strong> (e.g. peanuts, tree nuts)<br><strong>Severe shellfish allergy</strong><br><strong>Severe soy, egg, or other life-threatening allergy</strong></div>
+          </div>
+          <div style="background:#fdf5f0;border:1px solid #e0c0a0;border-radius:8px;padding:12px 16px">
+            <div style="font-size:.7rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:#8b5020;margin-bottom:4px">&#10007; No need to mention</div>
+            <div style="font-size:.84rem;color:#5a3010;line-height:1.7"><strong>Dairy / lactose</strong> &mdash; our kitchen is already dairy-light<br><strong>Gluten sensitivity</strong> &mdash; we prepare gluten-conscious meals<br><strong>Red meat / beef / pork</strong> &mdash; we do not serve these<br><strong>Mild food preferences</strong> &mdash; e.g. "doesn't like spicy"</div>
+          </div>
+          <div style="background:#fff8f0;border:1.5px solid #f0c080;border-radius:8px;padding:12px 16px">
+            <div style="font-size:.7rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:#a06000;margin-bottom:4px">&#9888; Epi-pen policy</div>
+            <div style="font-size:.84rem;color:#6a3a00;line-height:1.7">Amansala is <strong>not an allergen-free facility</strong>. We accommodate all severe allergies with care, but cross-contamination cannot be fully guaranteed. Any guest with a life-threatening allergy <strong>must carry their own epi-pen</strong> at all times.</div>
+          </div>
+        </div>
+        <button onclick="document.getElementById('dietHelpModal').style.display='none'" style="width:100%;padding:12px;background:#2e1f14;color:#f7efe3;border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.8rem;letter-spacing:.2em;text-transform:uppercase;cursor:pointer">Got it &mdash; close</button>
+      </div>
+    </div>
+
+    <!-- TOURS & SOUL SERVICES -->
     <div class="info-card">
-      <div class="card-title">Your Weekly Schedule</div>
-      <div class="section-note">
-        Choose your preferred times and rooms for each class. Meals and fixed activities are shown for reference.
-        Room assignments are subject to Melissa's final confirmation.
+      <div class="card-title">Tours &amp; Soul Services</div>
+      <div style="font-size:.78rem;color:var(--earth);margin-bottom:16px;line-height:1.6">
+        Set the <strong>default status</strong> for each offering. <strong>Pre-book price: $75 pp &middot; Walk-up / on-site: $95 pp.</strong><br>
+        <span style="font-size:.74rem;color:#9a7a62">Each tour and soul service also has its own toggle on the specific day card below.</span>
       </div>
-      <div class="days-area" id="schedule-container">
-        <!-- Dynamically rendered day cards -->
-      </div>
-    </div>
-
-    <!-- SOUL SERVICES (rendered if any) -->
-    <div class="info-card" id="soul-services-section" style="display:none;">
-      <div class="card-title">Soul Services &amp; Experiences</div>
-      <div class="section-note">
-        Let us know if you'd like any of these experiences included or offered as optional add-ons for your guests.
-      </div>
-      <div class="soul-grid" id="soul-services-container"></div>
-    </div>
-
-    <!-- SECTION: EQUIPMENT -->
-    <div class="info-card">
-      <div class="card-title">Equipment</div>
-      <div class="section-note">
-        Select any equipment you'll need for your classes. We'll have everything set up in the room before each session.
-      </div>
-      <div class="g2" style="margin-bottom:14px;">
-        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:.82rem;">
-          <input type="checkbox" id="eq-speaker" style="width:18px;height:18px;accent-color:var(--teal);">
-          Bluetooth speaker needed
-        </label>
-        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:.82rem;">
-          <input type="checkbox" id="eq-mats" onchange="toggleMatCount()" style="width:18px;height:18px;accent-color:var(--teal);">
-          Yoga mats provided by Amansala
-        </label>
-      </div>
-      <div id="mat-count-row" style="display:none;margin-bottom:14px;">
-        <div class="f" style="max-width:160px;">
-          <label>How many mats?</label>
-          <div class="stepper">
-            <button type="button" onclick="stepDown('eq-mat-count')">&#8722;</button>
-            <input type="number" id="eq-mat-count" min="0" value="0">
-            <button type="button" onclick="stepUp('eq-mat-count')">+</button>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+        <div>
+          <div style="font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:var(--teal);font-weight:700;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid var(--teal)">&#128506; Tours</div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div class="svc-block"><div class="svc-name">&#127807; Mangrove Tour</div><div style="font-size:.72rem;color:#9a7a62;margin-bottom:6px">Pre-book $75 &middot; On-site $95 pp</div><div class="svc-opts"><input class="tog" type="radio" name="sv-mang" id="ma1" value="pre"><label class="tlbl" for="ma1">Pre-booked</label><input class="tog" type="radio" name="sv-mang" id="ma2" value="opt" checked><label class="tlbl" for="ma2">Optional</label><input class="tog" type="radio" name="sv-mang" id="ma3" value="off"><label class="tlbl" for="ma3">Remove</label></div></div>
+            <div class="svc-block"><div class="svc-name">&#127963; Mayan Ruins Tour</div><div style="font-size:.72rem;color:#9a7a62;margin-bottom:6px">Pre-book $75 &middot; On-site $95 pp</div><div class="svc-opts"><input class="tog" type="radio" name="sv-tulum" id="t1" value="pre"><label class="tlbl" for="t1">Pre-booked</label><input class="tog" type="radio" name="sv-tulum" id="t2" value="opt" checked><label class="tlbl" for="t2">Optional</label><input class="tog" type="radio" name="sv-tulum" id="t3" value="off"><label class="tlbl" for="t3">Remove</label></div></div>
+            <div class="svc-block"><div class="svc-name">&#127946; Cenote Swim</div><div style="font-size:.72rem;color:#9a7a62;margin-bottom:6px">Pre-book $75 &middot; On-site $95 pp</div><div class="svc-opts"><input class="tog" type="radio" name="sv-cenote" id="c1" value="pre"><label class="tlbl" for="c1">Pre-booked</label><input class="tog" type="radio" name="sv-cenote" id="c2" value="opt" checked><label class="tlbl" for="c2">Optional</label><input class="tog" type="radio" name="sv-cenote" id="c3" value="off"><label class="tlbl" for="c3">Remove</label></div></div>
+            <div class="svc-block"><div class="svc-name">&#128676; Float Tour</div><div style="font-size:.72rem;color:#9a7a62;margin-bottom:6px">Pre-book $75 &middot; On-site $95 pp</div><div class="svc-opts"><input class="tog" type="radio" name="sv-float" id="fl1" value="pre"><label class="tlbl" for="fl1">Pre-booked</label><input class="tog" type="radio" name="sv-float" id="fl2" value="opt" checked><label class="tlbl" for="fl2">Optional</label><input class="tog" type="radio" name="sv-float" id="fl3" value="off"><label class="tlbl" for="fl3">Remove</label></div></div>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:var(--clay);font-weight:700;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid var(--clay)">&#10024; Soul Services</div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div class="svc-block"><div class="svc-name">&#128293; Temazcal</div><div style="font-size:.72rem;color:#9a7a62;margin-bottom:6px">Pre-book $75 &middot; On-site $95 pp</div><div class="svc-opts"><input class="tog" type="radio" name="sv-tem" id="te1" value="pre"><label class="tlbl" for="te1">Pre-booked</label><input class="tog" type="radio" name="sv-tem" id="te2" value="opt" checked><label class="tlbl" for="te2">Optional</label><input class="tog" type="radio" name="sv-tem" id="te3" value="off"><label class="tlbl" for="te3">Remove</label></div></div>
+            <div class="svc-block"><div class="svc-name">&#127802; Mayan Clay</div><div style="font-size:.72rem;color:#9a7a62;margin-bottom:6px">Pre-book $75 &middot; On-site $95 pp</div><div class="svc-opts"><input class="tog" type="radio" name="sv-clay" id="cl1" value="pre"><label class="tlbl" for="cl1">Pre-booked</label><input class="tog" type="radio" name="sv-clay" id="cl2" value="opt" checked><label class="tlbl" for="cl2">Optional</label><input class="tog" type="radio" name="sv-clay" id="cl3" value="off"><label class="tlbl" for="cl3">Remove</label></div></div>
+            <div class="svc-block"><div class="svc-name">&#127851; Cacao &amp; Sound Healing</div><div style="font-size:.72rem;color:#9a7a62;margin-bottom:6px">Pre-book $75 &middot; On-site $95 pp</div><div class="svc-opts"><input class="tog" type="radio" name="sv-cacao" id="ca1" value="pre"><label class="tlbl" for="ca1">Pre-booked</label><input class="tog" type="radio" name="sv-cacao" id="ca2" value="opt" checked><label class="tlbl" for="ca2">Optional</label><input class="tog" type="radio" name="sv-cacao" id="ca3" value="off"><label class="tlbl" for="ca3">Remove</label></div></div>
+            <div class="svc-block"><div class="svc-name">&#129482; Ice Bath</div><div style="font-size:.72rem;color:#9a7a62;margin-bottom:6px">Pre-book $75 &middot; On-site $95 pp</div><div class="svc-opts"><input class="tog" type="radio" name="sv-ice" id="i1" value="pre"><label class="tlbl" for="i1">Pre-booked</label><input class="tog" type="radio" name="sv-ice" id="i2" value="opt" checked><label class="tlbl" for="i2">Optional</label><input class="tog" type="radio" name="sv-ice" id="i3" value="off"><label class="tlbl" for="i3">Remove</label></div></div>
           </div>
         </div>
       </div>
-      <div class="f">
-        <label>Other equipment notes</label>
-        <input type="text" id="eq-notes" placeholder="e.g., bolsters, blocks, straps, resistance bands">
+      <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--warm)">
+        <div class="svc-block" style="max-width:320px"><div class="svc-name">&#10024; Closing Ceremony</div><div class="svc-opts"><input class="tog" type="radio" name="sv-close" id="cl4" value="inc" checked><label class="tlbl" for="cl4">Include</label><input class="tog" type="radio" name="sv-close" id="cl5" value="off"><label class="tlbl" for="cl5">Remove</label></div></div>
       </div>
     </div>
 
-    <!-- SECTION: NOTES -->
-    <div class="info-card">
-      <div class="card-title">Anything Else</div>
-      <div class="f">
-        <label>Additional notes for Melissa</label>
-        <textarea id="general-notes" placeholder="Any special requests, questions, or things we should know..."></textarea>
-      </div>
-    </div>
+    <!-- PER-DAY CARDS (built by JS) -->
+    <div class="days-area" id="daysArea"></div>
 
     <!-- SUBMIT -->
-    <div class="submit-row">
-      <button class="gen-btn" id="submit-btn" onclick="submitForm()">Submit Schedule</button>
+    <div class="info-card">
+      <button class="gen-btn" id="submit-btn" onclick="submitForm()">&#10022; Submit Schedule to Melissa</button>
     </div>
   </div>
 </div>
 
-<!-- CONFIRMATION SCREEN (post-submit or already submitted) -->
+<!-- CONFIRMATION -->
 <div id="confirmation-screen" style="display:none;">
   <div class="form-header">
-    <div class="logo">AMANSALA &middot; TULUM</div>
+    <div class="logo-text">AMANSALA &middot; TULUM</div>
     <div class="teacher-name" id="conf-teacher"></div>
     <div class="group-name" id="conf-group"></div>
-    <div class="header-meta">
-      <span id="conf-pax"></span>
-      <span id="conf-dates"></span>
-    </div>
   </div>
-  <div class="form-container">
+  <div style="max-width:780px;margin:0 auto;padding:28px 18px;">
     <div class="confirmation">
       <div class="check">&#10003;</div>
       <h2>Schedule Submitted</h2>
-      <p id="conf-message">
-        Thank you! Your schedule preferences have been received. Melissa will review and confirm room assignments and final times.
-        You'll receive a confirmation email once everything is set.
-      </p>
+      <p id="conf-message">Thank you! Your schedule preferences have been received. Melissa will review and confirm room assignments and final times.</p>
     </div>
-    <div id="conf-readonly-data"></div>
   </div>
 </div>
 
 <script>
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxnhymPPYBM6lXJFgCvemGQJaCyg7sJhHJ7ePGnutRMS3_Im_njyzbXOKKP6vmuxMoP7w/exec';
-
 let TOKEN = '';
 let FORM_DATA = null;
+
+// ── ROOMS & DAY DEFINITIONS ─────────────────────────────────────────────
+const ROOMS=['','Heaven','Sky','Beachfront (BF)','Grande','Chica','Beach','Pool Deck'];
+
+const DDAYS=[
+  {lbl:'Saturday',  hasMorning:false, hasAfternoon:true,  svcs:[], special:'Opening Ceremony',
+   defMeals:{welcome:'14:30',ceremony:'19:00',dinner:'19:30'},defM:null,defA:{s:'19:00',e:'20:00',r:'Heaven'}},
+  {lbl:'Sunday',    hasMorning:true,  hasAfternoon:true,  svcs:['cenote','float'],
+   defMeals:{light:'07:00',brunch:'10:30',snack:'14:30',dinner:'19:30'},defM:{s:'09:00',e:'10:00',r:'Heaven'},defA:{s:'17:00',e:'18:30',r:'Heaven'}},
+  {lbl:'Monday',    hasMorning:true,  hasAfternoon:true,  svcs:['tulum','ice','cacao'],
+   defMeals:{light:'07:00',brunch:'10:30',snack:'14:30',dinner:'19:30'},defM:{s:'09:00',e:'10:00',r:'Beachfront (BF)'},defA:{s:'17:00',e:'18:00',r:'Heaven'}},
+  {lbl:'Tuesday',   hasMorning:true,  hasAfternoon:true,  svcs:['temazcal'],
+   defMeals:{light:'07:00',brunch:'10:30',snack:'14:30',dinner:'19:30'},defM:{s:'09:00',e:'10:00',r:'Beachfront (BF)'},defA:{s:'17:00',e:'18:00',r:'Heaven'}},
+  {lbl:'Wednesday', hasMorning:true,  hasAfternoon:true,  svcs:['mang','clay','closing'],
+   defMeals:{light:'07:00',brunch:'10:30',snack:'14:30',dinner:'19:30'},defM:{s:'09:45',e:'10:45',r:'Heaven'},defA:{s:'17:45',e:'18:45',r:'Heaven'}},
+  {lbl:'Thursday',  hasMorning:true,  hasAfternoon:false, svcs:[],
+   defMeals:{light:'07:00',brunch:'10:30'},defM:{s:'09:00',e:'10:00',r:'Grande'},defA:null},
+];
+
+const SVC_META={
+  cenote: {lbl:'Cenote Swim',         defS:'11:45',defE:'14:00',soul:false},
+  tulum:  {lbl:'Mayan Ruins Tour',    defS:'11:45',defE:'14:00',soul:false},
+  float:  {lbl:'Float Tour',          defS:'11:45',defE:'14:00',soul:false},
+  mang:   {lbl:'Mangrove Tour',       defS:'11:45',defE:'14:00',soul:false},
+  ice:    {lbl:'Ice Bath',            defS:'15:00',defE:'17:00',soul:true},
+  cacao:  {lbl:'Cacao & Sound Healing',defS:'19:15',defE:'',    soul:true},
+  temazcal:{lbl:'Temazcal',           defS:'19:15',defE:'',     soul:true},
+  clay:   {lbl:'Mayan Clay',          defS:'15:30',defE:'16:00',soul:true},
+  closing:{lbl:'Closing Ceremony',    defS:'20:30',defE:'',     soul:false},
+};
 
 // ── INIT ──────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
@@ -752,17 +301,10 @@ async function loadFormData() {
     const url = APPS_SCRIPT_URL + '?action=formData&token=' + encodeURIComponent(TOKEN);
     const resp = await fetch(url);
     const json = await resp.json();
-    if (!json.success) {
-      showError(json.error || 'This link is not valid.');
-      return;
-    }
+    if (!json.success) { showError(json.error || 'This link is not valid.'); return; }
     FORM_DATA = json.data;
-
-    if (FORM_DATA.alreadySubmitted) {
-      renderConfirmation(true);
-    } else {
-      renderForm();
-    }
+    if (FORM_DATA.alreadySubmitted) { renderConfirmation(); }
+    else { renderForm(); }
   } catch (err) {
     showError('Could not connect to the server. Please try again later.');
   }
@@ -774,599 +316,391 @@ function showError(msg) {
   document.getElementById('error-message').textContent = msg;
 }
 
-// ── UTILITIES ──────────────────────────────────────────────────────────
-
-function stepUp(id) {
-  const el = document.getElementById(id);
-  el.value = Math.max(0, parseInt(el.value || 0) + 1);
+// ── HELPERS ───────────────────────────────────────────────────────────
+function roomSel(id,val){
+  return '<select id="'+id+'">'+ROOMS.map(function(r){return '<option value="'+r+'"'+(r===val?' selected':'')+'>'+( r||'— Room —')+'</option>';}).join('')+'</select>';
 }
-function stepDown(id) {
-  const el = document.getElementById(id);
-  el.value = Math.max(0, parseInt(el.value || 0) - 1);
-}
-function stepEq(id, delta) {
-  const el = document.getElementById(id);
-  const v = Math.max(0, parseInt(el.textContent || 0) + delta);
-  el.textContent = v;
-}
-function toggleMatCount() {
-  document.getElementById('mat-count-row').style.display =
-    document.getElementById('eq-mats').checked ? '' : 'none';
-}
-function checkAllergyInput(el) {
-  document.getElementById('epiReminder').style.display = el.value.trim().length > 0 ? 'block' : 'none';
-}
-
-function formatDate(dateStr) {
-  if (!dateStr) return '';
-  const d = new Date(dateStr);
-  if (isNaN(d)) return dateStr;
-  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-  return days[d.getUTCDay()] + ', ' + months[d.getUTCMonth()] + ' ' + d.getUTCDate();
-}
+function tInp(id,val){ return '<input type="time" id="'+id+'" value="'+(val||'')+'">'; }
+function gv(id){ var el=document.getElementById(id); return el?el.value:''; }
+function sv(n){ var el=document.querySelector('input[name="'+n+'"]:checked'); return el?el.value:'opt'; }
+function escHtml(s){ var d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+function checkAllergyInput(el){ document.getElementById('epiReminder').style.display=el.value.trim().length>0?'block':'none'; }
+function stepEq(id,delta){ var el=document.getElementById(id); if(!el)return; el.value=Math.max(0,(parseInt(el.value)||0)+delta); }
 
 function formatDateShort(dateStr) {
   if (!dateStr) return '';
-  const d = new Date(dateStr);
+  var d = new Date(dateStr);
   if (isNaN(d)) return dateStr;
-  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   return months[d.getUTCMonth()] + ' ' + d.getUTCDate();
 }
 
-function dateDiffDays(a, b) {
-  const da = new Date(a), db = new Date(b);
-  return Math.round((db - da) / (1000 * 60 * 60 * 24));
+// ── PER-CLASS NOISE + EQUIPMENT ──────────────────────────────────────
+function classExtras(pfx){
+  var noiseId = pfx+'_noise';
+  var eqItems=[['mats','Mats'],['blocks','Blocks'],['straps','Straps'],['blankets','Blankets'],['speaker','Speaker'],['candles','Candles'],['weights','Weights'],['chairs','Chairs']];
+  var steppers = eqItems.map(function(item){
+    var k=item[0], l=item[1], id=pfx+'_eq_'+k;
+    return '<div style="display:flex;align-items:center;gap:4px;background:var(--cream);border:1.5px solid var(--warm);border-radius:8px;padding:4px 8px">'
+      +'<span style="font-size:.7rem;color:var(--earth);white-space:nowrap">'+l+'</span>'
+      +'<div style="display:flex;align-items:center;gap:2px;margin-left:4px">'
+      +'<button type="button" onclick="stepEq(\''+id+'\',-1)" style="width:20px;height:20px;border:1px solid var(--warm);border-radius:4px;background:var(--sand);cursor:pointer;font-size:.8rem;line-height:1;color:var(--earth);padding:0">&minus;</button>'
+      +'<input type="number" id="'+id+'" value="0" min="0" max="50" style="width:32px;text-align:center;border:1px solid var(--warm);border-radius:4px;font-size:.75rem;font-family:inherit;background:#fff;color:var(--deep);padding:2px 0">'
+      +'<button type="button" onclick="stepEq(\''+id+'\',1)" style="width:20px;height:20px;border:1px solid var(--warm);border-radius:4px;background:var(--sand);cursor:pointer;font-size:.8rem;line-height:1;color:var(--earth);padding:0">+</button>'
+      +'</div></div>';
+  }).join('');
+  return '<div style="margin-top:10px;background:var(--sand);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:10px">'
+    +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'
+    +'<span style="font-size:.58rem;letter-spacing:.18em;text-transform:uppercase;color:var(--earth);font-weight:500;white-space:nowrap">Noise Level</span>'
+    +'<div style="display:flex;border:1.5px solid var(--warm);border-radius:6px;overflow:hidden;flex-shrink:0">'
+    +'<input type="radio" name="'+noiseId+'" id="'+noiseId+'_q" value="quiet" class="tog"><label for="'+noiseId+'_q" class="noise-lbl" style="padding:5px 11px;font-size:.72rem;font-weight:500;cursor:pointer;background:var(--cream);color:var(--earth);border-right:1px solid var(--warm);transition:all .15s;user-select:none;white-space:nowrap">Quiet</label>'
+    +'<input type="radio" name="'+noiseId+'" id="'+noiseId+'_m" value="medium" checked class="tog"><label for="'+noiseId+'_m" class="noise-lbl" style="padding:5px 11px;font-size:.72rem;font-weight:500;cursor:pointer;background:var(--cream);color:var(--earth);border-right:1px solid var(--warm);transition:all .15s;user-select:none;white-space:nowrap">Medium</label>'
+    +'<input type="radio" name="'+noiseId+'" id="'+noiseId+'_h" value="high" class="tog"><label for="'+noiseId+'_h" class="noise-lbl" style="padding:5px 11px;font-size:.72rem;font-weight:500;cursor:pointer;background:var(--cream);color:var(--earth);transition:all .15s;user-select:none;white-space:nowrap">High Energy</label>'
+    +'</div></div>'
+    +'<div><div style="font-size:.58rem;letter-spacing:.18em;text-transform:uppercase;color:var(--earth);font-weight:500;margin-bottom:6px">Equipment Needed</div>'
+    +'<div style="display:flex;flex-wrap:wrap;gap:6px">'+steppers
+    +'<div style="display:flex;align-items:center;gap:4px;background:var(--cream);border:1.5px solid var(--warm);border-radius:8px;padding:4px 8px"><input type="text" id="'+pfx+'_eq_other" placeholder="other..." style="border:none;outline:none;font-size:.7rem;font-family:inherit;background:transparent;color:var(--deep);width:90px"></div>'
+    +'</div></div></div>';
 }
 
-function getDateStr(dateVal) {
-  if (!dateVal) return '';
-  if (typeof dateVal === 'string') return dateVal.substring(0, 10);
-  if (dateVal instanceof Date) return dateVal.toISOString().substring(0, 10);
-  return String(dateVal).substring(0, 10);
+// Highlight noise radio labels
+document.addEventListener('change', function(e){
+  if(e.target.type==='radio' && e.target.name && e.target.name.indexOf('_noise')!==-1){
+    var name = e.target.name;
+    document.querySelectorAll('input[name="'+name+'"] + label.noise-lbl').forEach(function(lbl){
+      var radio = document.getElementById(lbl.getAttribute('for'));
+      lbl.style.background = radio && radio.checked ? 'var(--teal)' : 'var(--cream)';
+      lbl.style.color = radio && radio.checked ? '#fff' : 'var(--earth)';
+    });
+  }
+});
+
+// ── BUILD DAY CARDS ──────────────────────────────────────────────────
+function buildForms(){
+  var area = document.getElementById('daysArea');
+  area.innerHTML = '';
+  DDAYS.forEach(function(d, i){
+    var dc = document.createElement('div');
+    dc.className = 'day-card' + (i===0 ? ' open' : '');
+    var body = '';
+
+    if(d.lbl==='Saturday'){
+      body += '<div class="sec-lbl">Arrival & Welcome</div>'
+        +'<div class="g3">'
+        +'<div class="f"><label>Welcome Snack</label>'+tInp('d'+i+'_welcome',d.defMeals.welcome)+'</div>'
+        +'<div class="f"><label>Opening Ceremony Start</label>'+tInp('d'+i+'_ceremony',d.defMeals.ceremony)+'</div>'
+        +'<div class="f"><label>Ceremony Room</label>'+roomSel('d'+i+'_cr','Heaven')+'</div>'
+        +'</div>'
+        +classExtras('d'+i+'_a')
+        +'<div class="g2" style="margin-top:10px">'
+        +'<div class="f"><label>Dinner Time</label>'+tInp('d'+i+'_dinner',d.defMeals.dinner)+'</div>'
+        +'<div class="f"><label>Dinner Note</label><input type="text" id="d'+i+'_dnote" placeholder="e.g. on Beach"></div>'
+        +'</div>';
+    } else {
+      // Meals
+      body += '<div class="sec-lbl">Meals</div>';
+      if(d.lbl==='Thursday'){
+        body += '<div class="g2"><div class="f"><label>Light Breakfast</label>'+tInp('d'+i+'_light',d.defMeals.light)+'</div><div class="f"><label>Brunch (after class)</label>'+tInp('d'+i+'_brunch',d.defMeals.brunch)+'</div></div>';
+      } else {
+        body += '<div class="g4"><div class="f"><label>Light Breakfast</label>'+tInp('d'+i+'_light',d.defMeals.light)+'</div><div class="f"><label>Brunch</label>'+tInp('d'+i+'_brunch',d.defMeals.brunch)+'</div><div class="f"><label>Snack</label>'+tInp('d'+i+'_snack',d.defMeals.snack)+'</div><div class="f"><label>Dinner</label>'+tInp('d'+i+'_dinner',d.defMeals.dinner)+'</div></div>';
+      }
+
+      var daySvcs = d.svcs.filter(function(k){ return SVC_META[k]; });
+      var SOUL_KEYS = ['ice','cacao','temazcal','clay'];
+      var tourSvcs = daySvcs.filter(function(k){ return SOUL_KEYS.indexOf(k)===-1; });
+      var soulSvcs = daySvcs.filter(function(k){ return SOUL_KEYS.indexOf(k)!==-1; });
+
+      // Morning class
+      if(d.hasMorning){
+        body += '<div class="div-line"></div><div class="sec-lbl">Morning Class</div>'
+          +'<div class="class-row">'
+          +'<div class="f"><label>Start</label>'+tInp('d'+i+'_ms',d.defM.s)+'</div>'
+          +'<div class="f"><label>End</label>'+tInp('d'+i+'_me',d.defM.e)+'</div>'
+          +'<div class="f"><label>Room</label>'+roomSel('d'+i+'_mr',d.defM.r)+'</div>'
+          +'</div>'
+          +classExtras('d'+i+'_m');
+      }
+
+      // Tours
+      if(tourSvcs.length){
+        body += '<div class="div-line"></div><div class="sec-lbl" style="color:var(--teal)">Tours &mdash; between classes</div>'
+          +'<div style="display:flex;flex-direction:column;gap:8px">';
+        tourSvcs.forEach(function(k){ body += svcRow(i, k); });
+        body += '</div>';
+      }
+
+      // Afternoon class
+      if(d.hasAfternoon){
+        body += '<div class="div-line"></div><div class="sec-lbl">Afternoon / Evening Class</div>'
+          +'<div class="class-row">'
+          +'<div class="f"><label>Start</label>'+tInp('d'+i+'_as',d.defA.s)+'</div>'
+          +'<div class="f"><label>End</label>'+tInp('d'+i+'_ae',d.defA.e)+'</div>'
+          +'<div class="f"><label>Room</label>'+roomSel('d'+i+'_ar',d.defA.r)+'</div>'
+          +'</div>'
+          +classExtras('d'+i+'_a');
+      }
+
+      // Soul services
+      if(soulSvcs.length){
+        body += '<div class="div-line"></div><div class="sec-lbl" style="color:var(--clay)">Soul Services &mdash; after evening class</div>'
+          +'<div style="display:flex;flex-direction:column;gap:8px">';
+        soulSvcs.forEach(function(k){ body += svcRow(i, k); });
+        body += '</div>';
+      }
+
+      // Dinner note
+      if(d.lbl!=='Thursday'){
+        body += '<div class="div-line"></div><div class="f"><label>Dinner / Evening Note</label><input type="text" id="d'+i+'_dnote" placeholder="e.g. Dinner on Beach, late dinner for participants..."></div>';
+      }
+    }
+
+    dc.innerHTML = '<div class="day-card-head" onclick="this.parentElement.classList.toggle(\'open\')">'
+      +'<div class="dch-left"><span class="dch-name">'+d.lbl+'</span><span class="dch-date" id="dd'+i+'"></span></div>'
+      +'<span class="dch-arr">&#9660;</span>'
+      +'</div><div class="day-body">'+body+'</div>';
+    area.appendChild(dc);
+  });
+
+  updateDates();
+  // Init noise label highlighting
+  setTimeout(function(){
+    document.querySelectorAll('input.tog[type="radio"][checked]').forEach(function(r){ r.dispatchEvent(new Event('change',{bubbles:true})); });
+    // Also init all noise radios
+    document.querySelectorAll('.noise-lbl').forEach(function(lbl){
+      var radio = document.getElementById(lbl.getAttribute('for'));
+      if(radio && radio.checked){ lbl.style.background='var(--teal)'; lbl.style.color='#fff'; }
+    });
+  }, 50);
+  // Init service toggle styling
+  initSvcToggles();
 }
 
-function escHtml(s) {
-  const div = document.createElement('div');
-  div.textContent = s;
-  return div.innerHTML;
+function svcRow(dayIdx, k){
+  var m = SVC_META[k];
+  var icons = {cenote:'&#127946;',tulum:'&#127963;',float:'&#128676;',mang:'&#127807;',ice:'&#129482;',cacao:'&#127851;',temazcal:'&#128293;',clay:'&#127802;',closing:'&#10024;'};
+  var rid = 'd'+dayIdx+'_'+k+'_status';
+  return '<div style="background:var(--cream);border:1.5px solid var(--warm);border-radius:8px;padding:10px 14px;display:flex;flex-direction:column;gap:8px" id="svc-row-'+dayIdx+'-'+k+'">'
+    +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'
+    +'<span style="font-size:.84rem;font-weight:600;color:var(--earth);flex:1;white-space:nowrap">'+(icons[k]||'')+' '+m.lbl+'</span>'
+    +'<div style="display:flex;border:1.5px solid var(--warm);border-radius:6px;overflow:hidden">'
+    +'<input type="radio" name="'+rid+'" id="'+rid+'_inc" value="inc" class="tog svc-tog" data-day="'+dayIdx+'" data-svc="'+k+'"><label for="'+rid+'_inc" class="svc-tog-lbl" style="padding:4px 11px;font-size:.7rem;font-weight:600;cursor:pointer;border-right:1px solid var(--warm);transition:all .15s;user-select:none;white-space:nowrap;background:var(--sand);color:var(--earth)">Included</label>'
+    +'<input type="radio" name="'+rid+'" id="'+rid+'_opt" value="opt" class="tog svc-tog" data-day="'+dayIdx+'" data-svc="'+k+'" checked><label for="'+rid+'_opt" class="svc-tog-lbl" style="padding:4px 11px;font-size:.7rem;font-weight:600;cursor:pointer;border-right:1px solid var(--warm);transition:all .15s;user-select:none;white-space:nowrap;background:var(--sand);color:var(--earth)">Optional</label>'
+    +'<input type="radio" name="'+rid+'" id="'+rid+'_off" value="off" class="tog svc-tog" data-day="'+dayIdx+'" data-svc="'+k+'"><label for="'+rid+'_off" class="svc-tog-lbl" style="padding:4px 11px;font-size:.7rem;font-weight:600;cursor:pointer;transition:all .15s;user-select:none;white-space:nowrap;background:var(--sand);color:var(--earth)">Remove</label>'
+    +'</div></div>'
+    +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap" id="svc-times-'+dayIdx+'-'+k+'">'
+    +'<label style="font-size:.7rem;color:#9a7a62;white-space:nowrap">Start</label>'
+    +tInp('d'+dayIdx+'_'+k+'S',m.defS)
+    +(m.defE?'<label style="font-size:.7rem;color:#9a7a62;white-space:nowrap">End</label>'+tInp('d'+dayIdx+'_'+k+'E',m.defE):'')
+    +'</div></div>';
 }
 
-function getDayName(dateStr) {
-  if (!dateStr) return '';
-  const d = new Date(dateStr);
-  if (isNaN(d)) return '';
-  return ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][d.getUTCDay()];
+function initSvcToggles(){
+  document.querySelectorAll('.svc-tog').forEach(function(r){
+    r.addEventListener('change', function(){
+      var dayIdx = this.dataset.day, svc = this.dataset.svc;
+      syncSvcRow(dayIdx, svc);
+    });
+  });
+  // Initial sync
+  document.querySelectorAll('.svc-tog:checked').forEach(function(r){
+    if(r.dataset.day !== undefined) syncSvcRow(r.dataset.day, r.dataset.svc);
+  });
 }
 
-// ── RENDER FORM ────────────────────────────────────────────────────────
+function syncSvcRow(dayIdx, svc){
+  var rid = 'd'+dayIdx+'_'+svc+'_status';
+  var checked = document.querySelector('input[name="'+rid+'"]:checked');
+  var v = checked ? checked.value : 'opt';
+  var row = document.getElementById('svc-row-'+dayIdx+'-'+svc);
+  var times = document.getElementById('svc-times-'+dayIdx+'-'+svc);
+  if(row) row.style.opacity = v==='off' ? '0.4' : '1';
+  if(times) times.style.display = v==='off' ? 'none' : 'flex';
+  ['inc','opt','off'].forEach(function(val){
+    var lbl = document.querySelector('label[for="'+rid+'_'+val+'"]');
+    if(!lbl) return;
+    if(val===v){
+      lbl.style.background = val==='inc'?'#2e7d32':val==='opt'?'#e65100':'#888';
+      lbl.style.color = '#fff';
+    } else {
+      lbl.style.background = 'var(--sand)';
+      lbl.style.color = 'var(--earth)';
+    }
+  });
+}
 
+function updateDates(){
+  if(!FORM_DATA) return;
+  var arrival = FORM_DATA.group.arrival_date;
+  if(!arrival) return;
+  var d = new Date(arrival);
+  if(isNaN(d)) return;
+  DDAYS.forEach(function(_, i){
+    var dt = new Date(d.getTime() + i * 86400000);
+    var el = document.getElementById('dd'+i);
+    if(el) el.textContent = dt.toLocaleDateString('en-US',{month:'long',day:'numeric'});
+  });
+}
+
+// ── RENDER FORM ──────────────────────────────────────────────────────
 function renderForm() {
-  const { teacher, group, retreat, slots, roomOptions } = FORM_DATA;
+  var teacher = FORM_DATA.teacher;
+  var group = FORM_DATA.group;
 
   // Header
   document.getElementById('hdr-teacher').textContent = teacher.name || 'Teacher';
   document.getElementById('hdr-group').textContent = group.name || 'Group';
   document.getElementById('hdr-pax').innerHTML = '<strong>' + (group.pax || '?') + '</strong> guests';
-  document.getElementById('hdr-dates').textContent =
-    formatDateShort(group.arrival_date) + ' \u2192 ' + formatDateShort(group.departure_date);
+  document.getElementById('hdr-dates').textContent = formatDateShort(group.arrival_date) + ' \u2192 ' + formatDateShort(group.departure_date);
 
-  // Pre-fill dietary if submission data exists
-  if (FORM_DATA.submissionData) {
-    const sd = FORM_DATA.submissionData;
-    document.getElementById('diet-veg').value = sd.vegetarians || 0;
-    document.getElementById('diet-vegan').value = sd.vegans || 0;
-    document.getElementById('diet-allergies').value = sd.allergies || '';
-    if (sd.allergies) document.getElementById('epiReminder').style.display = 'block';
-    document.getElementById('eq-speaker').checked = !!sd.needs_speaker;
-    document.getElementById('eq-mats').checked = !!sd.needs_mats;
-    if (sd.needs_mats) {
-      document.getElementById('mat-count-row').style.display = '';
-      document.getElementById('eq-mat-count').value = sd.mat_count || 0;
-    }
-    document.getElementById('eq-notes').value = sd.equipment_notes || '';
-    document.getElementById('general-notes').value = sd.general_notes || '';
-  }
+  // Pre-fill group info
+  document.getElementById('iName').value = teacher.name || group.name || '';
+  document.getElementById('iSize').value = group.pax ? group.pax + ' participants' : '';
+  document.getElementById('iDates').value = formatDateShort(group.arrival_date) + ' \u2013 ' + formatDateShort(group.departure_date);
 
-  // Build schedule as collapsible day cards
-  renderSchedule(slots, group, roomOptions);
+  // Build day cards
+  buildForms();
 
-  // Soul services
-  renderSoulServices();
-
-  // Show
+  // Show form
   document.getElementById('loading-screen').style.display = 'none';
   document.getElementById('form-app').style.display = '';
 }
 
-function renderSchedule(slots, group, roomOptions) {
-  const container = document.getElementById('schedule-container');
+// ── COLLECT DATA ─────────────────────────────────────────────────────
+function getClassSetup(pfx){
+  var noise = (document.querySelector('input[name="'+pfx+'_noise"]:checked') || {}).value || 'medium';
+  var eqKeys = ['mats','blocks','straps','blankets','speaker','candles','weights','chairs'];
+  var eqLabels = {mats:'Mats',blocks:'Blocks',straps:'Straps',blankets:'Blankets',speaker:'Speaker',candles:'Candles',weights:'Weights',chairs:'Chairs'};
+  var selected = [];
+  eqKeys.forEach(function(k){
+    var el = document.getElementById(pfx+'_eq_'+k);
+    var qty = el ? parseInt(el.value)||0 : 0;
+    if(qty > 0) selected.push(qty > 1 ? qty+'x '+eqLabels[k] : eqLabels[k]);
+  });
+  var other = (document.getElementById(pfx+'_eq_other') || {}).value;
+  if(other && other.trim()) selected.push(other.trim());
+  return { noise: noise, equipment: selected };
+}
 
-  if (!slots || slots.length === 0) {
-    container.innerHTML = '<div style="text-align:center;padding:32px 0;color:var(--earth);font-size:.85rem;">No schedule slots have been set up yet. Melissa will add them soon.</div>';
-    return;
-  }
+function collectFormData(){
+  var days = [];
+  DDAYS.forEach(function(d, i){
+    var day = { dayIndex: i, label: d.lbl };
 
-  // Group slots by day
-  const dayMap = {};
-  const dayOrder = [];
-  for (const slot of slots) {
-    const dd = getDateStr(slot.day_date);
-    if (!dayMap[dd]) { dayMap[dd] = []; dayOrder.push(dd); }
-    dayMap[dd].push(slot);
-  }
-  dayOrder.sort();
-
-  const arrival = getDateStr(group.arrival_date);
-  const departure = getDateStr(group.departure_date);
-
-  let html = '';
-  for (let i = 0; i < dayOrder.length; i++) {
-    const dd = dayOrder[i];
-    const dayNum = dateDiffDays(arrival, dd) + 1;
-    const isArrival = dd === arrival;
-    const isDeparture = dd === departure;
-    const dayLabel = isArrival ? 'Arrival Day' : (isDeparture ? 'Departure Day' : '');
-    const dayName = getDayName(dd) || formatDate(dd);
-
-    html += '<div class="day-card' + (i === 0 ? ' open' : '') + '">';
-    html += '<div class="day-card-head" onclick="this.parentElement.classList.toggle(\'open\')">';
-    html += '<div class="dch-left">';
-    html += '<span class="dch-name">Day ' + dayNum + ' &mdash; ' + dayName + '</span>';
-    if (dayLabel) html += '<span class="dch-date">' + dayLabel + '</span>';
-    html += '</div>';
-    html += '<span class="dch-arr">&#9660;</span>';
-    html += '</div>';
-    html += '<div class="day-body">';
-
-    // Sort slots
-    const daySlots = dayMap[dd].sort((a, b) => {
-      const ta = a.window_start || a.label || '';
-      const tb = b.window_start || b.label || '';
-      return String(ta).localeCompare(String(tb));
-    });
-
-    // Fixed meals
-    if (isArrival) {
-      html += mealRow('4:00 PM', 'Welcome snack', 'Fixed');
+    if(d.lbl==='Saturday'){
+      day.welcome = gv('d'+i+'_welcome');
+      day.ceremony = gv('d'+i+'_ceremony');
+      day.ceremonyRoom = gv('d'+i+'_cr');
+      day.dinner = gv('d'+i+'_dinner');
+      day.dinnerNote = gv('d'+i+'_dnote');
+      day.classSetup_a = getClassSetup('d'+i+'_a');
     } else {
-      html += mealRow('7:00 AM', 'Light breakfast', 'Fixed');
-    }
+      day.light = gv('d'+i+'_light');
+      day.brunch = gv('d'+i+'_brunch');
+      day.snack = gv('d'+i+'_snack') || '';
+      day.dinner = gv('d'+i+'_dinner') || '';
+      day.dinnerNote = gv('d'+i+'_dnote') || '';
 
-    for (const slot of daySlots) {
-      if (slot.slot_type === 'meal' || slot.category === 'meal') {
-        const time = formatTimeDisplay(slot.window_start) || slot.label;
-        html += mealRow(time, slot.label || slot.requested_name || 'Meal', 'Fixed');
-      } else if (slot.slot_type === 'tour' || slot.category === 'tour') {
-        // Tours are managed by Melissa, not shown on teacher form
-        continue;
-      } else {
-        html += renderClassSlot(slot, roomOptions);
+      if(d.hasMorning){
+        day.morningStart = gv('d'+i+'_ms');
+        day.morningEnd = gv('d'+i+'_me');
+        day.morningRoom = gv('d'+i+'_mr');
+        day.classSetup_m = getClassSetup('d'+i+'_m');
       }
-    }
-
-    // Fixed meals after classes
-    if (!isDeparture) {
-      if (!isArrival) {
-        html += mealRow('10:45 AM', 'Brunch', 'Fixed');
-        html += mealRow('2:30 PM', 'Snack', 'Fixed');
+      if(d.hasAfternoon){
+        day.afternoonStart = gv('d'+i+'_as');
+        day.afternoonEnd = gv('d'+i+'_ae');
+        day.afternoonRoom = gv('d'+i+'_ar');
+        day.classSetup_a = getClassSetup('d'+i+'_a');
       }
-      html += mealRow('7:30 PM', 'Dinner', 'Fixed');
-    } else {
-      html += mealRow('', 'Full breakfast & departures', 'Fixed');
+
+      // Services
+      day.services = {};
+      d.svcs.forEach(function(k){
+        var rid = 'd'+i+'_'+k+'_status';
+        var checked = document.querySelector('input[name="'+rid+'"]:checked');
+        day.services[k] = {
+          status: checked ? checked.value : 'opt',
+          start: gv('d'+i+'_'+k+'S'),
+          end: gv('d'+i+'_'+k+'E') || ''
+        };
+      });
     }
-
-    html += '</div></div>';
-  }
-
-  container.innerHTML = html;
-
-  // Bind noise-bar clicks
-  container.querySelectorAll('.noise-bar label').forEach(lbl => {
-    lbl.addEventListener('click', function() {
-      const grp = this.parentElement;
-      grp.querySelectorAll('label').forEach(l => l.classList.remove('active'));
-      this.classList.add('active');
-      this.querySelector('input').checked = true;
-    });
+    days.push(day);
   });
 
-  // Bind time dropdown changes for "Other"
-  container.querySelectorAll('.time-select').forEach(sel => {
-    sel.addEventListener('change', function() {
-      const slotId = this.dataset.slotId;
-      const customRow = document.getElementById('custom-time-' + slotId);
-      if (customRow) {
-        customRow.style.display = this.value === 'other' ? '' : 'none';
-      }
-    });
-  });
+  return {
+    coordinator: gv('iCoord'),
+    notes: gv('iNotes'),
+    vegans: parseInt(document.getElementById('dVegan').value) || 0,
+    vegetarians: parseInt(document.getElementById('dVeg').value) || 0,
+    allergies: (document.getElementById('dAllergy').value || '').trim(),
+    globalServices: {
+      mangrove: sv('sv-mang'), tulum: sv('sv-tulum'), cenote: sv('sv-cenote'),
+      float: sv('sv-float'), temazcal: sv('sv-tem'), clay: sv('sv-clay'),
+      cacao: sv('sv-cacao'), ice: sv('sv-ice'), closing: sv('sv-close')
+    },
+    days: days
+  };
 }
 
-function mealRow(time, name, tag) {
-  return '<div class="meal-row">' +
-    '<span class="meal-time">' + escHtml(time) + '</span>' +
-    '<span class="meal-name">' + name + '</span>' +
-    '<span class="meal-tag">' + escHtml(tag) + '</span>' +
-    '</div>';
-}
-
-function formatTimeDisplay(t) {
-  if (!t) return '';
-  const str = String(t);
-  const parts = str.split(':');
-  if (parts.length < 2) return str;
-  let h = parseInt(parts[0]);
-  const m = parts[1];
-  const ampm = h >= 12 ? 'PM' : 'AM';
-  if (h > 12) h -= 12;
-  if (h === 0) h = 12;
-  return h + ':' + m + ' ' + ampm;
-}
-
-function renderClassSlot(slot, roomOptions) {
-  const slotId = slot.id;
-  const isMorning = (slot.window_start && parseInt(slot.window_start) < 12) ||
-                    (slot.label && slot.label.toLowerCase().includes('morning'));
-
-  // Determine time options
-  let timeOptions = '';
-  if (isMorning) {
-    timeOptions = '<option value="">Select time...</option>' +
-      '<option value="08:00-09:20"' + (isTimeMatch(slot, '08:00', '09:20') ? ' selected' : '') + '>8:00 &#8211; 9:20am</option>' +
-      '<option value="09:30-10:45"' + (isTimeMatch(slot, '09:30', '10:45') ? ' selected' : '') + '>9:30 &#8211; 10:45am</option>' +
-      '<option value="other"' + (isOtherTime(slot, isMorning) ? ' selected' : '') + '>Other</option>';
-  } else {
-    timeOptions = '<option value="">Select time...</option>' +
-      '<option value="16:30-18:00"' + (isTimeMatch(slot, '16:30', '18:00') ? ' selected' : '') + '>4:30 &#8211; 6:00pm</option>' +
-      '<option value="18:00-19:30"' + (isTimeMatch(slot, '18:00', '19:30') ? ' selected' : '') + '>6:00 &#8211; 7:30pm</option>';
-  }
-
-  // Room options
-  let roomOpts = '<option value="">Select room...</option>';
-  for (const r of roomOptions) {
-    const sel = (slot.requested_room === r) ? ' selected' : '';
-    roomOpts += '<option value="' + escHtml(r) + '"' + sel + '>' + escHtml(r) + '</option>';
-  }
-
-  const noise = slot.noise_level || '';
-  const showCustom = isOtherTime(slot, isMorning);
-
-  let html = '<div class="slot-card" data-slot-id="' + slotId + '">';
-  html += '<div class="slot-header">';
-  html += '<span class="slot-label">' + escHtml(slot.label || 'Class') + '</span>';
-  if (slot.category) html += '<span class="slot-category">' + escHtml(slot.category) + '</span>';
-  html += '</div>';
-  if (slot.window_start && slot.window_end) {
-    html += '<div class="slot-window">Window: ' + formatTimeDisplay(slot.window_start) + ' &#8211; ' + formatTimeDisplay(slot.window_end) + '</div>';
-  }
-
-  // Class name
-  html += '<div class="sec-lbl">Class Details</div>';
-  html += '<div class="class-row">';
-  html += '<div class="f"><label>Class name *</label>';
-  html += '<input type="text" class="slot-name" data-slot-id="' + slotId + '" value="' + escHtml(slot.requested_name || '') + '" placeholder="e.g., Morning Vinyasa"></div>';
-
-  // Time
-  html += '<div class="f"><label>Time</label>';
-  html += '<select class="time-select" data-slot-id="' + slotId + '">' + timeOptions + '</select></div>';
-
-  // Room
-  html += '<div class="f"><label>Room preference</label>';
-  html += '<select class="room-select" data-slot-id="' + slotId + '">' + roomOpts + '</select></div>';
-  html += '</div>';
-
-  // Custom time row
-  html += '<div class="g2" id="custom-time-' + slotId + '" style="display:' + (showCustom ? '' : 'none') + ';margin-top:10px;">';
-  html += '<div class="f"><label>Start</label><input type="text" class="custom-start" data-slot-id="' + slotId + '" placeholder="HH:MM" value="' + escHtml(showCustom && slot.requested_start ? slot.requested_start : '') + '"></div>';
-  html += '<div class="f"><label>End</label><input type="text" class="custom-end" data-slot-id="' + slotId + '" placeholder="HH:MM" value="' + escHtml(showCustom && slot.requested_end ? slot.requested_end : '') + '"></div>';
-  html += '</div>';
-
-  // Noise level
-  html += '<div style="margin-top:12px;">';
-  html += '<div class="sec-lbl">Noise Level</div>';
-  html += '<div class="noise-bar">';
-  html += '<label' + (noise === 'Low' ? ' class="active"' : '') + '><input type="radio" name="noise-' + slotId + '" value="Low"' + (noise === 'Low' ? ' checked' : '') + '><span>Quiet</span></label>';
-  html += '<label' + (noise === 'Medium' ? ' class="active"' : '') + '><input type="radio" name="noise-' + slotId + '" value="Medium"' + (noise === 'Medium' ? ' checked' : '') + '><span>Medium</span></label>';
-  html += '<label' + (noise === 'High' ? ' class="active"' : '') + '><input type="radio" name="noise-' + slotId + '" value="High"' + (noise === 'High' ? ' checked' : '') + '><span>High Energy</span></label>';
-  html += '</div></div>';
-
-  // Special requests
-  html += '<div class="f" style="margin-top:12px;">';
-  html += '<label>Special requests</label>';
-  html += '<input type="text" class="slot-notes" data-slot-id="' + slotId + '" value="' + escHtml(slot.special_notes || '') + '" placeholder="e.g., Mats in circle, candles, bolsters">';
-  html += '</div>';
-
-  html += '</div>';
-  return html;
-}
-
-// Tours removed from teacher form — managed by Melissa in ops scheduler
-
-function isTimeMatch(slot, start, end) {
-  if (!slot.requested_start || !slot.requested_end) return false;
-  const rs = String(slot.requested_start).substring(0, 5);
-  const re = String(slot.requested_end).substring(0, 5);
-  return rs === start && re === end;
-}
-
-function isOtherTime(slot, isMorning) {
-  if (!slot.requested_start) return false;
-  if (isMorning) {
-    return !isTimeMatch(slot, '08:00', '09:20') && !isTimeMatch(slot, '09:30', '10:45');
-  }
-  return !isTimeMatch(slot, '16:30', '18:00') && !isTimeMatch(slot, '18:00', '19:30');
-}
-
-// ── SOUL SERVICES ──────────────────────────────────────────────────────
-
-function renderSoulServices() {
-  const services = FORM_DATA.soulServices;
-  if (!services || services.length === 0) return;
-
-  document.getElementById('soul-services-section').style.display = '';
-  const container = document.getElementById('soul-services-container');
-  let html = '';
-
-  for (const svc of services) {
-    const svcId = svc.id;
-    const uid = 'svc_' + svcId;
-    html += '<div class="svc-block" data-service-id="' + svcId + '">';
-    html += '<div class="svc-name">' + escHtml(svc.name || svc.service_type || 'Service') + '</div>';
-    if (svc.price_per_person) {
-      html += '<div style="font-size:.72rem;color:var(--earth);margin-bottom:8px;">$' + svc.price_per_person + ' per person</div>';
-    }
-    html += '<div class="svc-opts">';
-    html += '<input type="radio" name="' + uid + '" value="none" id="' + uid + '_none" class="tog" checked><label for="' + uid + '_none" class="tlbl">Not Including</label>';
-    html += '<input type="radio" name="' + uid + '" value="included" id="' + uid + '_inc" class="tog"><label for="' + uid + '_inc" class="tlbl">Pre-booked</label>';
-    html += '<input type="radio" name="' + uid + '" value="optional" id="' + uid + '_opt" class="tog"><label for="' + uid + '_opt" class="tlbl">Optional</label>';
-    html += '</div>';
-
-    // Preferred day
-    if (svc.available_days) {
-      const days = String(svc.available_days).split(',').map(d => d.trim()).filter(Boolean);
-      if (days.length > 0) {
-        html += '<div class="f" style="margin-top:10px;"><label>Preferred day</label>';
-        html += '<select class="svc-day" data-service-id="' + svcId + '">';
-        html += '<option value="">Select day...</option>';
-        for (const day of days) {
-          html += '<option value="' + escHtml(day) + '">' + escHtml(day) + '</option>';
-        }
-        html += '</select></div>';
-      }
-    }
-
-    html += '<div class="f" style="margin-top:8px;"><label>Notes</label>';
-    html += '<input type="text" class="svc-notes" data-service-id="' + svcId + '" placeholder="Any preferences...">';
-    html += '</div>';
-    html += '</div>';
-  }
-
-  container.innerHTML = html;
-}
-
-// ── COLLECT & VALIDATE ──────────────────────────────────────────────────
-
-function collectSlots() {
-  const slots = FORM_DATA.slots || [];
-  const result = [];
-
-  for (const slot of slots) {
-    if (slot.slot_type === 'meal' || slot.category === 'meal') continue;
-
-    const sid = slot.id;
-    const card = document.querySelector('[data-slot-id="' + sid + '"]');
-    if (!card) continue;
-
-    const entry = {
-      id: sid,
-      slot_id: sid,
-      slot_type: slot.slot_type || slot.category || 'class',
-      label: slot.label,
-      day_date: getDateStr(slot.day_date),
-      window_start: slot.window_start || '',
-      window_end: slot.window_end || ''
-    };
-
-    if (slot.slot_type === 'tour' || slot.category === 'tour') {
-      const tourSel = card.querySelector('.tour-select');
-      const tourPaid = card.querySelector('.tour-paid');
-      entry.requested_name = tourSel ? tourSel.value : '';
-      entry.special_notes = tourPaid ? tourPaid.value : '';
-      entry.requested_start = slot.window_start || '';
-      entry.requested_end = slot.window_end || '';
-      entry.requested_room = '';
-      entry.noise_level = '';
-    } else {
-      const nameInput = card.querySelector('.slot-name');
-      const timeSel = card.querySelector('.time-select');
-      const roomSel = card.querySelector('.room-select');
-      const noiseChecked = card.querySelector('input[type="radio"]:checked');
-      const notesInput = card.querySelector('.slot-notes');
-
-      entry.requested_name = nameInput ? nameInput.value.trim() : '';
-      entry.requested_room = roomSel ? roomSel.value : '';
-      entry.noise_level = noiseChecked ? noiseChecked.value : '';
-      entry.special_notes = notesInput ? notesInput.value.trim() : '';
-
-      // Parse time
-      if (timeSel && timeSel.value && timeSel.value !== 'other') {
-        const parts = timeSel.value.split('-');
-        entry.requested_start = parts[0];
-        entry.requested_end = parts[1];
-      } else if (timeSel && timeSel.value === 'other') {
-        const cs = card.querySelector('.custom-start');
-        const ce = card.querySelector('.custom-end');
-        entry.requested_start = cs ? cs.value.trim() : '';
-        entry.requested_end = ce ? ce.value.trim() : '';
-      } else {
-        entry.requested_start = '';
-        entry.requested_end = '';
-      }
-    }
-
-    result.push(entry);
-  }
-  return result;
-}
-
-function collectSoulServices() {
-  const services = FORM_DATA.soulServices || [];
-  const result = [];
-  for (const svc of services) {
-    const svcId = svc.id;
-    const uid = 'svc_' + svcId;
-    const checked = document.querySelector('input[name="' + uid + '"]:checked');
-    const day = document.querySelector('.svc-day[data-service-id="' + svcId + '"]');
-    const notes = document.querySelector('.svc-notes[data-service-id="' + svcId + '"]');
-    result.push({
-      service_id: svcId,
-      selection: checked ? checked.value : 'none',
-      preferred_day: day ? day.value : '',
-      notes: notes ? notes.value.trim() : ''
-    });
-  }
-  return result;
-}
-
-function validateForm() {
-  let valid = true;
-  document.querySelectorAll('.error').forEach(el => el.classList.remove('error'));
-  document.querySelectorAll('.error-msg').forEach(el => el.remove());
-
-  const slots = FORM_DATA.slots || [];
-  for (const slot of slots) {
-    if (slot.slot_type === 'meal' || slot.category === 'meal') continue;
-    if (slot.slot_type === 'tour' || slot.category === 'tour') continue;
-
-    const sid = slot.id;
-    const card = document.querySelector('[data-slot-id="' + sid + '"]');
-    if (!card) continue;
-
-    const nameInput = card.querySelector('.slot-name');
-    if (nameInput && !nameInput.value.trim()) {
-      nameInput.classList.add('error');
-      const err = document.createElement('div');
-      err.className = 'error-msg';
-      err.textContent = 'Class name is required';
-      nameInput.parentElement.appendChild(err);
-      valid = false;
-    }
-
-    const timeSel = card.querySelector('.time-select');
-    if (timeSel && !timeSel.value) {
-      timeSel.classList.add('error');
-      const err = document.createElement('div');
-      err.className = 'error-msg';
-      err.textContent = 'Please select a time';
-      timeSel.parentElement.appendChild(err);
-      valid = false;
-    }
-
-    if (timeSel && timeSel.value === 'other') {
-      const cs = card.querySelector('.custom-start');
-      const ce = card.querySelector('.custom-end');
-      if (cs && !cs.value.trim()) {
-        cs.classList.add('error');
-        const err = document.createElement('div');
-        err.className = 'error-msg';
-        err.textContent = 'Start time required';
-        cs.parentElement.appendChild(err);
-        valid = false;
-      }
-      if (ce && !ce.value.trim()) {
-        ce.classList.add('error');
-        const err = document.createElement('div');
-        err.className = 'error-msg';
-        err.textContent = 'End time required';
-        ce.parentElement.appendChild(err);
-        valid = false;
-      }
-    }
-  }
-
-  if (!valid) {
-    // Open the day card containing the first error
-    const firstErr = document.querySelector('.error');
-    if (firstErr) {
-      const dayCard = firstErr.closest('.day-card');
-      if (dayCard && !dayCard.classList.contains('open')) dayCard.classList.add('open');
-      firstErr.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-  }
-  return valid;
-}
-
-// ── SUBMIT ─────────────────────────────────────────────────────────────
-
-async function submitForm() {
-  if (!validateForm()) return;
-
-  const btn = document.getElementById('submit-btn');
+// ── SUBMIT ────────────────────────────────────────────────────────────
+async function submitForm(){
+  var btn = document.getElementById('submit-btn');
   btn.disabled = true;
   btn.textContent = 'SUBMITTING...';
   document.getElementById('server-error-banner').style.display = 'none';
 
-  const slotsData = collectSlots();
-  const soulData = collectSoulServices();
+  var formData = collectFormData();
 
-  const payload = {
+  var payload = {
     action: 'submitTeacherForm',
     token: TOKEN,
-    slots: slotsData,
-    soulServices: soulData,
-    vegans: parseInt(document.getElementById('diet-vegan').value) || 0,
-    vegetarians: parseInt(document.getElementById('diet-veg').value) || 0,
-    allergies: document.getElementById('diet-allergies').value.trim(),
-    dietary: {
-      vegans: parseInt(document.getElementById('diet-vegan').value) || 0,
-      vegetarians: parseInt(document.getElementById('diet-veg').value) || 0,
-      allergies: document.getElementById('diet-allergies').value.trim()
-    },
-    needs_speaker: document.getElementById('eq-speaker').checked,
-    needs_mats: document.getElementById('eq-mats').checked,
-    mat_count: parseInt(document.getElementById('eq-mat-count').value) || 0,
-    equipment_notes: document.getElementById('eq-notes').value.trim(),
-    general_notes: document.getElementById('general-notes').value.trim()
+    vegans: formData.vegans,
+    vegetarians: formData.vegetarians,
+    allergies: formData.allergies,
+    dietary: { vegans: formData.vegans, vegetarians: formData.vegetarians, allergies: formData.allergies },
+    needs_speaker: false,
+    needs_mats: false,
+    mat_count: 0,
+    equipment_notes: '',
+    general_notes: formData.notes || '',
+    // Full schedule data as JSON
+    slots: [],
+    soulServices: [],
+    schedule_data: formData
   };
 
   try {
-    const resp = await fetch(APPS_SCRIPT_URL, {
+    var resp = await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
       mode: 'cors'
     });
-    const json = await resp.json();
-
+    var json = await resp.json();
     if (json.success) {
-      renderConfirmation(false);
+      renderConfirmation();
     } else {
       btn.disabled = false;
-      btn.textContent = 'SUBMIT SCHEDULE';
+      btn.textContent = '\u2726 SUBMIT SCHEDULE TO MELISSA';
       showServerErrors(json);
     }
   } catch (err) {
     btn.disabled = false;
-    btn.textContent = 'SUBMIT SCHEDULE';
+    btn.textContent = '\u2726 SUBMIT SCHEDULE TO MELISSA';
     showServerErrors({ error: 'Network error. Please check your connection and try again.' });
   }
 }
 
 function showServerErrors(json) {
-  const banner = document.getElementById('server-error-banner');
-  let html = '<strong>' + escHtml(json.error || 'Submission failed') + '</strong>';
+  var banner = document.getElementById('server-error-banner');
+  var html = '<strong>' + escHtml(json.error || 'Submission failed') + '</strong>';
   if (json.errors && json.errors.length > 0) {
     html += '<ul>';
-    for (const e of json.errors) {
-      const label = e.label || 'Slot ' + e.slot_id;
-      const msgs = e.errors || [];
-      for (const m of msgs) {
-        html += '<li>' + escHtml(label) + ': ' + escHtml(m) + '</li>';
-        const card = document.querySelector('[data-slot-id="' + e.slot_id + '"]');
-        if (card) card.style.borderColor = 'var(--error)';
-      }
-    }
+    json.errors.forEach(function(e){
+      var label = e.label || 'Item';
+      (e.errors||[]).forEach(function(m){ html += '<li>' + escHtml(label) + ': ' + escHtml(m) + '</li>'; });
+    });
     html += '</ul>';
   }
   banner.innerHTML = html;
@@ -1374,89 +708,18 @@ function showServerErrors(json) {
   banner.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
-// ── CONFIRMATION ────────────────────────────────────────────────────────
-
-function renderConfirmation(isReadOnly) {
-  const { teacher, group } = FORM_DATA;
-
+// ── CONFIRMATION ─────────────────────────────────────────────────────
+function renderConfirmation() {
   document.getElementById('loading-screen').style.display = 'none';
   document.getElementById('form-app').style.display = 'none';
   document.getElementById('confirmation-screen').style.display = '';
-
-  document.getElementById('conf-teacher').textContent = teacher.name || 'Teacher';
-  document.getElementById('conf-group').textContent = group.name || 'Group';
-  document.getElementById('conf-pax').innerHTML = '<strong>' + (group.pax || '?') + '</strong> guests';
-  document.getElementById('conf-dates').textContent =
-    formatDateShort(group.arrival_date) + ' \u2192 ' + formatDateShort(group.departure_date);
-
-  if (isReadOnly && FORM_DATA.submissionData) {
-    document.getElementById('conf-message').textContent =
-      'This form has already been submitted. Below is a summary of what was sent. If you need to make changes, please contact Melissa directly.';
-    renderReadOnlyData(FORM_DATA.submissionData);
+  if(FORM_DATA){
+    document.getElementById('conf-teacher').textContent = FORM_DATA.teacher.name || 'Teacher';
+    document.getElementById('conf-group').textContent = FORM_DATA.group.name || 'Group';
   }
-}
-
-function renderReadOnlyData(sub) {
-  const container = document.getElementById('conf-readonly-data');
-  let formData = {};
-  try { formData = JSON.parse(sub.form_data_json || '{}'); } catch(e) {}
-
-  let html = '';
-
-  // Dietary
-  html += '<div class="info-card">';
-  html += '<div class="card-title">Dietary</div>';
-  html += '<div class="g2">';
-  html += '<div class="f"><label>Vegetarians</label><div class="readonly-value">' + (sub.vegetarians || 0) + '</div></div>';
-  html += '<div class="f"><label>Vegans</label><div class="readonly-value">' + (sub.vegans || 0) + '</div></div>';
-  html += '</div>';
-  if (sub.allergies) {
-    html += '<div class="f" style="margin-top:10px;"><label>Allergies</label><div class="readonly-value">' + escHtml(sub.allergies) + '</div></div>';
+  if(FORM_DATA && FORM_DATA.alreadySubmitted){
+    document.getElementById('conf-message').textContent = 'This form has already been submitted. If you need to make changes, please contact Melissa directly.';
   }
-  html += '</div>';
-
-  // Slots
-  if (formData.slots && formData.slots.length > 0) {
-    html += '<div class="info-card">';
-    html += '<div class="card-title">Schedule</div>';
-    for (const s of formData.slots) {
-      html += '<div class="slot-card" style="margin-bottom:10px;">';
-      html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">';
-      html += '<strong style="font-size:.88rem;">' + escHtml(s.requested_name || s.label || 'Slot') + '</strong>';
-      if (s.requested_room) html += '<span class="readonly-pill">' + escHtml(s.requested_room) + '</span>';
-      html += '</div>';
-      const timeStr = (s.requested_start && s.requested_end)
-        ? formatTimeDisplay(s.requested_start) + ' \u2013 ' + formatTimeDisplay(s.requested_end)
-        : '';
-      if (timeStr) html += '<div style="font-size:.78rem;color:var(--earth);">' + timeStr + '</div>';
-      if (s.noise_level) html += '<div style="font-size:.78rem;color:var(--earth);">Noise: ' + escHtml(s.noise_level) + '</div>';
-      if (s.special_notes) html += '<div style="font-size:.78rem;color:var(--earth);font-style:italic;">' + escHtml(s.special_notes) + '</div>';
-      html += '</div>';
-    }
-    html += '</div>';
-  }
-
-  // Equipment
-  html += '<div class="info-card">';
-  html += '<div class="card-title">Equipment</div>';
-  html += '<div class="readonly-value">';
-  const eqItems = [];
-  if (sub.needs_speaker) eqItems.push('Bluetooth speaker');
-  if (sub.needs_mats) eqItems.push('Yoga mats' + (formData.mat_count ? ' (' + formData.mat_count + ')' : ''));
-  if (sub.equipment_notes) eqItems.push(sub.equipment_notes);
-  html += eqItems.length > 0 ? escHtml(eqItems.join(' \u00b7 ')) : '<span style="color:var(--earth);">None specified</span>';
-  html += '</div>';
-  html += '</div>';
-
-  // Notes
-  if (sub.general_notes) {
-    html += '<div class="info-card">';
-    html += '<div class="card-title">Additional Notes</div>';
-    html += '<div class="readonly-value" style="font-style:italic;">' + escHtml(sub.general_notes) + '</div>';
-    html += '</div>';
-  }
-
-  container.innerHTML = html;
 }
 </script>
 </body>
