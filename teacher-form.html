@@ -38,12 +38,14 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--deep);
 .doc-event{color:var(--deep);}
 .doc-room{color:var(--earth);font-size:.88rem;}
 .doc-sub{display:block;font-size:.78rem;color:#9a7a62;margin-top:3px;font-style:italic;}
-.doc-approved{min-width:70px;flex-shrink:0;text-align:right;margin-left:10px;}
 
 /* INLINE EDITABLE ELEMENTS — blend into doc-row */
 .e-time{border:none;border-bottom:1.5px dashed rgba(61,122,124,.35);background:transparent;font-family:'DM Sans',sans-serif;font-size:.88rem;color:var(--teal);font-weight:500;padding:2px 2px;outline:none;width:82px;cursor:pointer;}
 .e-time:focus{border-bottom-color:var(--teal);border-bottom-style:solid;}
-.e-status{border:none;border-bottom:1.5px dashed rgba(61,122,124,.35);background:transparent;font-family:'DM Sans',sans-serif;font-size:.72rem;color:var(--sage);font-weight:600;padding:2px 0;outline:none;cursor:pointer;text-transform:uppercase;letter-spacing:.06em;}
+.e-status{border:1.5px solid var(--warm);border-radius:5px;background:var(--cream);font-family:'DM Sans',sans-serif;font-size:.75rem;color:var(--earth);font-weight:600;padding:4px 8px;outline:none;cursor:pointer;margin-left:8px;}
+.e-status:focus{border-color:var(--teal);}
+.e-confirm{border:1.5px solid var(--warm);border-radius:5px;background:var(--cream);font-family:'DM Sans',sans-serif;font-size:.75rem;color:var(--earth);font-weight:600;padding:4px 8px;outline:none;cursor:pointer;margin-left:8px;}
+.e-confirm:focus{border-color:var(--teal);}
 .e-sel{border:none;border-bottom:1.5px dashed rgba(61,122,124,.35);background:transparent;font-family:'DM Sans',sans-serif;font-size:.88rem;color:var(--earth);padding:2px 0;outline:none;cursor:pointer;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238b5e3c'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 4px center;padding-right:18px;}
 .e-sel:focus{border-bottom-color:var(--teal);border-bottom-style:solid;}
 .e-text{border:none;border-bottom:1.5px dashed rgba(196,133,90,.35);background:transparent;font-family:'DM Sans',sans-serif;font-size:.78rem;color:var(--earth);padding:2px 2px;outline:none;width:100%;font-style:italic;}
@@ -287,8 +289,11 @@ function statusSel(id){
     +'<option value="optional" selected>Optional</option>'
     +'</select>';
 }
-function approvedCol(){
-  return '<span class="doc-approved" style="font-size:.65rem;letter-spacing:.08em;text-transform:uppercase;color:var(--warm)">—</span>';
+function confirmSel(id){
+  return '<select class="e-confirm" id="'+id+'">'
+    +'<option value="confirmed">Confirmed</option>'
+    +'<option value="pending" selected>Pending</option>'
+    +'</select>';
 }
 
 // ── FIXED ROW ───────────────────────────────────────────────────────────
@@ -297,7 +302,6 @@ function fixedRow(time, label){
     +'<span class="doc-time">'+fmt(time)+'</span>'
     +'<span class="doc-sep">|</span>'
     +'<span class="doc-main"><span class="doc-event">'+label+'</span></span>'
-    +approvedCol()
     +'</div>';
 }
 
@@ -307,10 +311,9 @@ function classRow(pfx, startVal, endVal, roomVal, label){
     +'<span class="doc-time">'+timeSel(pfx+'_s',startVal)+' – '+timeSel(pfx+'_e',endVal)+'</span>'
     +'<span class="doc-sep">|</span>'
     +'<span class="doc-main">'
-    +'<span class="doc-event">'+label+' | '+roomOpts(pfx+'_r',roomVal)+'</span>'
+    +'<span class="doc-event">'+label+' | '+roomOpts(pfx+'_r',roomVal)+' '+confirmSel(pfx+'_confirm')+'</span>'
     +'<span class="doc-sub">'+noise(pfx)+' &nbsp; '+notesInput(pfx+'_notes')+'</span>'
     +'</span>'
-    +approvedCol()
     +'</div>';
 }
 
@@ -320,7 +323,6 @@ function tourRow(pfx){
     +'<span class="doc-time" style="font-size:.88rem;font-weight:500">'+timeSel(pfx+'_tour_time','11:30')+'</span>'
     +'<span class="doc-sep">|</span>'
     +'<span class="doc-main"><span class="doc-event">'+tourOpts(pfx+'_tour')+' '+statusSel(pfx+'_tour_status')+'</span></span>'
-    +approvedCol()
     +'</div>';
 }
 
@@ -330,7 +332,6 @@ function expRow(pfx){
     +'<span class="doc-time">'+timeSel(pfx+'_exp_time','')+'</span>'
     +'<span class="doc-sep">|</span>'
     +'<span class="doc-main"><span class="doc-event">'+expOpts(pfx+'_exp')+' '+statusSel(pfx+'_exp_status')+'</span></span>'
-    +approvedCol()
     +'</div>';
 }
 
@@ -351,13 +352,6 @@ function buildSchedule(){
 
     html += '<div class="doc-day">';
     html += '<div class="doc-day-head">'+d.lbl+dateLbl+'</div>';
-    // Column header
-    html += '<div class="doc-row" style="border-bottom:1px solid var(--warm);padding:4px 0">'
-      +'<span class="doc-time" style="font-size:.58rem;letter-spacing:.15em;text-transform:uppercase;color:var(--earth);font-weight:500">Time</span>'
-      +'<span class="doc-sep"></span>'
-      +'<span class="doc-main" style="font-size:.58rem;letter-spacing:.15em;text-transform:uppercase;color:var(--earth);font-weight:500">Event &middot; Location</span>'
-      +'<span class="doc-approved" style="font-size:.58rem;letter-spacing:.15em;text-transform:uppercase;color:var(--earth);font-weight:500">Approved</span>'
-      +'</div>';
 
     if(d.type === 'arrival'){
       html += fixedRow('14:30','Welcome Snack');
@@ -409,14 +403,17 @@ function collectFormData(){
     var day={dayIndex:i, label:d.lbl, type:d.type};
     if(d.type==='arrival'){
       day.ceremony={start:gv('d'+i+'_a_s'),end:gv('d'+i+'_a_e'),room:gv('d'+i+'_a_r'),
+        confirm:gv('d'+i+'_a_confirm'),
         noise:(document.querySelector('input[name="d'+i+'_a_noise"]:checked')||{}).value||'medium',
         notes:gv('d'+i+'_a_notes')};
     } else {
       day.morning={start:gv('d'+i+'_m_s'),end:gv('d'+i+'_m_e'),room:gv('d'+i+'_m_r'),
+        confirm:gv('d'+i+'_m_confirm'),
         noise:(document.querySelector('input[name="d'+i+'_m_noise"]:checked')||{}).value||'medium',
         notes:gv('d'+i+'_m_notes')};
       if(d.type==='full'){
         day.afternoon={start:gv('d'+i+'_a_s'),end:gv('d'+i+'_a_e'),room:gv('d'+i+'_a_r'),
+          confirm:gv('d'+i+'_a_confirm'),
           noise:(document.querySelector('input[name="d'+i+'_a_noise"]:checked')||{}).value||'medium',
           notes:gv('d'+i+'_a_notes')};
         var tour=gv('d'+i+'_tour');
