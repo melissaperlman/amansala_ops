@@ -126,7 +126,10 @@ const SCHEMAS = {
   bookings: ['id','group_id','slot_id','day_date','start_time','end_time','title','subtitle','teacher_id','teacher_name','room','pax','category','status','price','is_optional','is_shared','setup_notes','notes','created_at','updated_at'],
   dietary: ['id','group_id','vegans','vegetarians','gluten_free','nut_allergy','shellfish_allergy','other_allergies','kitchen_notes','updated_at'],
   soul_services: ['id','retreat_id','service_type','name','facilitator','price_per_person','available_days','max_groups','notes','active'],
-  form_submissions: ['id','group_id','token','status','submitted_at','form_data_json','vegans','vegetarians','gluten_free','allergies','needs_speaker','needs_mats','equipment_notes','general_notes','ip_address','created_at']
+  form_submissions: ['id','group_id','token','status','submitted_at','form_data_json','vegans','vegetarians','gluten_free','allergies','needs_speaker','needs_mats','equipment_notes','general_notes','ip_address','created_at'],
+  rs_groups: ['id','label','color','short','pax','lastDay','removed','created_at'],
+  rs_bookings: ['id','group_id','day','start','end','title','subtitle','teacher','room','pax','notes','status','category','optional','price','created_at','updated_at'],
+  rs_transport: ['id','group_id','room','fname','lname','flight','date','time','airport','coordinator','driver','rate','note','created_at']
 };
 
 const VALID_ROOMS = ['BF','Grande','Chica','Sky','Heaven'];
@@ -443,6 +446,15 @@ function doGet(e) {
 
       case 'pendingForms':
         return respondOk(tabToJSON('form_submissions').filter(s => s.status === 'submitted'));
+
+      // ── ROOM SCHEDULE ──────────────────────────────────────────
+      case 'roomSchedule': {
+        return respondOk({
+          groups: tabToJSON('rs_groups'),
+          bookings: tabToJSON('rs_bookings'),
+          transport: tabToJSON('rs_transport')
+        });
+      }
 
       default:
         return respondError('Unknown action: ' + action);
@@ -1024,6 +1036,165 @@ function doPost(e) {
         t.created_at = now();
         appendRow('schedule_templates', t);
         return respondOk(t);
+      }
+
+      // ── ROOM SCHEDULE: SAVE GROUP ────────────────────────────
+      case 'saveRsGroup': {
+        const g = payload;
+        delete g.action;
+
+        if (g.id) {
+          const existing = findRowById('rs_groups', g.id);
+          if (existing) {
+            const merged = Object.assign({}, existing.obj, g);
+            updateRow('rs_groups', existing.rowIndex, existing.headers, merged);
+            return respondOk(merged);
+          }
+        }
+
+        g.id = nextId('rs_groups');
+        g.created_at = now();
+        appendRow('rs_groups', g);
+        return respondOk(g);
+      }
+
+      // ── ROOM SCHEDULE: SAVE BOOKING ─────────────────────────
+      case 'saveRsBooking': {
+        const b = payload;
+        delete b.action;
+        b.updated_at = now();
+
+        if (b.id) {
+          const existing = findRowById('rs_bookings', b.id);
+          if (existing) {
+            const merged = Object.assign({}, existing.obj, b);
+            updateRow('rs_bookings', existing.rowIndex, existing.headers, merged);
+            return respondOk(merged);
+          }
+        }
+
+        b.id = nextId('rs_bookings');
+        b.created_at = b.created_at || now();
+        appendRow('rs_bookings', b);
+        return respondOk(b);
+      }
+
+      // ── ROOM SCHEDULE: DELETE BOOKING ───────────────────────
+      case 'deleteRsBooking': {
+        const existing = findRowById('rs_bookings', payload.id);
+        if (!existing) return respondError('Booking not found');
+        existing.sheet.deleteRow(existing.rowIndex);
+        return respondOk({ deleted: payload.id });
+      }
+
+      // ── ROOM SCHEDULE: BULK SAVE BOOKINGS ───────────────────
+      case 'bulkSaveRsBookings': {
+        const results = [];
+        const items = payload.bookings || [];
+        for (const b of items) {
+          b.id = nextId('rs_bookings');
+          b.created_at = now();
+          b.updated_at = now();
+          appendRow('rs_bookings', b);
+          results.push(b);
+        }
+        return respondOk({ saved: results.length, bookings: results });
+      }
+
+      // ── ROOM SCHEDULE: SAVE TRANSPORT ───────────────────────
+      case 'saveRsTransport': {
+        const t = payload;
+        delete t.action;
+
+        if (t.id) {
+          const existing = findRowById('rs_transport', t.id);
+          if (existing) {
+            const merged = Object.assign({}, existing.obj, t);
+            updateRow('rs_transport', existing.rowIndex, existing.headers, merged);
+            return respondOk(merged);
+          }
+        }
+
+        t.id = nextId('rs_transport');
+        t.created_at = now();
+        appendRow('rs_transport', t);
+        return respondOk(t);
+      }
+
+      // ── ROOM SCHEDULE: BULK SAVE TRANSPORT ──────────────────
+      case 'bulkSaveRsTransport': {
+        const results = [];
+        const items = payload.arrivals || [];
+        for (const t of items) {
+          t.id = nextId('rs_transport');
+          t.created_at = now();
+          appendRow('rs_transport', t);
+          results.push(t);
+        }
+        return respondOk({ saved: results.length, arrivals: results });
+      }
+
+      // ── ROOM SCHEDULE: DELETE GROUP ─────────────────────────
+      case 'deleteRsGroup': {
+        const existing = findRowById('rs_groups', payload.id);
+        if (!existing) return respondError('Group not found');
+        // Delete group
+        existing.sheet.deleteRow(existing.rowIndex);
+        // Delete associated bookings
+        const allBookings = tabToJSON('rs_bookings');
+        const toDelete = allBookings.filter(b => String(b.group_id) === String(payload.id));
+        for (let i = toDelete.length - 1; i >= 0; i--) {
+          const row = findRowById('rs_bookings', toDelete[i].id);
+          if (row) row.sheet.deleteRow(row.rowIndex);
+        }
+        // Delete associated transport
+        const allTransport = tabToJSON('rs_transport');
+        const tDelete = allTransport.filter(t => String(t.group_id) === String(payload.id));
+        for (let i = tDelete.length - 1; i >= 0; i--) {
+          const row = findRowById('rs_transport', tDelete[i].id);
+          if (row) row.sheet.deleteRow(row.rowIndex);
+        }
+        return respondOk({ deleted: payload.id });
+      }
+
+      // ── ROOM SCHEDULE: FULL SYNC (replace all data) ─────────
+      case 'syncRoomSchedule': {
+        // Clear and re-populate all rs_ tabs with provided data
+        const rsGroups = payload.groups || [];
+        const rsBookings = payload.bookings || [];
+        const rsTransport = payload.transport || [];
+
+        // Clear existing data (keep headers)
+        ['rs_groups','rs_bookings','rs_transport'].forEach(tabName => {
+          const sheet = getTab(tabName);
+          if (sheet && sheet.getLastRow() > 1) {
+            sheet.deleteRows(2, sheet.getLastRow() - 1);
+          }
+        });
+
+        // Write groups
+        for (const g of rsGroups) {
+          g.id = g.id || nextId('rs_groups');
+          g.created_at = g.created_at || now();
+          appendRow('rs_groups', g);
+        }
+
+        // Write bookings
+        for (const b of rsBookings) {
+          b.id = b.id || nextId('rs_bookings');
+          b.created_at = b.created_at || now();
+          b.updated_at = now();
+          appendRow('rs_bookings', b);
+        }
+
+        // Write transport
+        for (const t of rsTransport) {
+          t.id = t.id || nextId('rs_transport');
+          t.created_at = t.created_at || now();
+          appendRow('rs_transport', t);
+        }
+
+        return respondOk({ groups: rsGroups.length, bookings: rsBookings.length, transport: rsTransport.length });
       }
 
       default:

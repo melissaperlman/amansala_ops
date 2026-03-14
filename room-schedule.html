@@ -652,6 +652,10 @@ Sunday March 22
 </div>
 
 <script>
+const API_URL = 'https://script.google.com/macros/s/AKfycbxnhymPPYBM6lXJFgCvemGQJaCyg7sJhHJ7ePGnutRMS3_Im_njyzbXOKKP6vmuxMoP7w/exec';
+let cloudMode = false; // set to true once data loads from API
+let saveTimer = null;
+
 const DAYS = ['Sun 15','Mon 16','Tue 17','Wed 18','Thu 19','Fri 20','Sat 21','Sun 22','Mon 23','Tue 24','Wed 25','Thu 26','Fri 27'];
 const DAY_LABELS = { 'Sun 15':'Sunday, March 15','Mon 16':'Monday, March 16','Tue 17':'Tuesday, March 17','Wed 18':'Wednesday, March 18','Thu 19':'Thursday, March 19','Fri 20':'Friday, March 20','Sat 21':'Saturday, March 21','Sun 22':'Sunday, March 22','Mon 23':'Monday, March 23','Tue 24':'Tuesday, March 24','Wed 25':'Wednesday, March 25','Thu 26':'Thursday, March 26','Fri 27':'Friday, March 27' };
 const ROOMS = ['Heaven','Chica','BF','Grande','Sky'];
@@ -1226,13 +1230,13 @@ function removeGroup(gid){
   const g = GROUPS.find(x=>x.id===gid);
   if(g) g.removed = true;
   if(activeGroup===gid) activeGroup='all';
-  render();
+  render(); scheduleCloudSave();
 }
 
 function restoreGroup(gid){
   const g = GROUPS.find(x=>x.id===gid);
   if(g) g.removed = false;
-  render();
+  render(); scheduleCloudSave();
 }
 
 // Check every minute if any group should auto-depart
@@ -2990,13 +2994,13 @@ function saveBooking(){
   };
   if(editingId){ const i=bookings.findIndex(b=>b.id===editingId); bookings[i]={...bookings[i],...data}; }
   else { bookings.push({id:nextId++,...data}); }
-  closeModal(); render();
+  closeModal(); render(); scheduleCloudSave();
 }
 function deleteBooking(){
   if(!editingId) return;
   if(confirm('Delete this booking?')){
     bookings=bookings.filter(b=>b.id!==editingId);
-    closeModal(); render();
+    closeModal(); render(); scheduleCloudSave();
   }
 }
 
@@ -3145,6 +3149,7 @@ function addAllImported(){
   });
   closeImportModal();
   render();
+  scheduleCloudSave();
 }
 
 document.getElementById('importOverlay').addEventListener('click',function(e){ if(e.target===this) closeImportModal(); });
@@ -3908,6 +3913,217 @@ function parseTime12(t){
   if(ampm==='AM' && h===12) h=0;
   return h*60+min;
 }
+
+// ── CLOUD SYNC ────────────────────────────────────────────────────────────
+
+// Status indicator
+function showSyncStatus(msg, color){
+  let el = document.getElementById('syncStatus');
+  if(!el){
+    el = document.createElement('div');
+    el.id = 'syncStatus';
+    el.style.cssText = 'position:fixed;bottom:16px;right:16px;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:600;z-index:9999;font-family:inherit;box-shadow:0 2px 12px rgba(0,0,0,.15);transition:opacity .3s;';
+    document.body.appendChild(el);
+  }
+  el.style.background = color || '#1a1a1a';
+  el.style.color = '#fff';
+  el.textContent = msg;
+  el.style.opacity = '1';
+  clearTimeout(el._hide);
+  el._hide = setTimeout(()=>{ el.style.opacity='0'; }, 4000);
+}
+
+// Load data from Google Sheets
+async function loadFromCloud(){
+  try {
+    showSyncStatus('Loading from cloud...', '#5b7fa6');
+    const resp = await fetch(API_URL + '?action=roomSchedule');
+    const json = await resp.json();
+    if(!json.success) throw new Error(json.error || 'Load failed');
+
+    const data = json.data;
+
+    // Load groups
+    if(data.groups && data.groups.length > 0){
+      // Keep the 'all' group, replace the rest
+      GROUPS.length = 0;
+      GROUPS.push({ id:'all', label:'All Groups / Shared', color:'#9a9490', short:'Shared', lastDay:null });
+      data.groups.forEach(g => {
+        GROUPS.push({
+          id: g.id || g.label.toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,12),
+          label: g.label,
+          color: g.color || '#9a9490',
+          short: g.short || g.label,
+          pax: g.pax || 0,
+          lastDay: g.lastDay || null,
+          removed: g.removed === true || g.removed === 'true'
+        });
+      });
+    }
+
+    // Load bookings
+    if(data.bookings && data.bookings.length > 0){
+      bookings = data.bookings.map(b => ({
+        id: b.id,
+        group: b.group_id || 'all',
+        day: b.day || '',
+        start: b.start || '',
+        end: b.end || '',
+        title: b.title || '',
+        subtitle: b.subtitle || '',
+        teacher: b.teacher || '',
+        room: b.room || '',
+        pax: b.pax || 0,
+        notes: b.notes || '',
+        status: b.status || 'confirmed',
+        category: b.category || 'classes',
+        optional: b.optional === true || b.optional === 'true',
+        price: b.price || ''
+      }));
+      nextId = Math.max(...bookings.map(b=>b.id), 0) + 1;
+    }
+
+    // Load transport
+    if(data.transport && data.transport.length > 0){
+      // Group transport by group_id
+      const byGroup = {};
+      data.transport.forEach(t => {
+        const gid = t.group_id || 'unknown';
+        if(!byGroup[gid]) byGroup[gid] = [];
+        byGroup[gid].push({
+          room: t.room || '',
+          fname: t.fname || '',
+          lname: t.lname || '',
+          flight: t.flight || '',
+          date: t.date || '',
+          time: t.time || '',
+          airport: t.airport || '',
+          coordinator: t.coordinator || '',
+          driver: t.driver || '',
+          rate: Number(t.rate) || 0,
+          note: t.note || ''
+        });
+      });
+      // Update TRANSPORT_DATA
+      Object.keys(byGroup).forEach(gid => {
+        TRANSPORT_DATA[gid] = { group: gid, arrivals: byGroup[gid] };
+      });
+    }
+
+    cloudMode = true;
+    showSyncStatus('Loaded from cloud', '#4a8c5c');
+    render();
+  } catch(err) {
+    console.warn('Cloud load failed, using local data:', err);
+    showSyncStatus('Using local data (cloud unavailable)', '#c47d3e');
+  }
+}
+
+// Save all data to Google Sheets
+async function saveToCloud(){
+  if(!cloudMode) return;
+  try {
+    showSyncStatus('Saving to cloud...', '#5b7fa6');
+
+    // Prepare groups (skip 'all')
+    const groupsToSave = GROUPS.filter(g => g.id !== 'all').map(g => ({
+      id: g.id,
+      label: g.label,
+      color: g.color,
+      short: g.short,
+      pax: g.pax || 0,
+      lastDay: g.lastDay || '',
+      removed: g.removed || false
+    }));
+
+    // Prepare bookings
+    const bookingsToSave = bookings.map(b => ({
+      id: b.id,
+      group_id: b.group,
+      day: b.day,
+      start: b.start,
+      end: b.end,
+      title: b.title,
+      subtitle: b.subtitle || '',
+      teacher: b.teacher || '',
+      room: b.room || '',
+      pax: b.pax || 0,
+      notes: b.notes || '',
+      status: b.status || 'confirmed',
+      category: b.category || 'classes',
+      optional: b.optional || false,
+      price: b.price || ''
+    }));
+
+    // Prepare transport
+    const transportToSave = [];
+    Object.keys(TRANSPORT_DATA).forEach(gKey => {
+      const gd = TRANSPORT_DATA[gKey];
+      gd.arrivals.forEach(a => {
+        transportToSave.push({
+          group_id: gd.group,
+          room: a.room,
+          fname: a.fname,
+          lname: a.lname,
+          flight: a.flight,
+          date: a.date,
+          time: a.time,
+          airport: a.airport,
+          coordinator: a.coordinator,
+          driver: a.driver,
+          rate: a.rate,
+          note: a.note
+        });
+      });
+    });
+
+    const resp = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({
+        action: 'syncRoomSchedule',
+        groups: groupsToSave,
+        bookings: bookingsToSave,
+        transport: transportToSave
+      })
+    });
+
+    const json = await resp.json();
+    if(!json.success) throw new Error(json.error || 'Save failed');
+
+    showSyncStatus('Saved to cloud', '#4a8c5c');
+  } catch(err) {
+    console.error('Cloud save failed:', err);
+    showSyncStatus('Save failed — try again', '#cc3333');
+  }
+}
+
+// Auto-save after changes (debounced)
+function scheduleCloudSave(){
+  if(!cloudMode) return;
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveToCloud, 2000);
+}
+
+// Add sync buttons to header
+(function addSyncButtons(){
+  const headerTop = document.querySelector('.header-top');
+  if(!headerTop) return;
+
+  const syncWrap = document.createElement('div');
+  syncWrap.style.cssText = 'display:flex;gap:6px;margin-left:8px';
+  syncWrap.innerHTML = `
+    <button onclick="loadFromCloud()" style="padding:6px 14px;border:1.5px solid #5b7fa6;border-radius:8px;background:#e8f0fa;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;color:#283593;display:flex;align-items:center;gap:5px">
+      ↓ Load Cloud
+    </button>
+    <button onclick="saveToCloud()" style="padding:6px 14px;border:1.5px solid #4a8c5c;border-radius:8px;background:#e8f5e9;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;color:#2e7d32;display:flex;align-items:center;gap:5px">
+      ↑ Save Cloud
+    </button>`;
+  headerTop.appendChild(syncWrap);
+})();
+
+// Try loading from cloud on startup
+loadFromCloud();
 
 render();
 </script>
