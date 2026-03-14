@@ -346,6 +346,28 @@
   .transport-stats { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px; }
   .transport-filter-bar { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:16px; }
 
+  /* RETREAT VIEW */
+  .retreat-wrap { padding:24px; max-width:1200px; margin:0 auto; }
+  .retreat-day-nav { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:20px; position:sticky; top:80px; z-index:10; background:var(--bg); padding:8px 0; }
+  .retreat-day-btn { padding:8px 16px; border-radius:8px; border:1.5px solid var(--border); background:var(--card); font-size:13px; font-weight:500; cursor:pointer; font-family:inherit; transition:all .15s; }
+  .retreat-day-btn:hover { border-color:#bbb; }
+  .retreat-day-btn.active { background:#1a1a1a; color:#fff; border-color:#1a1a1a; }
+  .retreat-room-section { margin-bottom:24px; }
+  .retreat-room-header { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+  .retreat-room-name { font-size:14px; font-weight:700; }
+  .retreat-timeline { position:relative; display:flex; gap:2px; align-items:stretch; min-height:48px; background:#f8f6f2; border-radius:8px; overflow:hidden; border:1px solid var(--border); }
+  .retreat-hour-mark { position:absolute; top:0; bottom:0; width:1px; background:var(--border); opacity:.5; z-index:1; }
+  .retreat-hour-label { position:absolute; top:2px; font-size:9px; color:var(--muted); z-index:1; }
+  .retreat-block { position:absolute; top:3px; bottom:3px; border-radius:5px; padding:3px 6px; font-size:11px; font-weight:600; overflow:hidden; cursor:pointer; z-index:2; display:flex; flex-direction:column; justify-content:center; line-height:1.3; transition:opacity .15s; border:1.5px solid transparent; }
+  .retreat-block:hover { opacity:.85; }
+  .retreat-block.conflict-block { border-color:var(--conflict) !important; box-shadow:0 0 0 2px rgba(232,112,58,.35); z-index:3; }
+  .retreat-conflict-label { position:absolute; top:-1px; right:4px; font-size:9px; font-weight:800; color:var(--conflict); }
+  .retreat-legend { display:flex; gap:14px; flex-wrap:wrap; margin-bottom:16px; }
+  .retreat-legend-item { display:flex; align-items:center; gap:5px; font-size:12px; font-weight:500; }
+  .retreat-legend-dot { width:12px; height:12px; border-radius:3px; }
+  .retreat-conflict-summary { background:#fff3e0; border-left:4px solid var(--conflict); border-radius:6px; padding:10px 14px; margin-bottom:16px; font-size:13px; }
+  .retreat-conflict-summary strong { color:#c4420a; }
+
   /* IMPORT MODALS */
   .import-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.35); z-index:200; align-items:center; justify-content:center; }
   .import-overlay.open { display:flex; }
@@ -385,6 +407,7 @@
     <button class="tab" onclick="switchTab(&#39;room&#39;)">By Room</button>
     <button class="tab" onclick="switchTab(&#39;teacher&#39;)">By Teacher</button>
     <button class="tab" onclick="switchTab(&#39;requests&#39;)" id="requestsTab">Teacher Requests <span id="pendingBadge" style="display:none;background:#e8703a;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;font-weight:700;margin-left:5px">0</span></button>
+    <button class="tab" onclick="switchTab(&#39;retreat&#39;)">By Retreat</button>
     <button class="tab" onclick="switchTab(&#39;transport&#39;)">Transport</button>
   </div>
 </div>
@@ -3093,7 +3116,7 @@ function switchTab(tab){
   document.body.classList.toggle('dayview-active', tab==='dayview');
   document.querySelectorAll('.tab').forEach((t,i)=>{
     t.classList.toggle('active',
-      (i===0&&tab==='day')||(i===1&&tab==='dayview')||(i===2&&tab==='room')||(i===3&&tab==='teacher')||(i===4&&tab==='requests')||(i===5&&tab==='transport'));
+      (i===0&&tab==='day')||(i===1&&tab==='dayview')||(i===2&&tab==='room')||(i===3&&tab==='teacher')||(i===4&&tab==='retreat')||(i===5&&tab==='requests')||(i===6&&tab==='transport'));
   });
   // Hide/show category tabs and group bar for requests tab
   const catTabs = document.getElementById('catTabs');
@@ -3105,6 +3128,11 @@ function switchTab(tab){
     if(filterBar) filterBar.style.display='none';
     renderGroupBar();
     renderTransportTab();
+  } else if(tab==='retreat'){
+    if(catTabs) catTabs.style.display='none';
+    if(groupBar) groupBar.style.display='none';
+    if(filterBar) filterBar.style.display='none';
+    renderRetreatView();
   } else if(tab==='requests'){
     if(catTabs) catTabs.style.display='none';
     if(groupBar) groupBar.style.display='none';
@@ -3874,6 +3902,149 @@ const TRANSPORT_DATA = {
     ]
   }
 };
+
+// ── BY RETREAT VIEW ──────────────────────────────────────────────────────
+let retreatViewDay = 'Sun 15';
+
+function renderRetreatView(){
+  const content = document.getElementById('mainContent');
+  content.style.maxWidth = '1200px';
+  content.style.padding = '0';
+
+  const YOGA_ROOMS = ['Heaven','Chica','BF','Grande','Sky'];
+  const ROOM_COLORS_MAP = { Heaven:'var(--heaven)', Chica:'var(--chica)', BF:'var(--bf)', Grande:'var(--grande)', Sky:'var(--sky)' };
+  const START_H = 5, END_H = 22;
+
+  // Active (non-removed, non-all) groups
+  const groups = GROUPS.filter(g => g.id !== 'all' && !g.removed);
+
+  // Get bookings for selected day, only classes/soul with rooms
+  const dayBk = bookings.filter(b =>
+    b.day === retreatViewDay &&
+    b.room && YOGA_ROOMS.includes(b.room) &&
+    (b.category === 'classes' || b.category === 'soul') &&
+    b.group !== 'all'
+  );
+
+  // Detect conflicts for this day
+  const conflicts = [];
+  const byRoom = {};
+  YOGA_ROOMS.forEach(r => byRoom[r] = []);
+  dayBk.forEach(b => { if(byRoom[b.room]) byRoom[b.room].push(b); });
+  const conflictIds = new Set();
+  YOGA_ROOMS.forEach(room => {
+    const rb = byRoom[room];
+    for(let i=0;i<rb.length;i++){
+      for(let j=i+1;j<rb.length;j++){
+        if(rb[i].start < rb[j].end && rb[j].start < rb[i].end){
+          conflictIds.add(rb[i].id); conflictIds.add(rb[j].id);
+          conflicts.push({ room, a:rb[i], b:rb[j] });
+        }
+      }
+    }
+  });
+
+  function timeToPercent(t){
+    const [h,m] = t.split(':').map(Number);
+    return ((h*60+m) - START_H*60) / ((END_H-START_H)*60) * 100;
+  }
+
+  // Day nav
+  let html = '<div class="retreat-wrap">';
+  html += '<div class="retreat-day-nav">';
+  DAYS.forEach(d => {
+    // Count conflicts for this day
+    const dayConf = bookings.filter(b => b.day===d && b.room && YOGA_ROOMS.includes(b.room) && (b.category==='classes'||b.category==='soul') && b.group!=='all');
+    const dByRoom = {};
+    YOGA_ROOMS.forEach(r => dByRoom[r] = []);
+    dayConf.forEach(b => { if(dByRoom[b.room]) dByRoom[b.room].push(b); });
+    let dConflicts = 0;
+    YOGA_ROOMS.forEach(room => {
+      const rb = dByRoom[room];
+      for(let i=0;i<rb.length;i++){
+        for(let j=i+1;j<rb.length;j++){
+          if(rb[i].start < rb[j].end && rb[j].start < rb[i].end) dConflicts++;
+        }
+      }
+    });
+    const confDot = dConflicts > 0 ? `<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--conflict);margin-left:4px;vertical-align:middle"></span>` : '';
+    html += `<button class="retreat-day-btn ${d===retreatViewDay?'active':''}" onclick="retreatViewDay='${d}';renderRetreatView()">${d}${confDot}</button>`;
+  });
+  html += '</div>';
+
+  // Legend
+  html += '<div class="retreat-legend">';
+  groups.forEach(g => {
+    html += `<div class="retreat-legend-item"><div class="retreat-legend-dot" style="background:${g.color}"></div>${g.short}</div>`;
+  });
+  html += '</div>';
+
+  // Conflict summary
+  if(conflicts.length > 0){
+    html += `<div class="retreat-conflict-summary">`;
+    html += `<strong>⚠ ${conflicts.length} conflict${conflicts.length>1?'s':''} on ${retreatViewDay}</strong><br>`;
+    conflicts.forEach(c => {
+      const gA = groupMeta(c.a.group), gB = groupMeta(c.b.group);
+      html += `<span style="display:inline-flex;align-items:center;gap:3px;margin-top:4px">
+        <span style="width:8px;height:8px;border-radius:50%;background:${gA.color};display:inline-block"></span><strong>${gA.short}</strong>
+        ${fmt12(c.a.start)}–${fmt12(c.a.end)} "${c.a.title}"
+        <span style="color:#aaa;margin:0 4px">vs</span>
+        <span style="width:8px;height:8px;border-radius:50%;background:${gB.color};display:inline-block"></span><strong>${gB.short}</strong>
+        ${fmt12(c.b.start)}–${fmt12(c.b.end)} "${c.b.title}"
+        in <strong>${c.room}</strong>
+      </span><br>`;
+    });
+    html += '</div>';
+  }
+
+  // Room timelines
+  YOGA_ROOMS.forEach(room => {
+    const rb = byRoom[room];
+    const hasConflict = rb.some(b => conflictIds.has(b.id));
+
+    html += `<div class="retreat-room-section">`;
+    html += `<div class="retreat-room-header">
+      <span class="room-tag ${ROOM_CSS[room]}" style="font-size:12px">${room}</span>
+      <span style="font-size:12px;color:var(--muted)">${rb.length} session${rb.length!==1?'s':''}</span>
+      ${hasConflict?'<span style="font-size:11px;font-weight:700;color:var(--conflict)">⚠ CONFLICT</span>':''}
+    </div>`;
+
+    html += `<div class="retreat-timeline" style="height:${hasConflict?'64px':'48px'}">`;
+
+    // Hour markers
+    for(let h=START_H; h<=END_H; h++){
+      const pct = ((h-START_H)/(END_H-START_H))*100;
+      html += `<div class="retreat-hour-mark" style="left:${pct}%"></div>`;
+      if(h % 2 === 0 || h===START_H) html += `<div class="retreat-hour-label" style="left:calc(${pct}% + 2px)">${h===0?'12a':h<12?h+'a':h===12?'12p':(h-12)+'p'}</div>`;
+    }
+
+    // Booking blocks
+    rb.forEach(b => {
+      const left = timeToPercent(b.start);
+      const width = timeToPercent(b.end) - left;
+      const gm = groupMeta(b.group);
+      const isConflict = conflictIds.has(b.id);
+      const conflictCls = isConflict ? 'conflict-block' : '';
+      html += `<div class="retreat-block ${conflictCls}" style="left:${left}%;width:${Math.max(width,2)}%;background:${gm.color}22;border-color:${isConflict?'var(--conflict)':gm.color};color:${gm.color}" onclick="openModal(${b.id})" title="${gm.short}: ${fmt12(b.start)}–${fmt12(b.end)} ${b.title}${b.teacher?' · '+b.teacher:''}">
+        ${isConflict?'<span class="retreat-conflict-label">⚠</span>':''}
+        <span style="font-size:10px;opacity:.8">${gm.short}</span>
+        <span>${b.title}</span>
+        <span style="font-size:10px;opacity:.7">${fmt12(b.start)}–${fmt12(b.end)}</span>
+      </div>`;
+    });
+
+    // Empty state
+    if(rb.length===0){
+      html += `<div style="display:flex;align-items:center;justify-content:center;width:100%;font-size:12px;color:var(--muted);font-style:italic">No sessions</div>`;
+    }
+
+    html += '</div>'; // timeline
+    html += '</div>'; // room section
+  });
+
+  html += '</div>'; // retreat-wrap
+  content.innerHTML = html;
+}
 
 function renderTransportTab(){
   const content = document.getElementById('mainContent');
