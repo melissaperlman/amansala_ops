@@ -2150,17 +2150,20 @@ function mergedMealRow(b){
   const groupIds = [...new Set(entries.map(x=>x.group))];
   const activeGroups = GROUPS.filter(g => g.id !== 'all' && !g.removed);
 
-  // Per-group headcount
+  // Per-group headcount — only groups that actually have this meal
   let counts = {}, total = 0;
-  groupIds.forEach(gid => {
-    if(gid === 'all') return;
+  const mergedGroupIds = new Set(groupIds.filter(g => g !== 'all'));
+  // If no specific groups in the merge (all are 'all'), find groups with meals on this day
+  if(mergedGroupIds.size === 0){
+    const day = b.day;
+    bookings.filter(x => x.day===day && x.category==='meals' && x.group!=='all')
+      .forEach(x => mergedGroupIds.add(x.group));
+  }
+  mergedGroupIds.forEach(gid => {
     const g = groupMeta(gid);
     counts[gid] = g.pax || 0;
     total += counts[gid];
   });
-  if(total === 0){
-    activeGroups.forEach(g => { counts[g.id] = g.pax || 0; total += counts[g.id]; });
-  }
 
   // Inline dot bubbles
   const dots = activeGroups
