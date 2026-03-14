@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Amansala Schedule — Design Options</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--sand:#f7efe3;--warm:#ead9c4;--clay:#c4855a;--earth:#8b5e3c;--deep:#2e1f14;--teal:#3d7a7c;--sage:#6b9470;--cream:#fdf9f4;--white:#fff;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'DM Sans',sans-serif;background:#e8e4df;color:var(--deep);font-size:15px;}
+
+/* OPTION SWITCHER */
+.switcher{background:var(--deep);padding:14px 28px;display:flex;gap:12px;align-items:center;justify-content:center;position:sticky;top:0;z-index:100;}
+.switcher span{font-size:.62rem;letter-spacing:.22em;text-transform:uppercase;color:var(--clay);margin-right:8px;}
+.sw-btn{padding:8px 22px;border:1.5px solid var(--clay);border-radius:6px;background:transparent;color:var(--sand);font-family:'DM Sans',sans-serif;font-size:.72rem;letter-spacing:.15em;text-transform:uppercase;cursor:pointer;transition:all .18s;}
+.sw-btn:hover{background:rgba(196,133,90,.15);}
+.sw-btn.active{background:var(--clay);color:var(--deep);border-color:var(--clay);}
+
+/* ═══════════════════════════════════════════
+   OPTION A — Elegant Itinerary
+   ═══════════════════════════════════════════ */
+#optionA{background:var(--cream);min-height:100vh;}
+.a-wrap{max-width:680px;margin:0 auto;padding:56px 36px 80px;}
+.a-masthead{text-align:center;margin-bottom:44px;}
+.a-logo{font-family:'Cormorant Garamond',serif;font-size:2.6rem;font-weight:300;letter-spacing:.16em;color:var(--deep);}
+.a-sub{font-size:.62rem;letter-spacing:.34em;text-transform:uppercase;color:var(--clay);margin-top:8px;}
+.a-group{font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-style:italic;color:var(--earth);margin-top:14px;}
+.a-rule{width:70px;height:1.5px;background:var(--clay);margin:16px auto 0;}
+
+.a-notes{background:rgba(196,133,90,.06);border-left:3px solid var(--clay);padding:12px 18px;border-radius:0 8px 8px 0;margin-bottom:32px;}
+.a-notes-lbl{font-size:.56rem;letter-spacing:.2em;text-transform:uppercase;color:var(--clay);margin-bottom:5px;font-weight:600;}
+.a-notes-txt{font-size:.84rem;color:var(--earth);line-height:1.7;}
+
+.a-day{margin-bottom:32px;}
+.a-day-head{font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-weight:500;color:var(--deep);border-bottom:1.5px solid var(--deep);padding-bottom:5px;margin-bottom:4px;letter-spacing:.03em;}
+.a-row{display:flex;padding:7px 0;border-bottom:1px solid rgba(234,217,196,.4);align-items:baseline;line-height:1.5;}
+.a-row:last-child{border-bottom:none;}
+.a-time{min-width:140px;flex-shrink:0;color:var(--teal);font-size:.88rem;font-weight:500;}
+.a-sep{color:rgba(196,133,90,.45);margin-right:10px;font-size:.82rem;}
+.a-main{flex:1;}
+.a-event{color:var(--deep);font-size:.92rem;}
+.a-detail{color:var(--earth);font-size:.82rem;}
+.a-sub-line{display:block;font-size:.76rem;color:#9a7a62;margin-top:2px;font-style:italic;}
+.a-badge{display:inline-block;font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;padding:2px 9px;border-radius:12px;vertical-align:middle;margin-left:6px;font-weight:600;}
+.a-opt{background:#fef3e8;color:var(--clay);border:1px solid #f0d0a8;}
+.a-inc{background:#e8f5e9;color:var(--sage);border:1px solid #b8d4b0;}
+.a-price{font-size:.78rem;color:var(--clay);font-weight:600;margin-left:4px;}
+.a-note-tag{display:inline-block;font-size:.6rem;letter-spacing:.08em;padding:2px 8px;border-radius:4px;background:rgba(61,122,124,.08);color:var(--teal);border:1px solid rgba(61,122,124,.18);margin-right:4px;margin-top:3px;}
+
+/* ═══════════════════════════════════════════
+   OPTION B — Modern Cards
+   ═══════════════════════════════════════════ */
+#optionB{background:#f5f3ef;min-height:100vh;display:none;}
+.b-wrap{max-width:720px;margin:0 auto;padding:40px 24px 80px;}
+.b-header{background:var(--deep);border-radius:16px;padding:36px 32px;margin-bottom:28px;text-align:center;}
+.b-logo{font-family:'Cormorant Garamond',serif;font-size:2.2rem;font-weight:300;letter-spacing:.14em;color:var(--sand);}
+.b-sub{font-size:.6rem;letter-spacing:.3em;text-transform:uppercase;color:var(--clay);margin-top:6px;}
+.b-group{font-size:.88rem;color:var(--warm);margin-top:12px;}
+
+.b-notes{background:var(--white);border:1px solid #e8e4df;border-radius:12px;padding:18px 22px;margin-bottom:20px;}
+.b-notes-lbl{font-size:.58rem;letter-spacing:.18em;text-transform:uppercase;color:var(--teal);margin-bottom:6px;font-weight:600;}
+.b-notes-items{display:flex;gap:8px;flex-wrap:wrap;}
+.b-tag{padding:5px 14px;border-radius:20px;font-size:.76rem;font-weight:500;}
+.b-tag-teal{background:rgba(61,122,124,.1);color:var(--teal);border:1px solid rgba(61,122,124,.2);}
+.b-tag-clay{background:rgba(196,133,90,.1);color:var(--clay);border:1px solid rgba(196,133,90,.25);}
+
+.b-day{background:var(--white);border:1px solid #e8e4df;border-radius:14px;overflow:hidden;margin-bottom:16px;box-shadow:0 2px 10px rgba(0,0,0,.04);}
+.b-day-head{background:var(--deep);padding:14px 22px;display:flex;justify-content:space-between;align-items:baseline;}
+.b-day-name{font-family:'Cormorant Garamond',serif;font-size:1.15rem;font-weight:400;color:var(--sand);letter-spacing:.06em;}
+.b-day-date{font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;color:var(--clay);}
+.b-day-body{padding:6px 0;}
+
+.b-row{display:flex;padding:10px 22px;border-bottom:1px solid #f0ece6;align-items:center;gap:14px;transition:background .12s;}
+.b-row:last-child{border-bottom:none;}
+.b-row:hover{background:rgba(247,239,227,.5);}
+.b-r-time{min-width:110px;font-size:.82rem;font-weight:600;color:var(--teal);}
+.b-r-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.b-dot-meal{background:#d4b896;}
+.b-dot-yoga{background:var(--teal);}
+.b-dot-tour{background:var(--clay);}
+.b-dot-exp{background:var(--sage);}
+.b-dot-dinner{background:#c07a5a;}
+.b-dot-special{background:#b8a0d0;}
+.b-r-content{flex:1;}
+.b-r-event{font-size:.88rem;font-weight:500;color:var(--deep);}
+.b-r-detail{font-size:.76rem;color:#9a9490;margin-top:2px;}
+.b-r-badge{display:inline-block;font-size:.55rem;letter-spacing:.08em;text-transform:uppercase;padding:3px 10px;border-radius:20px;font-weight:600;margin-left:8px;}
+.b-r-opt{background:#fef3e8;color:var(--clay);border:1px solid #f0d0a8;}
+.b-r-price{font-size:.76rem;color:var(--clay);font-weight:600;}
+
+/* LEGEND */
+.b-legend{display:flex;gap:16px;flex-wrap:wrap;padding:12px 22px;border-top:1px solid #f0ece6;background:rgba(245,243,239,.5);}
+.b-leg-item{display:flex;align-items:center;gap:6px;font-size:.72rem;color:#9a9490;}
+
+@media print{
+  .switcher{display:none!important;}
+  body{background:white;}
+  .a-wrap{padding:28px 20px 40px;}
+  .a-day{page-break-inside:avoid;}
+  .b-day{page-break-inside:avoid;}
+}
+@media(max-width:600px){
+  .a-wrap{padding:28px 16px 40px;}
+  .a-time{min-width:100px;font-size:.8rem;}
+  .b-wrap{padding:24px 12px 40px;}
+  .b-row{padding:10px 14px;}
+}
+</style>
+</head>
+<body>
+
+<div class="switcher">
+  <span>Design</span>
+  <button class="sw-btn active" onclick="show('A',this)">Option A — Elegant Itinerary</button>
+  <button class="sw-btn" onclick="show('B',this)">Option B — Modern Cards</button>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     OPTION A — Elegant Itinerary (matches leader doc style)
+     ═══════════════════════════════════════════════════════ -->
+<div id="optionA">
+<div class="a-wrap">
+  <div class="a-masthead">
+    <div class="a-logo">Amansala</div>
+    <div class="a-sub">Tulum, Mexico</div>
+    <div class="a-group">Retreat Schedule &middot; March 26 – 31, 2026</div>
+    <div class="a-rule"></div>
+  </div>
+
+  <div class="a-notes">
+    <div class="a-notes-lbl">Special Requests</div>
+    <div class="a-notes-txt">
+      <span class="a-note-tag">Shade Required</span>
+      <span class="a-note-tag">No Direct Sun</span>
+      <span class="a-note-tag">Microphone Needed</span>
+      <span class="a-note-tag">Music &amp; Quiet Sessions</span>
+    </div>
+  </div>
+
+  <!-- THURSDAY -->
+  <div class="a-day">
+    <div class="a-day-head">Thursday | March 26</div>
+    <div class="a-row"><span class="a-time">4:00 PM</span><span class="a-sep">|</span><span class="a-main"><span class="a-event">Welcome Snack</span></span></div>
+    <div class="a-row"><span class="a-time">5:45 PM</span><span class="a-sep">|</span><span class="a-main"><span class="a-event">Opening Circle &amp; Meditation</span><span class="a-sub-line">Orientation w/ Amansala</span></span></div>
+    <div class="a-row"><span class="a-time">7:30 PM</span><span class="a-sep">|</span><span class="a-main"><span class="a-event">Dinner</span></span></div>
+  </div>
+
+  <!-- FRIDAY -->
+  <div class="a-day">
+    <div class="a-day-head">Friday | March 27</div>
+    <div class="a-row"><span class="a-time">7:00 AM</span><span class="a-sep">|</span><span class="a-main"><span class="a-event">Light Breakfast</span></span></div>
+    <div class="a-row"><span class="a-time">9:30 AM</span><span class="a-sep">|</span><span class="a-main"><span class="a-event">Morning Yoga</span></span></div>
+    <div class="a-row"><span class="a-time">10:45 AM</span><span class="a-sep">|</span><span class="a-main"><span class="a-event">Brunch</span></span></div>
+    <div class="a-row"><span class="a-time">11:45 AM – 2:15 PM</span><span class="a-sep">|</span><span class="a-main"><span class="a-event">Grand Cenote w/ Sergio <span class="a-badge a-opt">Optional</span> <span class="a-price">$85</span></span></span></div>
+    <div class="a-row"><span class="a-time">2:30 PM</span><span class="a-sep">|</span><span class="a-main"><span class="a-event">Snack</span></span></div>
+    <div class="a-row"><span class="a-time">4:30 PM</span><span class="a-sep">|</span><span class="a-main"><span class="a-event">Yoga</span></span></div>
+    <div class="a-row"><span class="a-time">6:00 PM</span><span class="a-sep">|</span><span class="a-main"><span class="a-event">Dinner</span></span></div>
+    <div class="a-row"><span class="a-time">7:30 PM</span><span class="a-sep">|</span><span class="a-main"><span class="a-event">Salsa Class w/ Sergio</span></span></div>
+  </div>
+
+  <!-- SATURDAY -->
+  <div class="a-day">
+    <div class="a-day-head">Saturday | March 28</div>
+    <div class="a-row"><span class="a-time">7:00 AM</span><span class="a-sep">|</span><span class="a-main"><span class="a-event">Light Breakfast</span></span></div>
+    <div class="a-row"><span class="a-time">8:00 AM</span><span class="a-sep">|</span><span class="a-main"><span class="a-event">Morning Yoga</span></span></div>
+    <div class="a-row"><span class="a-time">10:45 AM</span><span class="a-sep">|</span><span class="a-main"><span class="a-event">Brunch</span></span></div>
+    <div class="a-row"><span class="a-time">10:45 AM – 1:15 PM</span><span class="a-sep">|</span><span class="a-main"><span class="a-event">Tulum Ruins w/ Sergio <span class="a-badge a-opt">Optional</span> <span class="a-price">$85</span></span></span></div>
+    <div class="a-row"><span class="a-time">2:30 PM</span><span class="a-sep">|</span><span class="a-main"><span class="a-event">Snack</span></span></div>
+    <div class="a-row"><span class="a-time">3:00 PM</span><span class="a-sep">|</span><span class="a-main"><span class="a-event">Cooking Class</span></span></div>
+    <div class="a-row"><span class="a-time">6:00 PM</span><span class="a-sep">|</span><span class="a-main"><span class="a-event">Yoga</span></span></div>
+    <div class="a-row"><span class="a-time">7:30 PM</span><span class="a-sep">|</span><span class="a-main"><span class="a-event">Dinner</span></span></div>
+  </div>
+
+  <!-- SUNDAY -->
+  <div class="a-day">
+    <div class="a-day-head">Sunday | March 29</div>
+    <div class="a-row"><span class="a-time">7:00 AM</span><span class="a-sep">|</span><span class="a-main"><span class="a-event">Light Breakfast</span></span></div>
+    <div class="a-row"><span class="a-time">8:00 AM</span><span class="a-sep">|</span><span class="a-main"><span class="a-event">Morning Yoga</span></span></div>
+    <div class="a-row"><span class="a-time">9:30 AM</span><span class="a-sep">|</span><span class="a-main"><span class="a-event">Brunch</span></span></div>
+    <div class="a-row"><span class="a-time">11:45 AM – 2:15 PM</span><span class="a-sep">|</span><span class="a-main"><span class="a-event">Mangrove Tour w/ Yolanda <span class="a-badge a-opt">Optional</span> <span class="a-price">$85</span></span></span></div>
+    <div class="a-row"><span class="a-time">2:30 PM</span><span class="a-sep">|</span><span class="a-main"><span class="a-event">Snack</span></span></div>
+    <div class="a-row"><span class="a-time">3:30 PM</span><span class="a-sep">|</span><span class="a-main"><span class="a-event">Mayan Clay Ceremony</span></span></div>
+    <div class="a-row"><span class="a-time">7:30 PM</span><span class="a-sep">|</span><span class="a-main"><span class="a-event">Offsite Group Dinner</span><span class="a-sub-line">Reservation at Gitano &middot; a la carte, paid on-site</span></span></div>
+  </div>
+
+  <!-- MONDAY -->
+  <div class="a-day">
+    <div class="a-day-head">Monday | March 30 <span style="font-family:'DM Sans';font-size:.7rem;color:var(--earth);font-weight:400;letter-spacing:0;margin-left:8px">13 pax</span></div>
+    <div class="a-row"><span class="a-time">7:00 AM</span><span class="a-sep">|</span><span class="a-main"><span class="a-event">Light Breakfast</span></span></div>
+    <div class="a-row"><span class="a-time">9:30 AM</span><span class="a-sep">|</span><span class="a-main"><span class="a-event">Morning Yoga</span></span></div>
+    <div class="a-row"><span class="a-time">10:45 AM</span><span class="a-sep">|</span><span class="a-main"><span class="a-event">Brunch</span></span></div>
+    <div class="a-row"><span class="a-time">12:00 PM</span><span class="a-sep">|</span><span class="a-main"><span class="a-event">Ice Bath <span class="a-badge a-opt">Optional</span> <span class="a-price">$75</span></span></span></div>
+    <div class="a-row"><span class="a-time">2:30 PM</span><span class="a-sep">|</span><span class="a-main"><span class="a-event">Snack</span></span></div>
+    <div class="a-row"><span class="a-time">4:30 PM</span><span class="a-sep">|</span><span class="a-main"><span class="a-event">Yoga</span></span></div>
+    <div class="a-row"><span class="a-time">6:00 PM</span><span class="a-sep">|</span><span class="a-main"><span class="a-event">Cacao &amp; Sound Bath <span class="a-badge a-opt">Optional</span> <span class="a-price">$65</span></span></span></div>
+    <div class="a-row"><span class="a-time">7:30 PM</span><span class="a-sep">|</span><span class="a-main"><span class="a-event">Dinner</span></span></div>
+  </div>
+
+  <!-- TUESDAY -->
+  <div class="a-day">
+    <div class="a-day-head">Tuesday | March 31</div>
+    <div class="a-row"><span class="a-time">7:00 AM</span><span class="a-sep">|</span><span class="a-main"><span class="a-event">Light Breakfast</span></span></div>
+    <div class="a-row"><span class="a-time">8:00 AM</span><span class="a-sep">|</span><span class="a-main"><span class="a-event">Morning Meditation &amp; Closing Circle</span></span></div>
+    <div class="a-row"><span class="a-time"></span><span class="a-sep"></span><span class="a-main"><span class="a-event">Full Breakfast</span></span></div>
+    <div class="a-row"><span class="a-time"></span><span class="a-sep"></span><span class="a-main"><span class="a-event" style="font-style:italic;color:var(--earth)">Departures &mdash; Wishing you safe travels</span></span></div>
+  </div>
+
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     OPTION B — Modern Cards
+     ═══════════════════════════════════════════════════════ -->
+<div id="optionB">
+<div class="b-wrap">
+  <div class="b-header">
+    <div class="b-logo">Amansala</div>
+    <div class="b-sub">Tulum, Mexico</div>
+    <div class="b-group">Retreat Schedule &middot; March 26 – 31, 2026</div>
+  </div>
+
+  <div class="b-notes">
+    <div class="b-notes-lbl">Special Requests</div>
+    <div class="b-notes-items">
+      <span class="b-tag b-tag-teal">Shade Required</span>
+      <span class="b-tag b-tag-teal">No Direct Sun</span>
+      <span class="b-tag b-tag-clay">Microphone Needed</span>
+      <span class="b-tag b-tag-teal">Music &amp; Quiet Sessions</span>
+    </div>
+  </div>
+
+  <!-- THURSDAY -->
+  <div class="b-day">
+    <div class="b-day-head"><span class="b-day-name">Thursday</span><span class="b-day-date">March 26</span></div>
+    <div class="b-day-body">
+      <div class="b-row"><span class="b-r-time">4:00 PM</span><span class="b-r-dot b-dot-meal"></span><span class="b-r-content"><span class="b-r-event">Welcome Snack</span></span></div>
+      <div class="b-row"><span class="b-r-time">5:45 PM</span><span class="b-r-dot b-dot-yoga"></span><span class="b-r-content"><span class="b-r-event">Opening Circle &amp; Meditation</span><span class="b-r-detail">Orientation w/ Amansala</span></span></div>
+      <div class="b-row"><span class="b-r-time">7:30 PM</span><span class="b-r-dot b-dot-dinner"></span><span class="b-r-content"><span class="b-r-event">Dinner</span></span></div>
+    </div>
+  </div>
+
+  <!-- FRIDAY -->
+  <div class="b-day">
+    <div class="b-day-head"><span class="b-day-name">Friday</span><span class="b-day-date">March 27</span></div>
+    <div class="b-day-body">
+      <div class="b-row"><span class="b-r-time">7:00 AM</span><span class="b-r-dot b-dot-meal"></span><span class="b-r-content"><span class="b-r-event">Light Breakfast</span></span></div>
+      <div class="b-row"><span class="b-r-time">9:30 AM</span><span class="b-r-dot b-dot-yoga"></span><span class="b-r-content"><span class="b-r-event">Morning Yoga</span></span></div>
+      <div class="b-row"><span class="b-r-time">10:45 AM</span><span class="b-r-dot b-dot-meal"></span><span class="b-r-content"><span class="b-r-event">Brunch</span></span></div>
+      <div class="b-row"><span class="b-r-time">11:45 – 2:15</span><span class="b-r-dot b-dot-tour"></span><span class="b-r-content"><span class="b-r-event">Grand Cenote w/ Sergio <span class="b-r-badge b-r-opt">Optional</span></span><span class="b-r-detail b-r-price">$85 per person</span></span></div>
+      <div class="b-row"><span class="b-r-time">2:30 PM</span><span class="b-r-dot b-dot-meal"></span><span class="b-r-content"><span class="b-r-event">Snack</span></span></div>
+      <div class="b-row"><span class="b-r-time">4:30 PM</span><span class="b-r-dot b-dot-yoga"></span><span class="b-r-content"><span class="b-r-event">Yoga</span></span></div>
+      <div class="b-row"><span class="b-r-time">6:00 PM</span><span class="b-r-dot b-dot-dinner"></span><span class="b-r-content"><span class="b-r-event">Dinner</span></span></div>
+      <div class="b-row"><span class="b-r-time">7:30 PM</span><span class="b-r-dot b-dot-special"></span><span class="b-r-content"><span class="b-r-event">Salsa Class w/ Sergio</span></span></div>
+    </div>
+    <div class="b-legend">
+      <span class="b-leg-item"><span class="b-r-dot b-dot-meal" style="width:6px;height:6px"></span>Meal</span>
+      <span class="b-leg-item"><span class="b-r-dot b-dot-yoga" style="width:6px;height:6px"></span>Yoga</span>
+      <span class="b-leg-item"><span class="b-r-dot b-dot-tour" style="width:6px;height:6px"></span>Tour</span>
+      <span class="b-leg-item"><span class="b-r-dot b-dot-exp" style="width:6px;height:6px"></span>Experience</span>
+      <span class="b-leg-item"><span class="b-r-dot b-dot-special" style="width:6px;height:6px"></span>Special</span>
+    </div>
+  </div>
+
+  <!-- SATURDAY -->
+  <div class="b-day">
+    <div class="b-day-head"><span class="b-day-name">Saturday</span><span class="b-day-date">March 28</span></div>
+    <div class="b-day-body">
+      <div class="b-row"><span class="b-r-time">7:00 AM</span><span class="b-r-dot b-dot-meal"></span><span class="b-r-content"><span class="b-r-event">Light Breakfast</span></span></div>
+      <div class="b-row"><span class="b-r-time">8:00 AM</span><span class="b-r-dot b-dot-yoga"></span><span class="b-r-content"><span class="b-r-event">Morning Yoga</span></span></div>
+      <div class="b-row"><span class="b-r-time">10:45 AM</span><span class="b-r-dot b-dot-meal"></span><span class="b-r-content"><span class="b-r-event">Brunch</span></span></div>
+      <div class="b-row"><span class="b-r-time">10:45 – 1:15</span><span class="b-r-dot b-dot-tour"></span><span class="b-r-content"><span class="b-r-event">Tulum Ruins w/ Sergio <span class="b-r-badge b-r-opt">Optional</span></span><span class="b-r-detail b-r-price">$85 per person</span></span></div>
+      <div class="b-row"><span class="b-r-time">2:30 PM</span><span class="b-r-dot b-dot-meal"></span><span class="b-r-content"><span class="b-r-event">Snack</span></span></div>
+      <div class="b-row"><span class="b-r-time">3:00 PM</span><span class="b-r-dot b-dot-special"></span><span class="b-r-content"><span class="b-r-event">Cooking Class</span></span></div>
+      <div class="b-row"><span class="b-r-time">6:00 PM</span><span class="b-r-dot b-dot-yoga"></span><span class="b-r-content"><span class="b-r-event">Yoga</span></span></div>
+      <div class="b-row"><span class="b-r-time">7:30 PM</span><span class="b-r-dot b-dot-dinner"></span><span class="b-r-content"><span class="b-r-event">Dinner</span></span></div>
+    </div>
+  </div>
+
+  <!-- SUNDAY -->
+  <div class="b-day">
+    <div class="b-day-head"><span class="b-day-name">Sunday</span><span class="b-day-date">March 29</span></div>
+    <div class="b-day-body">
+      <div class="b-row"><span class="b-r-time">7:00 AM</span><span class="b-r-dot b-dot-meal"></span><span class="b-r-content"><span class="b-r-event">Light Breakfast</span></span></div>
+      <div class="b-row"><span class="b-r-time">8:00 AM</span><span class="b-r-dot b-dot-yoga"></span><span class="b-r-content"><span class="b-r-event">Morning Yoga</span></span></div>
+      <div class="b-row"><span class="b-r-time">9:30 AM</span><span class="b-r-dot b-dot-meal"></span><span class="b-r-content"><span class="b-r-event">Brunch</span></span></div>
+      <div class="b-row"><span class="b-r-time">11:45 – 2:15</span><span class="b-r-dot b-dot-tour"></span><span class="b-r-content"><span class="b-r-event">Mangrove Tour w/ Yolanda <span class="b-r-badge b-r-opt">Optional</span></span><span class="b-r-detail b-r-price">$85 per person</span></span></div>
+      <div class="b-row"><span class="b-r-time">2:30 PM</span><span class="b-r-dot b-dot-meal"></span><span class="b-r-content"><span class="b-r-event">Snack</span></span></div>
+      <div class="b-row"><span class="b-r-time">3:30 PM</span><span class="b-r-dot b-dot-exp"></span><span class="b-r-content"><span class="b-r-event">Mayan Clay Ceremony</span></span></div>
+      <div class="b-row"><span class="b-r-time">7:30 PM</span><span class="b-r-dot b-dot-dinner"></span><span class="b-r-content"><span class="b-r-event">Offsite Group Dinner</span><span class="b-r-detail">Gitano &middot; a la carte, paid on-site</span></span></div>
+    </div>
+  </div>
+
+  <!-- MONDAY -->
+  <div class="b-day">
+    <div class="b-day-head"><span class="b-day-name">Monday</span><span class="b-day-date">March 30 &middot; 13 pax</span></div>
+    <div class="b-day-body">
+      <div class="b-row"><span class="b-r-time">7:00 AM</span><span class="b-r-dot b-dot-meal"></span><span class="b-r-content"><span class="b-r-event">Light Breakfast</span></span></div>
+      <div class="b-row"><span class="b-r-time">9:30 AM</span><span class="b-r-dot b-dot-yoga"></span><span class="b-r-content"><span class="b-r-event">Morning Yoga</span></span></div>
+      <div class="b-row"><span class="b-r-time">10:45 AM</span><span class="b-r-dot b-dot-meal"></span><span class="b-r-content"><span class="b-r-event">Brunch</span></span></div>
+      <div class="b-row"><span class="b-r-time">12:00 PM</span><span class="b-r-dot b-dot-exp"></span><span class="b-r-content"><span class="b-r-event">Ice Bath <span class="b-r-badge b-r-opt">Optional</span></span><span class="b-r-detail b-r-price">$75 per person</span></span></div>
+      <div class="b-row"><span class="b-r-time">2:30 PM</span><span class="b-r-dot b-dot-meal"></span><span class="b-r-content"><span class="b-r-event">Snack</span></span></div>
+      <div class="b-row"><span class="b-r-time">4:30 PM</span><span class="b-r-dot b-dot-yoga"></span><span class="b-r-content"><span class="b-r-event">Yoga</span></span></div>
+      <div class="b-row"><span class="b-r-time">6:00 PM</span><span class="b-r-dot b-dot-exp"></span><span class="b-r-content"><span class="b-r-event">Cacao &amp; Sound Bath <span class="b-r-badge b-r-opt">Optional</span></span><span class="b-r-detail b-r-price">$65 per person</span></span></div>
+      <div class="b-row"><span class="b-r-time">7:30 PM</span><span class="b-r-dot b-dot-dinner"></span><span class="b-r-content"><span class="b-r-event">Dinner</span></span></div>
+    </div>
+  </div>
+
+  <!-- TUESDAY -->
+  <div class="b-day">
+    <div class="b-day-head"><span class="b-day-name">Tuesday</span><span class="b-day-date">March 31</span></div>
+    <div class="b-day-body">
+      <div class="b-row"><span class="b-r-time">7:00 AM</span><span class="b-r-dot b-dot-meal"></span><span class="b-r-content"><span class="b-r-event">Light Breakfast</span></span></div>
+      <div class="b-row"><span class="b-r-time">8:00 AM</span><span class="b-r-dot b-dot-yoga"></span><span class="b-r-content"><span class="b-r-event">Morning Meditation &amp; Closing Circle</span></span></div>
+      <div class="b-row"><span class="b-r-time"></span><span class="b-r-dot b-dot-meal"></span><span class="b-r-content"><span class="b-r-event">Full Breakfast</span></span></div>
+      <div class="b-row"><span class="b-r-time"></span><span class="b-r-dot" style="background:var(--earth)"></span><span class="b-r-content"><span class="b-r-event" style="font-style:italic;color:var(--earth)">Departures — Wishing you safe travels</span></span></div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<script>
+function show(opt, btn){
+  document.getElementById('optionA').style.display = opt==='A'?'':'none';
+  document.getElementById('optionB').style.display = opt==='B'?'':'none';
+  document.querySelectorAll('.sw-btn').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');
+}
+</script>
+</body>
+</html>
