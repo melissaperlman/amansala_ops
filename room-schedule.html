@@ -4400,6 +4400,15 @@ async function loadFromCloud(){
     const data = json.data;
 
     // Load groups
+    const hasCloudData = (data.groups && data.groups.length > 0) || (data.bookings && data.bookings.length > 0);
+
+    if(!hasCloudData){
+      // Cloud is empty — keep local data, enable cloud mode so Save Cloud works
+      cloudMode = true;
+      showSyncStatus('Cloud is empty — click Save Cloud to upload your data', '#c47d3e');
+      return;
+    }
+
     if(data.groups && data.groups.length > 0){
       // Keep the 'all' group, replace the rest
       GROUPS.length = 0;
