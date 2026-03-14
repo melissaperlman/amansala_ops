@@ -735,7 +735,7 @@ Sunday March 22
 </div>
 
 <script>
-const API_URL = 'https://script.google.com/macros/s/AKfycbxj0xoHVXMy-qsb-U7ZJ_PWoCbHpOyVsM4lP1HC1Y4Znd8fa9qPryuj-Hz-0rKIkFX3Rg/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbzxMcsr_-kwzRghF7iD2Dgi5AEpYSzs22hqEaG7LACUaThbKshLxVni5Ex2ExJhhc3V1Q/exec';
 let cloudMode = false; // set to true once data loads from API
 let saveTimer = null;
 
@@ -4372,6 +4372,42 @@ function addParsedTransport(){
 
 // ── CLOUD SYNC ────────────────────────────────────────────────────────────
 
+// Fix time values that Google Sheets converts to ISO date strings
+function fixTime(val){
+  if(!val) return '';
+  const s = String(val).trim();
+  // Already in HH:MM 24-hour format
+  if(/^\d{1,2}:\d{2}$/.test(s)) return s;
+  // 12-hour format like "6:13 AM" or "3:46 PM" — convert to 24-hour
+  const ampm = s.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+  if(ampm){
+    let h = parseInt(ampm[1]);
+    const m = ampm[2];
+    const period = ampm[3].toUpperCase();
+    if(period === 'AM' && h === 12) h = 0;
+    else if(period === 'PM' && h !== 12) h += 12;
+    return h.toString().padStart(2,'0') + ':' + m;
+  }
+  // ISO date string from Google Sheets (e.g. "1899-12-31T01:17:04.000Z")
+  // Use LOCAL time (not UTC) because Sheets stores times in the spreadsheet's timezone
+  if(s.includes('T') && (s.includes('1899') || s.includes('1900') || s.includes('Z'))){
+    try {
+      const d = new Date(s);
+      const h = d.getHours().toString().padStart(2,'0');
+      const m = d.getMinutes().toString().padStart(2,'0');
+      return h + ':' + m;
+    } catch(e){ return s; }
+  }
+  // Serial number (fraction of day) from Sheets
+  if(!isNaN(Number(s)) && Number(s) > 0 && Number(s) < 1){
+    const totalMinutes = Math.round(Number(s) * 24 * 60);
+    const h = Math.floor(totalMinutes / 60).toString().padStart(2,'0');
+    const m = (totalMinutes % 60).toString().padStart(2,'0');
+    return h + ':' + m;
+  }
+  return s;
+}
+
 // Status indicator
 function showSyncStatus(msg, color){
   let el = document.getElementById('syncStatus');
@@ -4427,14 +4463,15 @@ async function loadFromCloud(){
       });
     }
 
-    // Load bookings
+    // Load bookings (deduplicate)
     if(data.bookings && data.bookings.length > 0){
+      const dedupSet = new Set();
       bookings = data.bookings.map(b => ({
         id: b.id,
         group: b.group_id || 'all',
         day: b.day || '',
-        start: b.start || '',
-        end: b.end || '',
+        start: fixTime(b.start),
+        end: fixTime(b.end),
         title: b.title || '',
         subtitle: b.subtitle || '',
         teacher: b.teacher || '',
@@ -4445,7 +4482,12 @@ async function loadFromCloud(){
         category: b.category || 'classes',
         optional: b.optional === true || b.optional === 'true',
         price: b.price || ''
-      }));
+      })).filter(b => {
+        const key = [b.group, b.day, b.start, b.end, b.title, b.room].join('|');
+        if(dedupSet.has(key)) return false;
+        dedupSet.add(key);
+        return true;
+      });
       nextId = Math.max(...bookings.map(b=>b.id), 0) + 1;
     }
 
@@ -4462,7 +4504,7 @@ async function loadFromCloud(){
           lname: t.lname || '',
           flight: t.flight || '',
           date: t.date || '',
-          time: t.time || '',
+          time: fixTime(t.time),
           airport: t.airport || '',
           coordinator: t.coordinator || '',
           driver: t.driver || '',
@@ -4502,8 +4544,17 @@ async function saveToCloud(){
       removed: g.removed || false
     }));
 
+    // Deduplicate bookings by group+day+start+end+title+room
+    const seen = new Set();
+    const uniqueBookings = bookings.filter(b => {
+      const key = [b.group, b.day, b.start, b.end, b.title, b.room].join('|');
+      if(seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
     // Prepare bookings
-    const bookingsToSave = bookings.map(b => ({
+    const bookingsToSave = uniqueBookings.map(b => ({
       id: b.id,
       group_id: b.group,
       day: b.day,

@@ -18,14 +18,21 @@ function tabToJSON(tabName) {
   const data = sheet.getDataRange().getValues();
   if (data.length <= 1) return [];
   const headers = data[0];
+  // Get display values for time columns (start, end, time) to avoid Date conversion
+  const displayData = sheet.getDataRange().getDisplayValues();
+  const timeHeaders = ['start','end','time'];
   return data.slice(1)
     .filter(r => r[0] !== '' && r[0] !== null && r[0] !== undefined)
-    .map(row => {
+    .map((row, ri) => {
       const obj = {};
       headers.forEach((h, i) => {
         let val = row[i];
-        // Convert Date objects to ISO strings
-        if (val instanceof Date) val = val.toISOString();
+        // For time columns, use the display value to preserve the original string
+        if (timeHeaders.indexOf(h) !== -1 && val instanceof Date) {
+          val = displayData[ri + 1][i]; // +1 to skip header row
+        }
+        // Convert other Date objects to ISO strings
+        else if (val instanceof Date) val = val.toISOString();
         // Convert TRUE/FALSE to boolean
         if (val === true || val === 'TRUE') val = true;
         else if (val === false || val === 'FALSE') val = false;
@@ -1243,6 +1250,13 @@ function doPost(e) {
           b.updated_at = now();
           appendRow('rs_bookings', b);
         }
+        // Force start/end columns to plain text so Sheets doesn't convert times
+        const bSheet = getTab('rs_bookings');
+        const bHeaders = bSheet.getRange(1,1,1,bSheet.getLastColumn()).getValues()[0];
+        const startCol = bHeaders.indexOf('start') + 1;
+        const endCol = bHeaders.indexOf('end') + 1;
+        if(startCol > 0 && bSheet.getLastRow() > 1) bSheet.getRange(2, startCol, bSheet.getLastRow()-1, 1).setNumberFormat('@');
+        if(endCol > 0 && bSheet.getLastRow() > 1) bSheet.getRange(2, endCol, bSheet.getLastRow()-1, 1).setNumberFormat('@');
 
         // Write transport
         for (const t of rsTransport) {
@@ -1250,6 +1264,11 @@ function doPost(e) {
           t.created_at = t.created_at || now();
           appendRow('rs_transport', t);
         }
+        // Force transport time column to plain text
+        const tSheet = getTab('rs_transport');
+        const tHeaders = tSheet.getRange(1,1,1,tSheet.getLastColumn()).getValues()[0];
+        const timeCol = tHeaders.indexOf('time') + 1;
+        if(timeCol > 0 && tSheet.getLastRow() > 1) tSheet.getRange(2, timeCol, tSheet.getLastRow()-1, 1).setNumberFormat('@');
 
         return respondOk({ groups: rsGroups.length, bookings: rsBookings.length, transport: rsTransport.length });
       }
