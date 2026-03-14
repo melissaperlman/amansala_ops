@@ -345,6 +345,28 @@
   .transport-stat strong { font-weight:700; }
   .transport-stats { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px; }
   .transport-filter-bar { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:16px; }
+
+  /* IMPORT MODALS */
+  .import-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.35); z-index:200; align-items:center; justify-content:center; }
+  .import-overlay.open { display:flex; }
+  .import-box { background:#fff; border-radius:14px; padding:28px; width:560px; max-width:95vw; box-shadow:0 20px 60px rgba(0,0,0,.18); max-height:90vh; overflow-y:auto; }
+  .import-title { font-family:'Playfair Display',serif; font-size:20px; font-weight:600; margin-bottom:6px; }
+  .import-desc { font-size:13px; color:var(--muted); margin-bottom:18px; }
+  .import-field { margin-bottom:14px; }
+  .import-label { font-size:11px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); margin-bottom:5px; display:block; }
+  .import-input { width:100%; padding:9px 12px; border:1.5px solid var(--border); border-radius:8px; font-size:14px; font-family:inherit; background:var(--bg); outline:none; }
+  .import-input:focus { border-color:#999; }
+  .import-ta { width:100%; min-height:120px; padding:10px 12px; border:1.5px solid var(--border); border-radius:8px; font-size:12px; font-family:monospace; background:var(--bg); resize:vertical; outline:none; }
+  .import-ta:focus { border-color:#999; }
+  .import-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:18px; }
+  .import-btn { padding:9px 22px; border:none; border-radius:8px; font-size:14px; font-family:inherit; font-weight:600; cursor:pointer; }
+  .import-btn-primary { background:#1a1a1a; color:#fff; }
+  .import-btn-primary:hover { opacity:.85; }
+  .import-btn-cancel { background:none; border:1.5px solid var(--border); color:var(--text); }
+  .import-msg { font-size:13px; padding:8px 0; }
+  .import-msg.ok { color:var(--green); }
+  .import-msg.err { color:var(--conflict); }
+  .import-msg.loading { color:var(--muted); display:flex; align-items:center; gap:8px; }
 </style>
 </head>
 <body>
@@ -354,9 +376,8 @@
     <span class="logo">Amansala</span>
     <span class="week-label">March 15–27 · Room Schedule</span>
     <button class="btn-new-week" onclick="openNewWeekModal()" style="margin-left:auto">🗓 New Week</button>
-    <button class="btn-import" onclick="openImportModal()">📋 Import from Google Doc</button>
-    <button class="btn-import" onclick="openLeaderImportModal()" style="background:#e8f5e9;border-color:#81c784;color:#2e7d32">📥 Load Leader Schedule</button>
-    <button class="btn-import" onclick="openSheetImportModal()" style="background:#e8eaf6;border-color:#9fa8da;color:#283593">🔗 Load from Google Sheet</button>
+    <button class="btn-import" onclick="openScheduleImport()" style="background:#e8f5e9;border-color:#81c784;color:#2e7d32">+ Add Group Schedule</button>
+    <button class="btn-import" onclick="openTransportImport()" style="background:#e8eaf6;border-color:#9fa8da;color:#283593">+ Add Transport</button>
   </div>
   <div class="tabs">
     <button class="tab active" onclick="switchTab(&#39;day&#39;)">By Room &amp; Day</button>
@@ -648,6 +669,68 @@ Sunday March 22
       </div>
     </div>
 
+  </div>
+</div>
+
+<!-- IMPORT SCHEDULE MODAL -->
+<div class="import-overlay" id="importScheduleOverlay" onclick="if(event.target===this)closeScheduleImport()">
+  <div class="import-box">
+    <div class="import-title">Import Group Schedule</div>
+    <div class="import-desc">Paste a Google Doc link or paste the schedule text directly. We'll read it and add the group.</div>
+    <div class="import-field">
+      <label class="import-label">Group Name</label>
+      <input class="import-input" id="isGroupName" placeholder="e.g. Lilian So, Hot Mamas">
+    </div>
+    <div class="import-field">
+      <label class="import-label">Number of Guests</label>
+      <input class="import-input" id="isGroupPax" type="number" placeholder="e.g. 12">
+    </div>
+    <div class="import-field">
+      <label class="import-label">Group Color</label>
+      <div style="display:flex;gap:6px;flex-wrap:wrap" id="isColorPicker"></div>
+    </div>
+    <div class="import-field">
+      <label class="import-label">Google Doc URL (paste the link)</label>
+      <input class="import-input" id="isDocUrl" placeholder="https://docs.google.com/document/d/...">
+    </div>
+    <div class="import-field">
+      <label class="import-label">— OR paste the schedule text directly —</label>
+      <textarea class="import-ta" id="isDocText" placeholder="Monday | March 16&#10;4:00 | Welcome Snack&#10;5:30 - 7:00 | Welcome Yoga | Grande&#10;..."></textarea>
+    </div>
+    <div id="isStatus"></div>
+    <div id="isPreview"></div>
+    <div class="import-actions">
+      <button class="import-btn import-btn-cancel" onclick="closeScheduleImport()">Cancel</button>
+      <button class="import-btn import-btn-primary" id="isFetchBtn" onclick="fetchScheduleDoc()">Import Schedule</button>
+      <button class="import-btn import-btn-primary" id="isAddBtn" onclick="addParsedSchedule()" style="display:none;background:var(--green)">Add to Schedule</button>
+    </div>
+  </div>
+</div>
+
+<!-- IMPORT TRANSPORT MODAL -->
+<div class="import-overlay" id="importTransportOverlay" onclick="if(event.target===this)closeTransportImport()">
+  <div class="import-box">
+    <div class="import-title">Import Transport Data</div>
+    <div class="import-desc">Paste a Google Sheet link or paste the transport data directly.</div>
+    <div class="import-field">
+      <label class="import-label">Group</label>
+      <select class="import-input" id="itGroup" style="cursor:pointer"></select>
+    </div>
+    <div class="import-field">
+      <label class="import-label">Google Sheet URL (paste the link)</label>
+      <input class="import-input" id="itSheetUrl" placeholder="https://docs.google.com/spreadsheets/d/...">
+    </div>
+    <div class="import-field">
+      <label class="import-label">— OR paste the spreadsheet rows directly —</label>
+      <textarea class="import-ta" id="itSheetText" placeholder="Room&#9;fname&#9;lname&#9;flightNumber&#9;Date&#9;Time&#9;airport&#9;Driver&#9;Rate&#10;34&#9;Gudrun&#9;Bjarnadottir&#9;UA1145&#9;15/3/2026&#9;6:13 AM&#9;Cancun&#9;Salomon&#9;45"></textarea>
+    </div>
+    <div id="itStatus"></div>
+    <div id="itPreview"></div>
+    <div class="import-actions">
+      <button class="import-btn import-btn-cancel" onclick="closeTransportImport()">Cancel</button>
+      <button class="import-btn import-btn-primary" id="itFetchBtn" onclick="fetchTransportSheet()">Import Transport</button>
+      <button class="import-btn import-btn-primary" id="itAddBtn" onclick="addParsedTransport()" style="display:none;background:var(--green)">Add Transport Data</button>
+    </div>
   </div>
 </div>
 
@@ -3898,6 +3981,7 @@ function renderTransportTab(){
       <div class="transport-header">
         <span class="transport-title">Arrival Transport</span>
         <span class="transport-subtitle">${selectedGroupLabel} — Guest pickup assignments & logistics</span>
+        <button onclick="openTransportImport()" style="margin-left:auto;padding:7px 16px;border:1.5px solid #5b7fa6;border-radius:8px;background:#e8f0fa;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;color:#283593">+ Add Transport</button>
       </div>
       ${hasData ? statsHtml + tableHtml : emptyHtml}
     </div>`;
@@ -3913,6 +3997,378 @@ function parseTime12(t){
   if(ampm==='AM' && h===12) h=0;
   return h*60+min;
 }
+
+// ── IMPORT SCHEDULE ───────────────────────────────────────────────────────
+
+const GROUP_COLORS = ['#e8a5b0','#5b7fa6','#4a8c5c','#8b5cf6','#c47d3e','#2e86ab','#d4577a','#e8703a','#8a5ba6','#d4a017','#45b7a0','#a85b7f'];
+let isSelectedColor = '#e8a5b0';
+let isParsedBookings = [];
+
+function openScheduleImport(){
+  document.getElementById('isGroupName').value='';
+  document.getElementById('isGroupPax').value='';
+  document.getElementById('isDocUrl').value='';
+  document.getElementById('isDocText').value='';
+  document.getElementById('isStatus').innerHTML='';
+  document.getElementById('isPreview').innerHTML='';
+  document.getElementById('isFetchBtn').style.display='';
+  document.getElementById('isAddBtn').style.display='none';
+  isParsedBookings = [];
+
+  // Color picker
+  const picker = document.getElementById('isColorPicker');
+  picker.innerHTML = GROUP_COLORS.map(c =>
+    `<div onclick="isSelectedColor='${c}';document.querySelectorAll('#isColorPicker div').forEach(d=>d.style.outline='');this.style.outline='3px solid #1a1a1a'" style="width:28px;height:28px;border-radius:50%;background:${c};cursor:pointer;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.15);${c===isSelectedColor?'outline:3px solid #1a1a1a':''}"></div>`
+  ).join('');
+
+  document.getElementById('importScheduleOverlay').classList.add('open');
+}
+
+function closeScheduleImport(){
+  document.getElementById('importScheduleOverlay').classList.remove('open');
+}
+
+async function fetchScheduleDoc(){
+  const url = document.getElementById('isDocUrl').value.trim();
+  const text = document.getElementById('isDocText').value.trim();
+  const groupName = document.getElementById('isGroupName').value.trim();
+
+  if(!groupName){ alert('Please enter a group name.'); return; }
+  if(!url && !text){ alert('Please paste a Google Doc URL or schedule text.'); return; }
+
+  let scheduleText = text;
+
+  // If URL provided, fetch via Apps Script
+  if(url && !text){
+    document.getElementById('isStatus').innerHTML='<div class="import-msg loading"><div class="spinner"></div> Reading Google Doc...</div>';
+    try {
+      const resp = await fetch(API_URL + '?action=readGoogleDoc&url=' + encodeURIComponent(url));
+      const json = await resp.json();
+      if(!json.success) throw new Error(json.error);
+      scheduleText = json.data.text;
+      document.getElementById('isDocText').value = scheduleText;
+    } catch(err){
+      document.getElementById('isStatus').innerHTML='<div class="import-msg err">Could not read Google Doc: ' + err.message + '</div>';
+      return;
+    }
+  }
+
+  // Parse the schedule text
+  isParsedBookings = parseScheduleText(scheduleText);
+
+  if(isParsedBookings.length === 0){
+    document.getElementById('isStatus').innerHTML='<div class="import-msg err">Could not find any schedule items. Make sure the format includes times and event names.</div>';
+    return;
+  }
+
+  // Show preview
+  document.getElementById('isStatus').innerHTML='<div class="import-msg ok">Found ' + isParsedBookings.length + ' items. Review below:</div>';
+
+  let preview = '<div style="max-height:250px;overflow-y:auto;margin-top:8px">';
+  let lastDay = '';
+  isParsedBookings.forEach(b => {
+    if(b.day !== lastDay){
+      preview += `<div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:10px 0 4px">${b.day}</div>`;
+      lastDay = b.day;
+    }
+    const catIcon = b.category==='meals'?'🍽':b.category==='classes'?'🧘':b.category==='soul'?'✨':'🗺';
+    preview += `<div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:6px 10px;margin-bottom:4px;font-size:12px;display:flex;gap:8px;align-items:center">
+      <span>${catIcon}</span>
+      <span style="font-weight:600;width:100px">${fmt12(b.start)}${b.end?' – '+fmt12(b.end):''}</span>
+      <span style="flex:1">${b.title}</span>
+      <span style="color:var(--muted);font-size:11px">${b.room||''}</span>
+    </div>`;
+  });
+  preview += '</div>';
+  document.getElementById('isPreview').innerHTML = preview;
+  document.getElementById('isFetchBtn').style.display='none';
+  document.getElementById('isAddBtn').style.display='';
+}
+
+function addParsedSchedule(){
+  const groupName = document.getElementById('isGroupName').value.trim();
+  const pax = parseInt(document.getElementById('isGroupPax').value) || 0;
+  const groupId = groupName.toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,12);
+
+  // Check if group already exists
+  let existing = GROUPS.find(g => g.id === groupId);
+  if(!existing){
+    GROUPS.push({
+      id: groupId,
+      label: groupName,
+      color: isSelectedColor,
+      short: groupName.length > 16 ? groupName.slice(0,14)+'…' : groupName,
+      pax: pax,
+      lastDay: isParsedBookings.length ? isParsedBookings[isParsedBookings.length-1].day : null
+    });
+  }
+
+  // Add bookings
+  isParsedBookings.forEach(b => {
+    bookings.push({
+      id: nextId++,
+      group: groupId,
+      ...b,
+      pax: pax
+    });
+  });
+
+  closeScheduleImport();
+  render();
+  scheduleCloudSave();
+}
+
+function parseScheduleText(text){
+  const results = [];
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+
+  let currentDay = '';
+  const dayMap = {};
+
+  // Build day map from DAYS array
+  const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+  lines.forEach(line => {
+    // Check if this is a day header: "Monday | March 16" or "Tuesday | March 17"
+    const dayMatch = line.match(/^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)\s*[\|·\-]\s*(March|April|May|June)\s+(\d+)/i);
+    if(dayMatch){
+      const dayNum = parseInt(dayMatch[3]);
+      const dayOfWeek = dayMatch[1].slice(0,3);
+      currentDay = dayOfWeek + ' ' + dayNum;
+      return;
+    }
+
+    if(!currentDay) return;
+
+    // Parse time and event: "7:00 | Light Breakfast" or "5:30 - 7:00 | Welcome Yoga | Grande"
+    // Flexible: handles "630", "7:00", "945", etc.
+    const eventMatch = line.match(/^(\d{1,2}:?\d{2})\s*(?:AM|PM)?\s*(?:[\-–]\s*(\d{1,2}:?\d{2})\s*(?:AM|PM)?)?\s*[\|]?\s*(.+)/i);
+    if(!eventMatch) return;
+
+    let startRaw = eventMatch[1];
+    let endRaw = eventMatch[2] || '';
+    let rest = eventMatch[3].trim();
+
+    // Normalize time: "630" → "6:30", "945" → "9:45"
+    function normalizeTime(t){
+      if(!t) return '';
+      t = t.replace(/\s*(AM|PM)/i,'');
+      if(!t.includes(':') && t.length >= 3){
+        return t.slice(0,-2) + ':' + t.slice(-2);
+      }
+      return t;
+    }
+
+    let start24 = normalizeTime(startRaw);
+    let end24 = normalizeTime(endRaw);
+
+    // Convert to 24h if needed (assume times < 12 before noon are AM, context-dependent)
+    function to24(t){
+      if(!t) return '';
+      const [h,m] = t.split(':').map(Number);
+      if(isNaN(h)) return t;
+      // Heuristic: if hour < 6, probably PM (like 1:45 = 13:45)
+      if(h < 6 && h !== 0) return (h+12)+':'+String(m).padStart(2,'0');
+      return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');
+    }
+
+    start24 = to24(start24);
+    end24 = to24(end24);
+
+    // Parse title and room from rest: "Welcome Yoga | Grande" or "Dinner | Orientation | Max"
+    const parts = rest.split('|').map(p => p.trim()).filter(Boolean);
+    let title = parts[0] || '';
+    let room = '';
+    let teacher = '';
+
+    // Check if any part matches a known room
+    const knownRooms = ['Heaven','Chica','BF','Grande','Sky','Beachfront','Beach'];
+    parts.slice(1).forEach(p => {
+      if(knownRooms.some(r => p.toLowerCase().includes(r.toLowerCase()))){
+        room = p.replace(/Beachfront/i,'BF').replace(/Beach$/i,'BF');
+      } else if(p.toLowerCase().includes('orientation')){
+        title += ' & Orientation';
+      } else {
+        // Could be teacher or extra info
+        if(p.length < 20) teacher = p;
+        else title += ' — ' + p;
+      }
+    });
+
+    // Categorize
+    let category = 'classes';
+    const lc = title.toLowerCase();
+    if(lc.includes('breakfast') || lc.includes('brunch') || lc.includes('lunch') || lc.includes('dinner') || lc.includes('snack') || lc.includes('fruit') || lc.includes('coffee') || lc.includes('banana')){
+      category = 'meals';
+    } else if(lc.includes('meditation') || lc.includes('ceremony') || lc.includes('sound') || lc.includes('cacao') || lc.includes('circle') || lc.includes('clay')){
+      category = 'soul';
+    } else if(lc.includes('cenote') || lc.includes('ruins') || lc.includes('mangrove') || lc.includes('tour')){
+      category = 'tours';
+    }
+
+    // If no end time for meals, set a reasonable default
+    if(!end24 && category === 'meals'){
+      const [sh,sm] = start24.split(':').map(Number);
+      end24 = String(sh).padStart(2,'0') + ':' + String(sm+30).padStart(2,'0');
+      if(sm+30 >= 60) end24 = String(sh+1).padStart(2,'0') + ':' + String((sm+30)-60).padStart(2,'0');
+    }
+
+    results.push({
+      day: currentDay,
+      start: start24,
+      end: end24,
+      title: title,
+      subtitle: teacher ? 'w/ ' + teacher : '',
+      teacher: teacher,
+      room: room,
+      notes: '',
+      status: 'confirmed',
+      category: category
+    });
+  });
+
+  return results;
+}
+
+// ── IMPORT TRANSPORT ──────────────────────────────────────────────────────
+
+let itParsedArrivals = [];
+
+function openTransportImport(){
+  document.getElementById('itSheetUrl').value='';
+  document.getElementById('itSheetText').value='';
+  document.getElementById('itStatus').innerHTML='';
+  document.getElementById('itPreview').innerHTML='';
+  document.getElementById('itFetchBtn').style.display='';
+  document.getElementById('itAddBtn').style.display='none';
+  itParsedArrivals = [];
+
+  // Populate group dropdown
+  const sel = document.getElementById('itGroup');
+  sel.innerHTML = GROUPS.filter(g=>g.id!=='all').map(g =>
+    `<option value="${g.id}">${g.label}</option>`
+  ).join('');
+
+  document.getElementById('importTransportOverlay').classList.add('open');
+}
+
+function closeTransportImport(){
+  document.getElementById('importTransportOverlay').classList.remove('open');
+}
+
+async function fetchTransportSheet(){
+  const url = document.getElementById('itSheetUrl').value.trim();
+  const text = document.getElementById('itSheetText').value.trim();
+  const groupId = document.getElementById('itGroup').value;
+
+  if(!groupId){ alert('Please select a group.'); return; }
+  if(!url && !text){ alert('Please paste a Google Sheet URL or transport data.'); return; }
+
+  let rows = [];
+
+  if(url && !text){
+    document.getElementById('itStatus').innerHTML='<div class="import-msg loading"><div class="spinner"></div> Reading Google Sheet...</div>';
+    try {
+      const resp = await fetch(API_URL + '?action=readGoogleSheet&url=' + encodeURIComponent(url));
+      const json = await resp.json();
+      if(!json.success) throw new Error(json.error);
+
+      const headers = json.data.headers.map(h => String(h).toLowerCase().trim());
+      rows = json.data.rows.map(r => {
+        const obj = {};
+        headers.forEach((h,i) => { obj[h] = r[i] || ''; });
+        return obj;
+      });
+    } catch(err){
+      document.getElementById('itStatus').innerHTML='<div class="import-msg err">Could not read sheet: ' + err.message + '</div>';
+      return;
+    }
+  } else if(text){
+    // Parse tab-separated paste
+    const lines = text.split('\n').filter(l => l.trim());
+    if(lines.length < 2){ document.getElementById('itStatus').innerHTML='<div class="import-msg err">Need at least a header row and one data row.</div>'; return; }
+
+    const headers = lines[0].split('\t').map(h => h.toLowerCase().trim());
+    for(let i=1; i<lines.length; i++){
+      const cells = lines[i].split('\t');
+      if(cells.every(c => !c.trim())) continue;
+      const obj = {};
+      headers.forEach((h,j) => { obj[h] = (cells[j]||'').trim(); });
+      rows.push(obj);
+    }
+  }
+
+  // Map to transport format
+  itParsedArrivals = rows.filter(r => r.fname || r.lname).map(r => ({
+    room: r.room || '',
+    fname: r.fname || '',
+    lname: r.lname || '',
+    flight: r.flightnumber || r.flight || '',
+    date: formatTransportDate(r.date || ''),
+    time: r.time || '',
+    airport: r.airport || '',
+    coordinator: r['quien cargo'] || r.coordinator || '',
+    driver: r.driver || '',
+    rate: Number(String(r.rate).replace(/[^0-9.]/g,'')) || 0,
+    note: r.note || r.notes || ''
+  }));
+
+  if(itParsedArrivals.length === 0){
+    document.getElementById('itStatus').innerHTML='<div class="import-msg err">No transport records found. Make sure columns include: Room, fname, lname, flightNumber, Date, Time, airport, Driver, Rate</div>';
+    return;
+  }
+
+  // Preview
+  document.getElementById('itStatus').innerHTML='<div class="import-msg ok">Found ' + itParsedArrivals.length + ' arrivals:</div>';
+
+  let preview = '<div style="max-height:250px;overflow-y:auto;margin-top:8px">';
+  itParsedArrivals.forEach(a => {
+    const airCls = a.airport.toLowerCase()==='cancun'?'cancun':'tulum';
+    preview += `<div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:6px 10px;margin-bottom:4px;font-size:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <span style="font-weight:600;width:55px">${a.time||'—'}</span>
+      <span style="flex:1">${a.fname} ${a.lname}</span>
+      <span style="color:var(--muted)">${a.room}</span>
+      <span class="transport-airport ${airCls}" style="font-size:10px">${a.airport}</span>
+      <span style="color:var(--muted);font-size:11px">${a.flight}</span>
+      ${a.rate?'<span style="color:var(--green);font-weight:600;font-size:11px">$'+a.rate+'</span>':''}
+    </div>`;
+  });
+  preview += '</div>';
+  document.getElementById('itPreview').innerHTML = preview;
+  document.getElementById('itFetchBtn').style.display='none';
+  document.getElementById('itAddBtn').style.display='';
+}
+
+function formatTransportDate(d){
+  if(!d) return '';
+  d = String(d);
+  // Handle various date formats
+  if(d.includes('/')){ return d; }
+  if(d.includes('-')){ const p=d.split('-'); return p[2]+'/'+p[1]+'/'+p[0]; }
+  return d;
+}
+
+function addParsedTransport(){
+  const groupId = document.getElementById('itGroup').value;
+
+  if(!TRANSPORT_DATA[groupId]){
+    TRANSPORT_DATA[groupId] = { group: groupId, arrivals: [] };
+  }
+
+  // Add new arrivals (avoid exact duplicates)
+  itParsedArrivals.forEach(a => {
+    const isDup = TRANSPORT_DATA[groupId].arrivals.some(ex =>
+      ex.fname === a.fname && ex.lname === a.lname && ex.date === a.date
+    );
+    if(!isDup) TRANSPORT_DATA[groupId].arrivals.push(a);
+  });
+
+  closeTransportImport();
+  if(activeTab === 'transport') renderTransportTab();
+  scheduleCloudSave();
+}
+
+// ── ADD BUTTONS TO TRANSPORT TAB & HEADER ─────────────────────────────────
 
 // ── CLOUD SYNC ────────────────────────────────────────────────────────────
 

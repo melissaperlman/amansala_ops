@@ -456,6 +456,63 @@ function doGet(e) {
         });
       }
 
+      // ── READ GOOGLE DOC ────────────────────────────────────────
+      case 'readGoogleDoc': {
+        const url = e.parameter.url;
+        if (!url) return respondError('Missing url parameter');
+
+        // Extract doc ID from URL
+        const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+        if (!match) return respondError('Could not find document ID in URL');
+
+        try {
+          const doc = DocumentApp.openById(match[1]);
+          const body = doc.getBody();
+          const text = body.getText();
+          return respondOk({ title: doc.getName(), text: text });
+        } catch (err) {
+          return respondError('Could not open document: ' + err.message + '. Make sure the doc is shared with your Google account.');
+        }
+      }
+
+      // ── READ GOOGLE SHEET ──────────────────────────────────────
+      case 'readGoogleSheet': {
+        const url = e.parameter.url;
+        if (!url) return respondError('Missing url parameter');
+
+        const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+        if (!match) return respondError('Could not find spreadsheet ID in URL');
+
+        // Extract gid if present
+        const gidMatch = url.match(/gid=(\d+)/);
+
+        try {
+          const ss = SpreadsheetApp.openById(match[1]);
+          let sheet;
+          if (gidMatch) {
+            const sheets = ss.getSheets();
+            sheet = sheets.find(s => String(s.getSheetId()) === gidMatch[1]) || sheets[0];
+          } else {
+            sheet = ss.getSheets()[0];
+          }
+
+          const data = sheet.getDataRange().getValues();
+          if (data.length <= 1) return respondOk({ headers: data[0] || [], rows: [] });
+
+          const headers = data[0];
+          const rows = data.slice(1).filter(r => r.some(cell => cell !== '' && cell !== null));
+
+          return respondOk({
+            title: ss.getName(),
+            sheetName: sheet.getName(),
+            headers: headers,
+            rows: rows
+          });
+        } catch (err) {
+          return respondError('Could not open spreadsheet: ' + err.message + '. Make sure the sheet is shared with your Google account.');
+        }
+      }
+
       default:
         return respondError('Unknown action: ' + action);
     }
