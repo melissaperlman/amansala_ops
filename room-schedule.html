@@ -1331,6 +1331,18 @@ function groupStatus(g){
   return 'active';
 }
 
+function editGroupPax(gid){
+  const g = GROUPS.find(x=>x.id===gid);
+  if(!g) return;
+  const val = prompt(`How many guests in ${g.label}?`, g.pax || 0);
+  if(val === null) return;
+  const num = parseInt(val);
+  if(isNaN(num) || num < 0) return;
+  g.pax = num;
+  render();
+  scheduleCloudSave();
+}
+
 function removeGroup(gid){
   if(!confirm(`Remove this group from the schedule? Their bookings will be hidden.`)) return;
   const g = GROUPS.find(x=>x.id===gid);
@@ -1431,7 +1443,9 @@ function renderGroupBar(){
     const status = groupStatus(g);
     const border = isActive ? `2px solid ${g.color}` : '2px solid var(--border)';
     const bg = isActive ? g.color+'22' : 'var(--card)';
-    const paxBadge = g.pax ? `<span style="margin-left:6px;background:#1a1a1a;color:#fff;border-radius:4px;padding:1px 7px;font-size:12px;font-weight:700">${g.pax}</span>` : '';
+    const paxBadge = g.id !== 'all'
+      ? `<span onclick="event.stopPropagation();editGroupPax('${g.id}')" title="Click to edit guest count" style="margin-left:6px;background:${g.pax?'#1a1a1a':'#ccc'};color:#fff;border-radius:4px;padding:1px 7px;font-size:12px;font-weight:700;cursor:pointer">${g.pax||'+ pax'}</span>`
+      : '';
 
     // Departure indicator
     let statusBadge = '';
