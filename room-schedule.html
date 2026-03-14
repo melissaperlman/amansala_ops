@@ -2926,20 +2926,16 @@ function paxBubbles(b, overrideCounts){
       }
     });
   } else if(b.group === 'all'){
-    // shared activity — use each group's pax field, or group.pax as fallback
-    activeGroups.forEach(g => {
-      const n = b.pax || g.pax || 0;
-      parts.push({ color: g.color, short: g.short, n });
-      total += n;
-    });
-    // override total with sum of groups, not repeated pax
-    total = b.pax > 0 ? b.pax : activeGroups.reduce((s,g) => s + (g.pax||0), 0);
     // For 'all' with explicit pax, just show total cleanly
     if(b.pax > 0){
       return `<span style="display:inline-flex;align-items:center;gap:4px;background:#f0f0f0;border-radius:20px;padding:2px 9px;font-size:12px;font-weight:700;color:#333">${b.pax} guests</span>`;
     }
-    // No pax — show per-group breakdown from group sizes
-    parts = activeGroups.map(g => ({ color: g.color, short: g.short, n: g.pax || 0 }));
+    // Only include groups that have a meal booking on this day
+    const groupsWithMealsToday = new Set(
+      bookings.filter(x => x.day===b.day && x.category==='meals' && x.group!=='all').map(x=>x.group)
+    );
+    const relevantGroups = activeGroups.filter(g => groupsWithMealsToday.has(g.id));
+    parts = relevantGroups.map(g => ({ color: g.color, short: g.short, n: g.pax || 0 }));
     total = parts.reduce((s,p) => s + p.n, 0);
   } else {
     // Single-group booking
