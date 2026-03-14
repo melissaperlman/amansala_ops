@@ -4831,8 +4831,9 @@ function scheduleCloudSave(){
   headerTop.appendChild(syncWrap);
 })();
 
-// Try loading from cloud on startup
-loadFromCloud();
+// Don't auto-load from cloud — local data is the source of truth.
+// Use "Load Cloud" button to manually pull, "Save Cloud" to push.
+cloudMode = true;
 
 render();
 </script>
