@@ -1669,10 +1669,10 @@ function renderByDay(){
 
 // Calculate how many people will be at a meal on a given day
 function mealPaxForDay(day){
-  // Which groups have ANY booking on this day?
+  // Which groups have a MEAL booking on this day?
   const removedIds = new Set(GROUPS.filter(g=>g.removed).map(g=>g.id));
   const activeOnDay = new Set(
-    bookings.filter(b => b.day===day && b.group!=='all' && !removedIds.has(b.group)).map(b=>b.group)
+    bookings.filter(b => b.day===day && b.group!=='all' && !removedIds.has(b.group) && b.category==='meals').map(b=>b.group)
   );
   // Only count groups that are filtered in
   const visGroups = activeGroup==='all'
