@@ -2361,7 +2361,7 @@ function parseAndImportCSV(csv, forceGroup, statusEl){
   let groupId = forceGroup;
   if(!groupId){
     const gLower = groupName.toLowerCase();
-    else if(gLower.includes('woman')) groupId = 'iamwoman';
+    if(gLower.includes('woman')) groupId = 'iamwoman';
     else if(gLower.includes('meghan') || gLower.includes('kinsey')) groupId = 'meghan';
     else if(gLower.includes('sam') || gLower.includes('applebee')) groupId = 'sam';
     else {
