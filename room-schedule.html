@@ -4491,12 +4491,16 @@ async function loadFromCloud(){
       nextId = Math.max(...bookings.map(b=>b.id), 0) + 1;
     }
 
-    // Load transport
+    // Load transport (deduplicate)
     if(data.transport && data.transport.length > 0){
-      // Group transport by group_id
+      const tDedup = new Set();
       const byGroup = {};
       data.transport.forEach(t => {
         const gid = t.group_id || 'unknown';
+        // Deduplicate by group + name + date
+        const tKey = [gid, t.fname, t.lname, t.date].join('|');
+        if(tDedup.has(tKey)) return;
+        tDedup.add(tKey);
         if(!byGroup[gid]) byGroup[gid] = [];
         byGroup[gid].push({
           room: t.room || '',
@@ -4572,11 +4576,15 @@ async function saveToCloud(){
       price: b.price || ''
     }));
 
-    // Prepare transport
+    // Prepare transport (deduplicate)
     const transportToSave = [];
+    const tSeen = new Set();
     Object.keys(TRANSPORT_DATA).forEach(gKey => {
       const gd = TRANSPORT_DATA[gKey];
       gd.arrivals.forEach(a => {
+        const tKey = [gd.group, a.fname, a.lname, a.date].join('|');
+        if(tSeen.has(tKey)) return;
+        tSeen.add(tKey);
         transportToSave.push({
           group_id: gd.group,
           room: a.room,
