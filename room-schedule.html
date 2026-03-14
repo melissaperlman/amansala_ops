@@ -517,7 +517,6 @@
         <option value="meghan">Meghan's Group</option>
         <option value="iamwoman">I Am Woman (26 pax)</option>
         <option value="sam">Samantha Applebee (12 pax)</option>
-        <option value="hotmamas">Hot Mamas (12 pax)</option>
         <option value="gudrun">Gudrun &amp; Alyssa (31 pax)</option>
       </select>
     </div>
@@ -682,7 +681,6 @@ Sunday March 22
           <option value="meghan">Meghan's Group</option>
           <option value="iamwoman">I Am Woman</option>
           <option value="sam">Samantha Applebee</option>
-          <option value="hotmamas">Hot Mamas</option>
         </select>
       </div>
       <div id="sheetImportStatus" style="font-size:13px;min-height:20px;margin-bottom:8px"></div>
@@ -977,53 +975,6 @@ let bookings = [
   { id:321, group:'all',      day:'Tue 24', start:'14:30', end:'15:00', title:'Afternoon Snack',           subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
   { id:322, group:'all',      day:'Wed 25', start:'14:30', end:'15:00', title:'Afternoon Snack',           subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
   { id:323, group:'all',      day:'Thu 26', start:'14:30', end:'15:00', title:'Afternoon Snack',           subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
-  // ── Hot Mamas (Melissa) ────────────────────────────────────────────────
-  // SAT 21
-  { id:400, group:'hotmamas', day:'Sat 21', start:'16:00', end:'16:30', title:'Welcome Snack',             subtitle:'All groups', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
-  { id:401, group:'hotmamas', day:'Sat 21', start:'17:45', end:'19:00', title:'Opening Yoga',              subtitle:'', teacher:'Melissa', room:'Grande', pax:12, notes:'Noise: Low', status:'requested', category:'classes' },
-  { id:402, group:'hotmamas', day:'Sat 21', start:'19:30', end:'20:30', title:'Dinner',                    subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
-  // SUN 22
-  { id:403, group:'hotmamas', day:'Sun 22', start:'07:00', end:'08:00', title:'Light Breakfast',           subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
-  { id:404, group:'hotmamas', day:'Sun 22', start:'09:30', end:'10:30', title:'Morning Class',             subtitle:'', teacher:'Melissa', room:'Grande', pax:12, notes:'Noise: Low', status:'requested', category:'classes' },
-  { id:405, group:'hotmamas', day:'Sun 22', start:'10:45', end:'11:30', title:'Brunch',                    subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
-  { id:406, group:'hotmamas', day:'Sun 22', start:'11:45', end:'14:15', title:'Tulum Ruins',               subtitle:'Optional', teacher:'', room:'', pax:12, notes:'Optional · $75 pp', status:'confirmed', category:'tours', price:'$75', optional:true },
-  { id:407, group:'hotmamas', day:'Sun 22', start:'14:30', end:'15:00', title:'Snack',                     subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
-  { id:408, group:'hotmamas', day:'Sun 22', start:'18:00', end:'19:15', title:'Afternoon Yoga',            subtitle:'', teacher:'Melissa', room:'Grande', pax:12, notes:'Noise: Medium', status:'requested', category:'classes' },
-  { id:409, group:'hotmamas', day:'Sun 22', start:'19:30', end:'20:30', title:'Dinner',                    subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
-  // MON 23
-  { id:410, group:'hotmamas', day:'Mon 23', start:'07:00', end:'08:00', title:'Light Breakfast',           subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
-  { id:411, group:'hotmamas', day:'Mon 23', start:'09:30', end:'10:30', title:'Morning Class',             subtitle:'', teacher:'Melissa', room:'Grande', pax:12, notes:'Noise: High', status:'requested', category:'classes' },
-  { id:412, group:'hotmamas', day:'Mon 23', start:'10:45', end:'11:30', title:'Brunch',                    subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
-  { id:413, group:'hotmamas', day:'Mon 23', start:'11:45', end:'14:15', title:'Grande Cenote',             subtitle:'Prepaid / Included', teacher:'', room:'', pax:12, notes:'Included in package', status:'confirmed', category:'tours', price:'INC', optional:false },
-  { id:414, group:'hotmamas', day:'Mon 23', start:'14:30', end:'15:00', title:'Snack',                     subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
-  { id:415, group:'hotmamas', day:'Mon 23', start:'15:00', end:'16:00', title:'Cooking Class',             subtitle:'Included', teacher:'', room:'', pax:12, notes:'', status:'confirmed', category:'soul' },
-  { id:416, group:'hotmamas', day:'Mon 23', start:'18:00', end:'19:15', title:'Afternoon Yoga',            subtitle:'', teacher:'Melissa', room:'Grande', pax:12, notes:'Noise: Low', status:'requested', category:'classes' },
-  { id:417, group:'hotmamas', day:'Mon 23', start:'19:15', end:'21:30', title:'Temazcal',                  subtitle:'Optional', teacher:'', room:'', pax:12, notes:'Optional · $85 pp', status:'confirmed', category:'soul', price:'$85', optional:true },
-  { id:418, group:'hotmamas', day:'Mon 23', start:'19:30', end:'20:30', title:'Dinner',                    subtitle:'Late if temazcal', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
-  // TUE 24
-  { id:419, group:'hotmamas', day:'Tue 24', start:'07:00', end:'08:00', title:'Light Breakfast',           subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
-  { id:420, group:'hotmamas', day:'Tue 24', start:'09:30', end:'10:30', title:'Morning Class',             subtitle:'', teacher:'Melissa', room:'Grande', pax:12, notes:'', status:'requested', category:'classes' },
-  { id:421, group:'hotmamas', day:'Tue 24', start:'10:45', end:'11:30', title:'Brunch',                    subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
-  { id:422, group:'hotmamas', day:'Tue 24', start:'14:30', end:'15:00', title:'Snack',                     subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
-  { id:423, group:'hotmamas', day:'Tue 24', start:'15:00', end:'16:00', title:'Ice Bath',                  subtitle:'Optional', teacher:'', room:'', pax:12, notes:'Optional · $65 pp', status:'confirmed', category:'soul', price:'$65', optional:true },
-  { id:424, group:'hotmamas', day:'Tue 24', start:'18:00', end:'19:00', title:'Afternoon Yoga',            subtitle:'', teacher:'Melissa', room:'Grande', pax:12, notes:'', status:'requested', category:'classes' },
-  { id:425, group:'hotmamas', day:'Tue 24', start:'19:15', end:'20:15', title:'Cacao + Sound Healing',     subtitle:'Included', teacher:'', room:'', pax:12, notes:'Included in package', status:'confirmed', category:'soul', price:'INC', optional:false },
-  { id:426, group:'hotmamas', day:'Tue 24', start:'20:30', end:'21:30', title:'Dinner',                    subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
-  // WED 25
-  { id:427, group:'hotmamas', day:'Wed 25', start:'07:00', end:'08:00', title:'Light Breakfast',           subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
-  { id:428, group:'hotmamas', day:'Wed 25', start:'09:30', end:'10:30', title:'Morning Class',             subtitle:'', teacher:'Melissa', room:'Grande', pax:12, notes:'', status:'requested', category:'classes' },
-  { id:429, group:'hotmamas', day:'Wed 25', start:'10:45', end:'11:30', title:'Brunch',                    subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
-  { id:430, group:'hotmamas', day:'Wed 25', start:'11:45', end:'14:15', title:'Mangroves',                 subtitle:'Optional', teacher:'', room:'', pax:12, notes:'Optional · $75 pp', status:'confirmed', category:'tours', price:'$75', optional:true },
-  { id:431, group:'hotmamas', day:'Wed 25', start:'14:30', end:'15:00', title:'Snack',                     subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
-  { id:432, group:'hotmamas', day:'Wed 25', start:'15:00', end:'15:30', title:'Mayan Clay',                subtitle:'Optional', teacher:'', room:'', pax:12, notes:'Optional · $65 pp', status:'confirmed', category:'soul', price:'$65', optional:true },
-  { id:433, group:'hotmamas', day:'Wed 25', start:'16:30', end:'17:30', title:'Afternoon Class',           subtitle:'', teacher:'Melissa', room:'Grande', pax:12, notes:'', status:'requested', category:'classes' },
-  { id:434, group:'hotmamas', day:'Wed 25', start:'19:00', end:'19:30', title:'Salsa Class',               subtitle:'Special event', teacher:'', room:'', pax:12, notes:'', status:'confirmed', category:'soul' },
-  { id:435, group:'hotmamas', day:'Wed 25', start:'19:30', end:'21:00', title:'Special Dinner',            subtitle:'On-site · $45 pp', teacher:'', room:'', pax:12, notes:'$45 per person', status:'confirmed', category:'meals', price:'$45' },
-  // THU 26 — Departures
-  { id:436, group:'hotmamas', day:'Thu 26', start:'07:00', end:'08:00', title:'Light Breakfast',           subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
-  { id:437, group:'hotmamas', day:'Thu 26', start:'08:00', end:'09:00', title:'Morning Class',             subtitle:'', teacher:'Melissa', room:'Grande', pax:12, notes:'', status:'requested', category:'classes' },
-  { id:438, group:'hotmamas', day:'Thu 26', start:'09:00', end:'10:00', title:'Full Breakfast & Departures', subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
-
 
   // ── I Am Woman — additional/corrected bookings ─────────────────────────
   { id:500, group:'iamwoman', day:'Mon 23', start:'14:30', end:'15:00', title:'Snack',              subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
@@ -1245,7 +1196,6 @@ const GROUPS = [
   { id:'meghan',   label:"Meghan's Group",       color:'#e8a5b0', short:'Meghan',      pax:26, lastDay:'Thu 26' },
   { id:'iamwoman', label:'I Am Woman',            color:'#5b7fa6', short:'I Am Woman',  pax:12, lastDay:'Fri 27' },
   { id:'sam',      label:'Samantha Applebee',     color:'#4a8c5c', short:'Sam A.',      pax:12, lastDay:'Thu 26' },
-  { id:'hotmamas', label:'Hot Mamas',              color:'#c47d3e', short:'Hot Mamas',  pax:12, lastDay:'Thu 26' },
   { id:'gudrun',   label:'Gudrun & Alyssa Dasso',  color:'#2e86ab', short:'Gudrun & Alyssa', pax:31, lastDay:'Sat 21' },
   { id:'lilian',   label:'Lilian So',              color:'#d4577a', short:'Lilian So',      pax:28, lastDay:'Sat 21' },
 ];
@@ -1287,7 +1237,6 @@ const dietaryState = {
   meghan:   { vegans:0, vegetarians:0, glutenFree:0, allergies:'' },
   iamwoman: { vegans:0, vegetarians:0, glutenFree:0, allergies:'' },
   sam:      { vegans:0, vegetarians:0, glutenFree:0, allergies:'' },
-  hotmamas: { vegans:0, vegetarians:12, glutenFree:0, allergies:'' },
   gudrun:   { vegans:0, vegetarians:0, glutenFree:0, allergies:'Roxana Mercado-Ryan: Celiac (GF), Michael Perlstein: Lactose intolerant, Andrea Elkort: Gluten intolerant, Rashika Silma: Gluten, Jessica Walsh: Dairy Free' },
 };
 function getTourState(id){
@@ -2197,7 +2146,9 @@ function mergedMealRow(b){
   const mealKey = 'meal-' + b.start + '-' + (b.title||'').toLowerCase().replace(/[^a-z0-9]/g,'-').slice(0,20);
   let dietChips = '';
   let totalVegans = 0, totalVeg = 0, totalGF = 0, hasAllergy = false;
-  activeGroups.forEach(g => {
+  // Only check dietary info for groups that are part of this meal
+  const dietGroups = activeGroups.filter(g => mergedGroupIds.has(g.id));
+  dietGroups.forEach(g => {
     const d = dietaryState[g.id] || {};
     totalVegans += d.vegans||0;
     totalVeg    += d.vegetarians||0;
@@ -2210,7 +2161,7 @@ function mergedMealRow(b){
   if(hasAllergy)       dietChips += `<span style="background:#fce4ec;border:1px solid #f48fb1;color:#c62828;border-radius:5px;padding:1px 7px;font-size:11px;font-weight:600">⚠ Allergy</span>`;
 
   // ── Per-group dietary rows for panel ─────────────────────────────────────
-  const dietRows = activeGroups.map(g => {
+  const dietRows = dietGroups.map(g => {
     const d = dietaryState[g.id] || {};
     return `<div style="border-bottom:1px solid #f0e8f8;padding:10px 0">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
@@ -2262,7 +2213,7 @@ function mergedMealRow(b){
       ${b.optional?`<span class="optional-badge">Optional</span>`:''}
       ${b.price?`<span class="compact-price">${b.price}</span>`:''}
       ${paxInline}
-      <span class="meal-diet-chips">${dietChips}</span>
+      ${dietChips?`<span class="meal-diet-chips">${dietChips}</span>`:''}
       ${allNotes?`<span class="compact-detail" title="${allNotes}">📋</span>`:''}
       <button onclick="toggleDietPanel('${mealKey}')"
         style="margin-left:auto;font-size:11px;font-weight:600;color:#8a5ba6;background:#f5e8ff;border:1px solid #d4a0e4;border-radius:5px;padding:2px 8px;cursor:pointer;font-family:inherit"
@@ -2410,7 +2361,6 @@ function parseAndImportCSV(csv, forceGroup, statusEl){
   let groupId = forceGroup;
   if(!groupId){
     const gLower = groupName.toLowerCase();
-    if(gLower.includes('mama')) groupId = 'hotmamas';
     else if(gLower.includes('woman')) groupId = 'iamwoman';
     else if(gLower.includes('meghan') || gLower.includes('kinsey')) groupId = 'meghan';
     else if(gLower.includes('sam') || gLower.includes('applebee')) groupId = 'sam';
