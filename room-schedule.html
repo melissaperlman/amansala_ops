@@ -4402,19 +4402,11 @@ async function loadFromCloud(){
     // Load groups
     const hasCloudGroups = data.groups && data.groups.length > 0;
     const hasCloudBookings = data.bookings && data.bookings.length > 0;
-    const hasCloudTransport = data.transport && data.transport.length > 0;
 
     if(!hasCloudGroups && !hasCloudBookings){
-      // Cloud is empty — keep local data, enable cloud mode so Save Cloud works
+      // Cloud is truly empty — keep local data so user can Save Cloud
       cloudMode = true;
       showSyncStatus('Click Save Cloud to upload your data', '#c47d3e');
-      return;
-    }
-
-    // Only replace local data if cloud actually has that data type
-    if(!hasCloudBookings){
-      cloudMode = true;
-      showSyncStatus('Cloud has groups but no bookings — click Save Cloud to upload all data', '#c47d3e');
       return;
     }
 
