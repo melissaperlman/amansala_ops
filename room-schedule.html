@@ -482,7 +482,7 @@
           <option value="Fri 27">Fri, Mar 27</option>
         </select>
       </div>
-      <div class="form-row" style="margin-bottom:0">
+      <div class="form-row" style="margin-bottom:0" id="roomFieldRow">
         <label class="form-label">Room</label>
         <select class="form-select" id="fieldRoom">
           <option>Heaven</option><option>Chica</option><option>BF</option><option>Grande</option><option>Sky</option><option>Beach</option>
@@ -525,12 +525,13 @@
       </select>
     </div>
     <div class="form-row" id="mealLocationRow" style="display:none">
-      <label class="form-label">Meal Location</label>
+      <label class="form-label">Restaurant Area</label>
       <select class="form-select" id="fieldLocation">
-        <option value="">— No location —</option>
+        <option value="">— Select area —</option>
         <option value="Inside">Inside</option>
         <option value="Lower Deck">Lower Deck</option>
         <option value="Upper Deck">Upper Deck</option>
+        <option value="Pool Deck">Pool Deck</option>
         <option value="Poolside">Poolside</option>
       </select>
     </div>
@@ -2217,15 +2218,13 @@ function mergedMealRow(b){
   }).join('');
 
   const allNotes = entries.map(x=>x.notes).filter(Boolean).join(' · ');
-  const allRooms = [...new Set(entries.map(x=>x.room).filter(Boolean))].join(', ');
   const allLocations = [...new Set(entries.map(x=>x.location).filter(Boolean))].join(', ');
-  const locationLabel = allLocations || allRooms;
 
   return `<div class="meal-row">
     <div class="meal-row-top">
       <span class="compact-time">${fmt12(b.start)}${b.end&&b.end!==b.start?' – '+fmt12(b.end):''}</span>
       <span class="compact-title">${b.title}${b.subtitle?' <span style="color:var(--muted);font-weight:400">'+b.subtitle+'</span>':''}</span>
-      ${locationLabel?`<span style="font-size:11px;font-weight:600;color:#6d4c41;background:#efebe9;border:1px solid #d7ccc8;border-radius:5px;padding:1px 7px">📍 ${locationLabel}</span>`:''}
+      <span style="font-size:11px;font-weight:600;color:#6d4c41;background:#efebe9;border:1px solid #d7ccc8;border-radius:5px;padding:1px 7px">📍 Restaurant${allLocations?' · '+allLocations:''}</span>
       ${b.optional?`<span class="optional-badge">Optional</span>`:''}
       ${b.price?`<span class="compact-price">${b.price}</span>`:''}
       ${paxInline}
@@ -3078,7 +3077,9 @@ function quickToggleRequested(bookingId, evt){
 
 function toggleMealLocation(){
   const cat = document.getElementById('fieldCategory').value;
-  document.getElementById('mealLocationRow').style.display = cat==='meals' ? '' : 'none';
+  const isMeal = cat==='meals';
+  document.getElementById('mealLocationRow').style.display = isMeal ? '' : 'none';
+  document.getElementById('roomFieldRow').style.display = isMeal ? 'none' : '';
 }
 
 function saveBooking(){
@@ -4124,7 +4125,7 @@ function renderMealsCalendar(){
         html += `<div style="background:#fff;border:1px solid var(--border);border-left:3px solid ${color};border-radius:6px;padding:8px 8px;margin-bottom:6px;cursor:pointer" onclick="openModal(${b.id})">
           <div style="font-size:12px;font-weight:600;margin-bottom:3px">${b.title}</div>
           <div style="font-size:11px;color:var(--muted)">${fmt12(b.start)}${b.end&&b.end!==b.start?' – '+fmt12(b.end):''}</div>
-          ${loc?`<div style="font-size:10px;font-weight:600;color:#6d4c41;margin-top:3px">📍 ${loc}</div>`:''}
+          <div style="font-size:10px;font-weight:600;color:#6d4c41;margin-top:3px">📍 Restaurant${loc?' · '+loc:''}</div>
           ${groupDots?`<div style="display:flex;gap:3px;margin-top:4px">${groupDots}</div>`:''}
         </div>`;
       });
