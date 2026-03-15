@@ -2829,7 +2829,7 @@ function renderByRoom(){
   let html = '';
 
   rooms.forEach(room=>{
-    const rb = visibleBookings().filter(b=>b.room===room).sort((a,b)=>a.day.localeCompare(b.day)||a.start.localeCompare(b.start));
+    const rb = visibleBookings().filter(b=>b.room===room).sort((a,b)=>(DAYS.indexOf(a.day)-DAYS.indexOf(b.day))||a.start.localeCompare(b.start));
     html+=`<div class="room-section">
       <div class="room-section-header">
         <span class="room-tag ${ROOM_CSS[room]}" style="font-size:13px">${room}</span>
@@ -2868,7 +2868,7 @@ function renderByTeacher(){
 
   teachers.forEach(teacher=>{
     const tb = visibleBookings().filter(b=>b.teacher===teacher)
-      .sort((a,b)=>a.day.localeCompare(b.day)||a.start.localeCompare(b.start));
+      .sort((a,b)=>(DAYS.indexOf(a.day)-DAYS.indexOf(b.day))||a.start.localeCompare(b.start));
     const totalPax = tb.reduce((s,b)=>s+b.pax,0);
 
     html+=`<div class="teacher-section">
