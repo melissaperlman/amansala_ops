@@ -4134,7 +4134,9 @@ function renderRetreatsOverview(){
         </div>
         <span style="font-size:13px;font-weight:700;background:#f5f5f5;border:1px solid #e0e0e0;border-radius:8px;padding:3px 10px">${g.pax||0} guests</span>
         ${statusBadge}
-        <span style="font-size:18px;color:var(--muted);margin-left:8px">›</span>
+        <button onclick="event.stopPropagation();setGroup('${g.id}');switchTab('day')" style="padding:4px 12px;border:1.5px solid var(--border);border-radius:6px;background:var(--card);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--text)">📋 Schedule</button>
+        <button onclick="event.stopPropagation();setGroup('${g.id}');switchTab('transport')" style="padding:4px 12px;border:1.5px solid var(--border);border-radius:6px;background:var(--card);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--text)">🚐 Transport</button>
+        <span style="font-size:18px;color:var(--muted);margin-left:4px">›</span>
       </div>
 
       <div id="${panelId}" style="display:none;border-top:1px solid var(--border);padding:16px 20px;background:#fafaf8">
