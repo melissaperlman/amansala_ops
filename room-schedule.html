@@ -2230,9 +2230,9 @@ function mergedMealRow(b){
       ${paxInline}
       ${dietChips?`<span class="meal-diet-chips">${dietChips}</span>`:''}
       ${allNotes?`<span class="compact-detail" title="${allNotes}">📋</span>`:''}
-      ${(totalVegans+totalVeg+totalGF > 0 || hasAllergy) ? `<button onclick="toggleDietPanel('${mealKey}')"
+      <button onclick="toggleDietPanel('${mealKey}')"
         style="margin-left:auto;font-size:11px;font-weight:600;color:#8a5ba6;background:#f5e8ff;border:1px solid #d4a0e4;border-radius:5px;padding:2px 8px;cursor:pointer;font-family:inherit"
-        id="diet-btn-${mealKey}">🍽 Dietary</button>` : ''}
+        id="diet-btn-${mealKey}">🍽 Dietary</button>
       <button class="edit-btn" onclick="openModal(${b.id})">✏ Edit</button>
     </div>
 
