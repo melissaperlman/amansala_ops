@@ -512,13 +512,7 @@
     </div>
     <div class="form-row">
       <label class="form-label">Group</label>
-      <select class="form-select" id="fieldGroup">
-        <option value="all">All Groups / Shared</option>
-        <option value="meghan">Meghan's Group</option>
-        <option value="iamwoman">I Am Woman (26 pax)</option>
-        <option value="sam">Samantha Applebee (12 pax)</option>
-        <option value="gudrun">Gudrun &amp; Alyssa (31 pax)</option>
-      </select>
+      <select class="form-select" id="fieldGroup"></select>
     </div>
     <div class="form-row">
       <label class="form-label">Category</label>
@@ -678,9 +672,6 @@ Sunday March 22
         <label class="form-label">Assign to group</label>
         <select id="sheetGroupSelect" style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit">
           <option value="">← auto-detect from sheet</option>
-          <option value="meghan">Meghan's Group</option>
-          <option value="iamwoman">I Am Woman</option>
-          <option value="sam">Samantha Applebee</option>
         </select>
       </div>
       <div id="sheetImportStatus" style="font-size:13px;min-height:20px;margin-bottom:8px"></div>
@@ -1797,6 +1788,7 @@ function mergedTourRow(b){
     <div class="tour-row-top">
       <span class="compact-time">${fmt12(b.start)}${b.end&&b.end!==b.start?' – '+fmt12(b.end):''}</span>
       <span class="compact-title" style="font-weight:600;font-size:14px">${cleanTitle}</span>
+      ${(b._merged||[b]).map(x=>x.group).filter(g=>g&&g!=='all').filter((v,i,a)=>a.indexOf(v)===i).map(gid=>{const gm=groupMeta(gid);return `<span style="display:inline-flex;align-items:center;gap:3px;background:${gm.color}18;border:1px solid ${gm.color}40;border-radius:4px;padding:1px 7px;font-size:11px;font-weight:600;color:${gm.color}"><span style="width:6px;height:6px;border-radius:50%;background:${gm.color};display:inline-block"></span>${gm.short}</span>`;}).join('')}
       ${costPill}
       ${optBadge}
       ${tourPaxBubbles}
@@ -2016,10 +2008,21 @@ function mergedSoulRow(b){
     ? `<span style="font-size:12px;color:var(--muted)" title="${b.notes}">📋 ${b.notes}</span>`
     : '';
 
+  // Group tags — show which groups have this soul service
+  const soulEntries = b._merged || [b];
+  const soulGroupIds = [...new Set(soulEntries.map(x=>x.group).filter(g=>g&&g!=='all'))];
+  const soulGroupTags = soulGroupIds.map(gid => {
+    const gm = groupMeta(gid);
+    return `<span style="display:inline-flex;align-items:center;gap:3px;background:${gm.color}18;border:1px solid ${gm.color}40;border-radius:4px;padding:1px 7px;font-size:11px;font-weight:600;color:${gm.color}">
+      <span style="width:6px;height:6px;border-radius:50%;background:${gm.color};display:inline-block"></span>${gm.short}
+    </span>`;
+  }).join('');
+
   return `<div class="tour-row" style="border-left-color:#8a5ba6" id="soulrow-${slotKey}">
     <div class="tour-row-top">
       <span class="compact-time">${fmt12(b.start)}${b.end&&b.end!==b.start?' – '+fmt12(b.end):''}</span>
       <span class="compact-title" style="font-weight:600;font-size:14px">${cleanTitle}</span>
+      ${soulGroupTags}
       ${pricePill}
       ${optBadge}
       ${teacherLine}
@@ -2311,6 +2314,12 @@ function openSheetImportModal(){
   showSheetStep(1);
   document.getElementById('sheetCsvPaste').value='';
   document.getElementById('sheetImportStatus').textContent='';
+  // Populate group dropdown dynamically
+  const sel = document.getElementById('sheetGroupSelect');
+  const autoOpt = '<option value="">← auto-detect from sheet</option>';
+  sel.innerHTML = autoOpt + GROUPS.filter(g => g.id !== 'all' && !g.removed).map(g =>
+    `<option value="${g.id}">${g.label}</option>`
+  ).join('');
 }
 function closeSheetImportModal(){
   document.getElementById('sheetImportOverlay').style.display='none';
@@ -2973,6 +2982,11 @@ function card(b){
 function openModal(id, defaultDay, defaultRoom){
   editingId = id;
   updateTeacherDatalist();
+  // Populate group dropdown dynamically from GROUPS
+  const groupSelect = document.getElementById('fieldGroup');
+  groupSelect.innerHTML = GROUPS.filter(g => !g.removed).map(g =>
+    `<option value="${g.id}">${g.label}${g.pax?' ('+g.pax+' pax)':''}</option>`
+  ).join('');
   document.getElementById('modalTitle').textContent = id ? 'Edit Booking' : 'Add Booking';
   document.getElementById('deleteBtn').style.display = id ? 'block' : 'none';
   if(id){
