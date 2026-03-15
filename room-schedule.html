@@ -408,6 +408,7 @@
     <button class="tab" onclick="switchTab(&#39;teacher&#39;)">By Teacher</button>
     <button class="tab" onclick="switchTab(&#39;requests&#39;)" id="requestsTab">Teacher Requests <span id="pendingBadge" style="display:none;background:#e8703a;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;font-weight:700;margin-left:5px">0</span></button>
     <button class="tab" onclick="switchTab(&#39;retreat&#39;)">By Retreat</button>
+    <button class="tab" onclick="switchTab(&#39;mealcal&#39;)">Meals Calendar</button>
     <button class="tab" onclick="switchTab(&#39;transport&#39;)">Transport</button>
   </div>
 </div>
@@ -516,11 +517,21 @@
     </div>
     <div class="form-row">
       <label class="form-label">Category</label>
-      <select class="form-select" id="fieldCategory">
+      <select class="form-select" id="fieldCategory" onchange="toggleMealLocation()">
         <option value="classes">🧘 Classes</option>
         <option value="meals">🍽 Meals</option>
         <option value="tours">🗺 Tours</option>
         <option value="soul">✨ Soul Services</option>
+      </select>
+    </div>
+    <div class="form-row" id="mealLocationRow" style="display:none">
+      <label class="form-label">Meal Location</label>
+      <select class="form-select" id="fieldLocation">
+        <option value="">— No location —</option>
+        <option value="Inside">Inside</option>
+        <option value="Lower Deck">Lower Deck</option>
+        <option value="Upper Deck">Upper Deck</option>
+        <option value="Poolside">Poolside</option>
       </select>
     </div>
     <div class="form-row">
@@ -2207,12 +2218,14 @@ function mergedMealRow(b){
 
   const allNotes = entries.map(x=>x.notes).filter(Boolean).join(' · ');
   const allRooms = [...new Set(entries.map(x=>x.room).filter(Boolean))].join(', ');
+  const allLocations = [...new Set(entries.map(x=>x.location).filter(Boolean))].join(', ');
+  const locationLabel = allLocations || allRooms;
 
   return `<div class="meal-row">
     <div class="meal-row-top">
       <span class="compact-time">${fmt12(b.start)}${b.end&&b.end!==b.start?' – '+fmt12(b.end):''}</span>
       <span class="compact-title">${b.title}${b.subtitle?' <span style="color:var(--muted);font-weight:400">'+b.subtitle+'</span>':''}</span>
-      ${allRooms?`<span class="compact-detail">· ${allRooms}</span>`:''}
+      ${locationLabel?`<span style="font-size:11px;font-weight:600;color:#6d4c41;background:#efebe9;border:1px solid #d7ccc8;border-radius:5px;padding:1px 7px">📍 ${locationLabel}</span>`:''}
       ${b.optional?`<span class="optional-badge">Optional</span>`:''}
       ${b.price?`<span class="compact-price">${b.price}</span>`:''}
       ${paxInline}
@@ -3001,6 +3014,7 @@ function openModal(id, defaultDay, defaultRoom){
     document.getElementById('fieldNotes').value=b.notes;
     document.getElementById('fieldStatus').value=b.status;
     document.getElementById('fieldCategory').value=b.category||'classes';
+    document.getElementById('fieldLocation').value=b.location||'';
     document.getElementById('fieldGroup').value=b.group||'all';
   } else {
     document.getElementById('fieldTitle').value='';
@@ -3013,8 +3027,10 @@ function openModal(id, defaultDay, defaultRoom){
     document.getElementById('fieldNotes').value='';
     document.getElementById('fieldStatus').value='confirmed';
     document.getElementById('fieldCategory').value=activeCategory!=='all'?activeCategory:'classes';
+    document.getElementById('fieldLocation').value='';
     document.getElementById('fieldGroup').value=activeGroup!=='all'?activeGroup:'all';
   }
+  toggleMealLocation();
   syncRoomRequestedCheckbox();
   document.getElementById('modalOverlay').classList.add('open');
 }
@@ -3060,6 +3076,11 @@ function quickToggleRequested(bookingId, evt){
   else render();
 }
 
+function toggleMealLocation(){
+  const cat = document.getElementById('fieldCategory').value;
+  document.getElementById('mealLocationRow').style.display = cat==='meals' ? '' : 'none';
+}
+
 function saveBooking(){
   const data={
     title:document.getElementById('fieldTitle').value.trim()||'Untitled',
@@ -3073,6 +3094,7 @@ function saveBooking(){
     status:document.getElementById('fieldStatus').value,
     category:document.getElementById('fieldCategory').value,
     group:document.getElementById('fieldGroup').value||'all',
+    location:document.getElementById('fieldLocation').value||'',
     subtitle:'',
   };
   if(editingId){ const i=bookings.findIndex(b=>b.id===editingId); bookings[i]={...bookings[i],...data}; }
@@ -3091,9 +3113,9 @@ function deleteBooking(){
 function switchTab(tab){
   activeTab=tab;
   document.body.classList.toggle('dayview-active', tab==='dayview');
+  const tabOrder = ['day','dayview','room','teacher','requests','retreat','mealcal','transport'];
   document.querySelectorAll('.tab').forEach((t,i)=>{
-    t.classList.toggle('active',
-      (i===0&&tab==='day')||(i===1&&tab==='dayview')||(i===2&&tab==='room')||(i===3&&tab==='teacher')||(i===4&&tab==='retreat')||(i===5&&tab==='requests')||(i===6&&tab==='transport'));
+    t.classList.toggle('active', tabOrder[i]===tab);
   });
   // Hide/show category tabs and group bar for requests tab
   const catTabs = document.getElementById('catTabs');
@@ -3105,6 +3127,12 @@ function switchTab(tab){
     if(filterBar) filterBar.style.display='none';
     renderGroupBar();
     renderTransportTab();
+  } else if(tab==='mealcal'){
+    if(catTabs) catTabs.style.display='none';
+    if(groupBar) groupBar.style.display='';
+    if(filterBar) filterBar.style.display='none';
+    renderGroupBar();
+    renderMealsCalendar();
   } else if(tab==='retreat'){
     if(catTabs) catTabs.style.display='none';
     if(groupBar) groupBar.style.display='none';
@@ -3129,7 +3157,7 @@ function switchTab(tab){
   }
 }
 function setCat(c){ activeCategory=c; render(); }
-function setGroup(g){ activeGroup=g; if(activeTab==='transport'){ renderGroupBar(); renderTransportTab(); } else if(activeTab==='dayview'){ renderGroupBar(); renderDayView(); } else render(); }
+function setGroup(g){ activeGroup=g; if(activeTab==='transport'){ renderGroupBar(); renderTransportTab(); } else if(activeTab==='dayview'){ renderGroupBar(); renderDayView(); } else if(activeTab==='mealcal'){ renderGroupBar(); renderMealsCalendar(); } else render(); }
 function setDay(d){ activeDay=d; render(); }
 function setRoom(r){ activeRoom=r; render(); }
 function setTeacher(t){ activeTeacher=t; render(); }
@@ -4023,6 +4051,94 @@ function renderRetreatView(){
   content.innerHTML = html;
 }
 
+// ── MEALS CALENDAR VIEW ──────────────────────────────────────────────────
+function renderMealsCalendar(){
+  const content = document.getElementById('mainContent');
+  const removedIds = new Set(GROUPS.filter(g=>g.removed).map(g=>g.id));
+  const MEAL_COLORS = { breakfast:'#ff9800', lunch:'#4caf50', dinner:'#5c6bc0', snack:'#ab47bc' };
+
+  function mealType(title){
+    const t = (title||'').toLowerCase();
+    if(t.includes('breakfast') || t.includes('brunch')) return 'breakfast';
+    if(t.includes('lunch')) return 'lunch';
+    if(t.includes('dinner') || t.includes('supper')) return 'dinner';
+    if(t.includes('snack') || t.includes('juice') || t.includes('smoothie')) return 'snack';
+    return 'lunch'; // default
+  }
+
+  let html = '<div style="padding:16px 24px 32px">';
+  html += '<div style="font-family:Playfair Display,serif;font-size:20px;font-weight:600;margin-bottom:16px">Meals Calendar</div>';
+
+  // Legend
+  html += '<div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:18px">';
+  ['breakfast','lunch','dinner','snack'].forEach(type => {
+    html += `<span style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600">
+      <span style="width:10px;height:10px;border-radius:3px;background:${MEAL_COLORS[type]}"></span>${type.charAt(0).toUpperCase()+type.slice(1)}</span>`;
+  });
+  html += '</div>';
+
+  // Calendar grid - days as columns
+  html += `<div style="display:grid;grid-template-columns:repeat(${DAYS.length},minmax(140px,1fr));gap:0;border:1px solid var(--border);border-radius:10px;overflow:hidden;overflow-x:auto">`;
+
+  DAYS.forEach((day,di) => {
+    const dayLabel = DAY_LABELS[day] || day;
+    const parts = dayLabel.split(', ');
+    const shortDay = parts[0] ? parts[0].slice(0,3) : '';
+    const dateStr = parts[1] || '';
+
+    // Get meals for this day
+    let dayMeals = bookings.filter(b =>
+      b.day===day && b.category==='meals' && !removedIds.has(b.group)
+    );
+    if(activeGroup !== 'all') dayMeals = dayMeals.filter(b => b.group===activeGroup || b.group==='all');
+
+    const merged = mergeMeals(dayMeals);
+    const { total:paxTotal } = mealPaxForDay(day);
+
+    // Day header
+    html += `<div style="border-right:${di<DAYS.length-1?'1':'0'}px solid var(--border);min-height:200px">`;
+    html += `<div style="background:var(--card);border-bottom:1px solid var(--border);padding:10px 8px;text-align:center;position:sticky;top:0;z-index:2">
+      <div style="font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted)">${shortDay}</div>
+      <div style="font-size:15px;font-weight:600">${dateStr}</div>
+      ${paxTotal>0?`<div style="font-size:11px;color:#6d4c41;font-weight:600;margin-top:2px">🍽 ${paxTotal} covers</div>`:''}
+    </div>`;
+
+    // Meal cards
+    html += '<div style="padding:6px 6px 10px">';
+    if(merged.length === 0){
+      html += '<div style="color:var(--muted);font-size:12px;text-align:center;padding:16px 0">No meals</div>';
+    } else {
+      merged.forEach(b => {
+        const type = mealType(b.title);
+        const color = MEAL_COLORS[type];
+        const loc = b.location || [...new Set((b._merged||[b]).map(x=>x.location).filter(Boolean))].join(', ');
+
+        // Group dots
+        const entries = b._merged || [b];
+        const groupIds = [...new Set(entries.map(x=>x.group).filter(x=>x!=='all'))];
+        const groupDots = groupIds.map(gid => {
+          const g = groupMeta(gid);
+          return `<span title="${g.label}" style="width:7px;height:7px;border-radius:50%;background:${g.color};display:inline-block"></span>`;
+        }).join('');
+
+        html += `<div style="background:#fff;border:1px solid var(--border);border-left:3px solid ${color};border-radius:6px;padding:8px 8px;margin-bottom:6px;cursor:pointer" onclick="openModal(${b.id})">
+          <div style="font-size:12px;font-weight:600;margin-bottom:3px">${b.title}</div>
+          <div style="font-size:11px;color:var(--muted)">${fmt12(b.start)}${b.end&&b.end!==b.start?' – '+fmt12(b.end):''}</div>
+          ${loc?`<div style="font-size:10px;font-weight:600;color:#6d4c41;margin-top:3px">📍 ${loc}</div>`:''}
+          ${groupDots?`<div style="display:flex;gap:3px;margin-top:4px">${groupDots}</div>`:''}
+        </div>`;
+      });
+    }
+    html += '</div></div>';
+  });
+
+  html += '</div>'; // grid
+  html += '</div>'; // wrap
+  content.innerHTML = html;
+  content.style.maxWidth = 'none';
+  content.style.padding = '0';
+}
+
 function renderTransportTab(){
   const content = document.getElementById('mainContent');
   content.style.maxWidth = '960px';
@@ -4629,7 +4745,8 @@ async function loadFromCloud(){
         status: b.status || 'confirmed',
         category: b.category || 'classes',
         optional: b.optional === true || b.optional === 'true',
-        price: b.price || ''
+        price: b.price || '',
+        location: b.location || ''
       })).filter(b => {
         const key = [b.group, b.day, b.start, b.end, b.title, b.room].join('|');
         if(dedupSet.has(key)) return false;
@@ -4721,7 +4838,8 @@ async function saveToCloud(){
       status: b.status || 'confirmed',
       category: b.category || 'classes',
       optional: b.optional || false,
-      price: b.price || ''
+      price: b.price || '',
+      location: b.location || ''
     }));
 
     // Prepare transport (deduplicate)
