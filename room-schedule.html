@@ -2795,6 +2795,7 @@ function renderDayView(){
         const conflictClass = conflictIds.has(b.id) ? 'conflict-ev' : '';
         const gm = groupMeta(b.group);
         const groupDot = b.group!=='all' ? '<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:'+gm.color+';margin-right:3px;vertical-align:middle"></span>' : '';
+        const groupLabel = b.group!=='all' ? '<div style="font-size:9px;font-weight:700;color:'+gm.color+';letter-spacing:0.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+gm.short+'</div>' : '';
         const teacherLine = b.teacher ? '<div class="ev-teacher">👤 '+b.teacher+'</div>' : '';
         const paxLine = b.pax ? ' · '+b.pax : '';
 
@@ -2805,7 +2806,7 @@ function renderDayView(){
         ev.title = fmt12(b.start)+'–'+fmt12(b.end)+' · '+b.title+(b.teacher?' · '+b.teacher:'');
         ev.onclick = function(e){ e.stopPropagation(); openModal(b.id); };
         const reqBadge = isRequested ? '<div style="font-size:9px;font-weight:700;color:#d4a017;letter-spacing:0.05em">★ REQUESTED</div>' : '';
-        ev.innerHTML = reqBadge+teacherLine+'<div class="ev-title">'+groupDot+b.title+'</div>'+(heightPx > 30 ? '<div class="ev-time">'+fmt12(b.start)+'–'+fmt12(b.end)+paxLine+'</div>' : '');
+        ev.innerHTML = reqBadge+groupLabel+teacherLine+'<div class="ev-title">'+groupDot+b.title+'</div>'+(heightPx > 30 ? '<div class="ev-time">'+fmt12(b.start)+'–'+fmt12(b.end)+paxLine+'</div>' : '');
         overlay.appendChild(ev);
       });
     });
