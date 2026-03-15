@@ -2841,11 +2841,14 @@ function renderByRoom(){
       html+=`<div class="empty-state" style="padding:20px 0">No bookings for this room.</div>`;
     } else {
       rb.forEach(b=>{
+        const gm = groupMeta(b.group);
+        const groupTag = b.group && b.group!=='all' ? `<span style="display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:600;color:#333;background:${gm.color}22;border:1px solid ${gm.color}44;border-radius:4px;padding:1px 6px"><span style="width:6px;height:6px;border-radius:50%;background:${gm.color};display:inline-block"></span>${gm.short}</span>` : '';
         html+=`<div class="teacher-booking-row">
           <span class="trow-day">${b.day}</span>
           <span class="trow-time">${fmt12(b.start)}–${fmt12(b.end)}</span>
           <span class="trow-title"><strong>${b.title}</strong>${b.subtitle?` <span style="color:var(--muted)">${b.subtitle}</span>`:''}</span>
-          <span class="teacher-chip ${tChip(b.teacher)}" style="font-size:12px">${b.teacher}</span>
+          ${groupTag}
+          ${b.teacher?`<span class="teacher-chip ${tChip(b.teacher)}" style="font-size:12px">${b.teacher}</span>`:''}
           <span class="trow-pax">${b.pax} pax</span>
           <button class="edit-btn" onclick="openModal(${b.id})">✏ Edit</button>
         </div>`;
