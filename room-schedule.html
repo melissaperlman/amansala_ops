@@ -2580,6 +2580,14 @@ function detectRoomConflicts() {
       }
     }
   });
+  // Sort chronologically by day then by earliest start time
+  conflicts.sort((a,b) => {
+    const dayDiff = DAYS.indexOf(a.day) - DAYS.indexOf(b.day);
+    if(dayDiff !== 0) return dayDiff;
+    const startA = a.timeA.split('–')[0];
+    const startB = b.timeA.split('–')[0];
+    return startA.localeCompare(startB);
+  });
   return conflicts;
 }
 
