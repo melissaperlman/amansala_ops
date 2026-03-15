@@ -4238,19 +4238,20 @@ function renderMealsCalendar(){
         const color = MEAL_COLORS[type];
         const loc = b.location || [...new Set((b._merged||[b]).map(x=>x.location).filter(Boolean))].join(', ');
 
-        // Group dots
+        // Group tags with names
         const entries = b._merged || [b];
         const groupIds = [...new Set(entries.map(x=>x.group).filter(x=>x!=='all'))];
-        const groupDots = groupIds.map(gid => {
+        const groupTags = groupIds.map(gid => {
           const g = groupMeta(gid);
-          return `<span title="${g.label}" style="width:7px;height:7px;border-radius:50%;background:${g.color};display:inline-block"></span>`;
+          return `<span style="display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:600;color:#333;background:${g.color}22;border:1px solid ${g.color}44;border-radius:4px;padding:1px 5px">
+            <span style="width:6px;height:6px;border-radius:50%;background:${g.color};display:inline-block"></span>${g.short}</span>`;
         }).join('');
 
         html += `<div style="background:#fff;border:1px solid var(--border);border-left:3px solid ${color};border-radius:6px;padding:8px 8px;margin-bottom:6px;cursor:pointer" onclick="openModal(${b.id})">
           <div style="font-size:12px;font-weight:600;margin-bottom:3px">${b.title}</div>
           <div style="font-size:11px;color:var(--muted)">${fmt12(b.start)}${b.end&&b.end!==b.start?' – '+fmt12(b.end):''}</div>
           <div style="font-size:10px;font-weight:600;color:#6d4c41;margin-top:3px">📍 Restaurant${loc?' · '+loc:''}</div>
-          ${groupDots?`<div style="display:flex;gap:3px;margin-top:4px">${groupDots}</div>`:''}
+          ${groupTags?`<div style="display:flex;gap:3px;flex-wrap:wrap;margin-top:4px">${groupTags}</div>`:''}
         </div>`;
       });
     }
