@@ -2148,7 +2148,7 @@ function mergedMealRow(b){
     .filter(g => (counts[g.id]||0) > 0)
     .map(g => `<span style="display:inline-flex;align-items:center;gap:3px">
       <span style="width:8px;height:8px;border-radius:50%;background:${g.color};display:inline-block"></span>
-      <span style="font-size:12px;font-weight:600;color:#333">${counts[g.id]}</span>
+      <span style="font-size:12px;font-weight:600;color:#333">${g.short} ${counts[g.id]}</span>
     </span>`).join('<span style="color:#bbb;font-size:10px;margin:0 1px">·</span>');
   const totalPill = activeGroups.filter(g=>(counts[g.id]||0)>0).length > 1
     ? `<span style="font-size:12px;font-weight:700;color:#fff;background:#1a1a1a;border-radius:10px;padding:1px 7px;margin-left:2px">${total}</span>`
