@@ -4594,6 +4594,7 @@ async function syncTransportFromSheet(){
     if(!json.success) throw new Error(json.error || 'Import failed');
 
     const records = json.data.transport || [];
+    if(json.data.headers) console.log('Transport sheet headers:', json.data.headers);
     if(records.length === 0){
       alert('No transport records found in the sheet. Check that column headers include: first name, last name, group, date, time, etc.');
       return;

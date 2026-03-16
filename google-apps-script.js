@@ -566,8 +566,9 @@ function doGet(e) {
             const colLname = findCol(headers, ['last','lname','surname']);
             const colRoom = findCol(headers, ['room','habitacion']);
             const colFlight = findCol(headers, ['flight','vuelo']);
-            const colDate = findCol(headers, ['date','fecha','arrival']);
-            const colTime = findCol(headers, ['time','hora','hour']);
+            // Find date & time carefully — avoid "arrival time" matching date's "arrival" keyword
+            const colTime = findCol(headers, ['arrival time','time of arrival','time','hora','hour','eta']);
+            const colDate = findCol(headers, ['arrival date','date of arrival','date','fecha','arrival']);
             const colAirport = findCol(headers, ['airport','aeropuerto']);
             const colDriver = findCol(headers, ['driver','chofer','conductor']);
             const colRate = findCol(headers, ['rate','tarifa','cost','precio']);
@@ -596,10 +597,18 @@ function doGet(e) {
             });
           });
 
+          // Include headers from each tab for debugging
+          const tabHeaders = {};
+          arrivalSheets.forEach(sheet => {
+            const data = sheet.getDataRange().getDisplayValues();
+            if (data.length > 0) tabHeaders[sheet.getName()] = data[0];
+          });
+
           return respondOk({
             transport: allTransport,
             tabsRead: tabsRead,
-            count: allTransport.length
+            count: allTransport.length,
+            headers: tabHeaders
           });
         } catch (err) {
           return respondError('Could not open transport sheet: ' + err.message + '. Make sure it is shared with the Apps Script service account.');
