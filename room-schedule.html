@@ -4155,6 +4155,7 @@ function renderRetreatsOverview(){
           <button onclick="setGroup('${g.id}');switchTab('transport')" style="padding:6px 14px;border:1.5px solid var(--border);border-radius:8px;background:var(--card);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--text)">🚐 View Transport</button>
           <button onclick="setGroup('${g.id}');switchTab('mealcal')" style="padding:6px 14px;border:1.5px solid var(--border);border-radius:8px;background:var(--card);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--text)">🍽 View Meals</button>
           <button onclick="setGroup('${g.id}');switchTab('dayview')" style="padding:6px 14px;border:1.5px solid var(--border);border-radius:8px;background:var(--card);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--text)">📅 Day View</button>
+          <button onclick="generateSignUpSheet('${g.id}')" style="padding:6px 14px;border:1.5px solid #8a5ba6;border-radius:8px;background:#f5e8ff;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;color:#8a5ba6">📝 Sign-Up Sheet</button>
         </div>
 
         <!-- Full day-by-day schedule -->
@@ -4187,6 +4188,132 @@ function renderRetreatsOverview(){
   content.innerHTML = html;
   content.style.maxWidth = '900px';
   content.style.padding = '28px 24px';
+}
+
+// ── SIGN-UP SHEET GENERATOR ──────────────────────────────────────────────
+function generateSignUpSheet(gid){
+  const g = groupMeta(gid);
+  const gb = bookings.filter(b => b.group === gid);
+
+  // Get date range
+  let firstIdx = 999, lastIdx = -1;
+  gb.forEach(b => {
+    const idx = DAYS.indexOf(b.day);
+    if(idx >= 0 && idx < firstIdx) firstIdx = idx;
+    if(idx >= 0 && idx > lastIdx) lastIdx = idx;
+  });
+  const firstDay = DAY_LABELS[DAYS[firstIdx]] || '';
+  const lastDay = DAY_LABELS[DAYS[lastIdx]] || '';
+  const dateRange = firstDay.split(', ')[1] + ' – ' + lastDay.split(', ')[1];
+
+  // Get activities: tours + soul services for this group
+  const activities = gb.filter(b => b.category==='tours' || b.category==='soul')
+    .sort((a,b) => (DAYS.indexOf(a.day)-DAYS.indexOf(b.day)) || a.start.localeCompare(b.start));
+
+  // Get guest names from transport data
+  let guests = [];
+  if(TRANSPORT_DATA[gid] && TRANSPORT_DATA[gid].arrivals){
+    guests = TRANSPORT_DATA[gid].arrivals.map(a => (a.fname + ' ' + a.lname).trim());
+  }
+  // Deduplicate and sort alphabetically by first name
+  guests = [...new Set(guests)].sort((a,b) => a.localeCompare(b));
+
+  // If no transport data, create empty rows
+  const guestCount = Math.max(guests.length, g.pax || 20);
+  while(guests.length < guestCount) guests.push('');
+
+  // Build activity columns
+  const actCols = activities.map(b => {
+    const dayLabel = DAY_LABELS[b.day] || b.day;
+    const dayParts = dayLabel.split(', ');
+    const dayShort = dayParts[0] + ', ' + (dayParts[1]||'').replace('March ','').replace('March','');
+    const isIncluded = !b.price || b.price === '$0' || b.price === '0';
+    const priceLabel = isIncluded ? 'Incl' : b.price;
+    return {
+      day: dayShort,
+      name: b.title.replace(/optional\s*/i,'').trim(),
+      price: priceLabel,
+      time: fmt12(b.start) + ' - ' + fmt12(b.end),
+      included: isIncluded
+    };
+  });
+
+  // Open print window
+  const win = window.open('', '_blank');
+  let html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>Sign-Up Sheet — ${g.label}</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Playfair+Display:wght@400;600;700&display=swap');
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body { font-family:'DM Sans',sans-serif; padding:20px; color:#1a1a1a; }
+    @media print {
+      body { padding:0; }
+      .no-print { display:none !important; }
+      table { page-break-inside:auto; }
+      tr { page-break-inside:avoid; }
+    }
+    table { border-collapse:collapse; width:100%; font-size:11px; }
+    th, td { border:1px solid #ccc; padding:6px 8px; text-align:center; }
+    th { background:#f5f3ef; font-weight:600; }
+    td.name { text-align:left; font-weight:500; min-width:160px; }
+    .header-row { background:#1a1a1a; color:#fff; }
+    .header-row th { border-color:#333; }
+    .activity-name { font-weight:700; font-size:12px; }
+    .activity-price { font-size:10px; font-weight:600; }
+    .activity-price.included { color:#2e7d32; }
+    .activity-price.paid { color:#c62828; }
+    .activity-time { font-size:10px; color:#666; }
+    .footer-row td { font-weight:600; background:#fafafa; }
+    .brand { font-family:'Playfair Display',serif; font-size:24px; letter-spacing:2px; text-transform:uppercase; }
+    .subtitle { font-size:11px; color:#888; letter-spacing:1px; text-transform:uppercase; }
+    .checkbox { width:18px; height:18px; border:1.5px solid #999; border-radius:3px; display:inline-block; }
+    .note { font-size:10px; color:#666; font-style:italic; margin:8px 0; }
+  </style></head><body>
+  <div class="no-print" style="margin-bottom:16px">
+    <button onclick="window.print()" style="padding:8px 20px;background:#1a1a1a;color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">🖨 Print</button>
+    <span style="font-size:12px;color:#888;margin-left:10px">Or Cmd+P to print / save as PDF</span>
+  </div>
+
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
+    <div>
+      <div style="font-size:16px;font-weight:700">${g.label} ${dateRange} | ${g.pax||guests.length} ppl</div>
+      <div style="font-size:11px;color:#888;margin-top:2px">Min of 7 for group rates otherwise surcharge will be applied</div>
+    </div>
+    <div style="text-align:right">
+      <div class="brand">amansala</div>
+      <div class="subtitle">Eco-Chic Resort + Spa · Tulum, Mexico</div>
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th rowspan="3" style="text-align:left;min-width:160px">Name</th>
+        ${actCols.map(a => `<th>${a.day}</th>`).join('')}
+      </tr>
+      <tr>
+        ${actCols.map(a => `<th class="activity-name">${a.name}/<span class="activity-price ${a.included?'included':'paid'}">${a.price}</span></th>`).join('')}
+      </tr>
+      <tr>
+        ${actCols.map(a => `<th class="activity-time">${a.time}</th>`).join('')}
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td colspan="${actCols.length+1}" style="font-size:10px;text-align:center;padding:4px;color:#555">✔ by your name if you would like to join. Cancellation Policy Below</td></tr>
+      ${guests.map(name => `<tr>
+        <td class="name">${name}</td>
+        ${actCols.map(() => '<td></td>').join('')}
+      </tr>`).join('')}
+      <tr><td colspan="${actCols.length+1}" class="note" style="border:none;text-align:center;padding:10px">All services must be cancelled at least 12 hours before your service otherwise you will be charged in full.</td></tr>
+      <tr class="footer-row"><td class="name">Total Pax</td>${actCols.map(() => '<td></td>').join('')}</tr>
+      <tr class="footer-row"><td class="name">Guide</td>${actCols.map(() => '<td></td>').join('')}</tr>
+      <tr class="footer-row"><td class="name">Van</td>${actCols.map(() => '<td></td>').join('')}</tr>
+    </tbody>
+  </table>
+  </body></html>`;
+
+  win.document.write(html);
+  win.document.close();
 }
 
 // ── MEALS CALENDAR VIEW ──────────────────────────────────────────────────
