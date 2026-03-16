@@ -4512,7 +4512,8 @@ function renderTransportTab(){
         <span class="transport-title">Arrival Transport</span>
         <span class="transport-subtitle">${selectedGroupLabel} — Guest pickup assignments & logistics</span>
         <button onclick="syncTransportFromSheet()" style="margin-left:auto;padding:7px 16px;border:1.5px solid #4a8c5c;border-radius:8px;background:#e8f5e9;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;color:#2e7d32" id="syncTransportBtn">🔄 Sync from Google Sheet</button>
-        <button onclick="openTransportImport()" style="padding:7px 16px;border:1.5px solid #5b7fa6;border-radius:8px;background:#e8f0fa;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;color:#283593">+ Add Transport</button>
+        <button onclick="openTransportImport()" style="padding:7px 16px;border:1.5px solid #5b7fa6;border-radius:8px;background:#e8f0fa;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;color:#283593">+ Bulk Import</button>
+        <button onclick="addTransportManual()" style="padding:7px 16px;border:1.5px solid #8a5ba6;border-radius:8px;background:#f5e8ff;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;color:#8a5ba6">+ Add Guest</button>
       </div>
       ${hasData ? statsHtml + tableHtml : emptyHtml}
     </div>`;
@@ -4531,13 +4532,11 @@ function parseTime12(t){
 
 // ── SYNC TRANSPORT FROM GOOGLE SHEET ─────────────────────────────────────
 const TRANSPORT_SHEET_ID = '1Q9bfzVn9rV_e_VYsZdJTm9rHSi9fdc4AhnaOdPln45w';
-const TRANSPORT_SHEET_GID = '564605004';
-
 async function syncTransportFromSheet(){
   const btn = document.getElementById('syncTransportBtn');
   if(btn) { btn.textContent = '⏳ Syncing...'; btn.disabled = true; }
   try {
-    const url = API_URL + '?action=importTransport&sheetId=' + TRANSPORT_SHEET_ID + '&gid=' + TRANSPORT_SHEET_GID;
+    const url = API_URL + '?action=importTransport&sheetId=' + TRANSPORT_SHEET_ID;
     const resp = await fetch(url);
     const json = await resp.json();
     if(!json.success) throw new Error(json.error || 'Import failed');
@@ -4586,8 +4585,9 @@ async function syncTransportFromSheet(){
       TRANSPORT_DATA[gid] = { group: gid, arrivals: byGroup[gid] };
     });
 
-    if(btn) btn.textContent = '✓ Synced ' + records.length + ' records';
-    setTimeout(() => { if(btn) { btn.textContent = '🔄 Sync from Google Sheet'; btn.disabled = false; } }, 3000);
+    const tabsInfo = json.data.tabsRead ? ' from ' + json.data.tabsRead.length + ' tabs' : '';
+    if(btn) btn.textContent = '✓ Synced ' + records.length + ' guests' + tabsInfo;
+    setTimeout(() => { if(btn) { btn.textContent = '🔄 Sync from Google Sheet'; btn.disabled = false; } }, 4000);
 
     // Re-render
     renderGroupBar();
@@ -4598,6 +4598,75 @@ async function syncTransportFromSheet(){
     alert('Sync failed: ' + err.message);
     if(btn) { btn.textContent = '🔄 Sync from Google Sheet'; btn.disabled = false; }
   }
+}
+
+// ── ADD TRANSPORT MANUALLY ────────────────────────────────────────────────
+function addTransportManual(){
+  const groupOpts = GROUPS.filter(g => g.id!=='all' && !g.removed).map(g =>
+    `<option value="${g.id}">${g.label}</option>`
+  ).join('');
+
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay open';
+  overlay.onclick = function(e){ if(e.target===overlay){ overlay.remove(); } };
+  overlay.innerHTML = `<div class="modal" style="max-width:460px">
+    <div class="modal-title">Add Guest Transport</div>
+    <div class="form-row"><label class="form-label">Group</label><select class="form-select" id="mtGroup">${groupOpts}</select></div>
+    <div class="form-row-half">
+      <div class="form-row"><label class="form-label">First Name</label><input class="form-input" id="mtFname" placeholder="e.g. Sarah"></div>
+      <div class="form-row"><label class="form-label">Last Name</label><input class="form-input" id="mtLname" placeholder="e.g. Turner"></div>
+    </div>
+    <div class="form-row-half">
+      <div class="form-row"><label class="form-label">Room</label><input class="form-input" id="mtRoom" placeholder="e.g. 23"></div>
+      <div class="form-row"><label class="form-label">Flight</label><input class="form-input" id="mtFlight" placeholder="e.g. UA 1145"></div>
+    </div>
+    <div class="form-row-half">
+      <div class="form-row"><label class="form-label">Date</label><input class="form-input" id="mtDate" placeholder="e.g. 16/3/2026"></div>
+      <div class="form-row"><label class="form-label">Time</label><input class="form-input" id="mtTime" placeholder="e.g. 6:13 AM"></div>
+    </div>
+    <div class="form-row-half">
+      <div class="form-row"><label class="form-label">Airport</label>
+        <select class="form-select" id="mtAirport"><option>Cancun</option><option>Tulum</option></select>
+      </div>
+      <div class="form-row"><label class="form-label">Driver</label><input class="form-input" id="mtDriver" placeholder="e.g. Salomon"></div>
+    </div>
+    <div class="form-row-half">
+      <div class="form-row"><label class="form-label">Rate ($)</label><input class="form-input" id="mtRate" type="number" placeholder="e.g. 45"></div>
+      <div class="form-row"><label class="form-label">Note</label><input class="form-input" id="mtNote" placeholder="Optional"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="this.closest('.modal-overlay').remove()">Cancel</button>
+      <button class="btn-save" onclick="saveTransportManual(this)">Add Guest</button>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+
+  // Default group to active filter
+  if(activeGroup !== 'all') document.getElementById('mtGroup').value = activeGroup;
+}
+
+function saveTransportManual(btn){
+  const gid = document.getElementById('mtGroup').value;
+  const entry = {
+    fname: document.getElementById('mtFname').value.trim(),
+    lname: document.getElementById('mtLname').value.trim(),
+    room: document.getElementById('mtRoom').value.trim(),
+    flight: document.getElementById('mtFlight').value.trim(),
+    date: document.getElementById('mtDate').value.trim(),
+    time: document.getElementById('mtTime').value.trim(),
+    airport: document.getElementById('mtAirport').value,
+    driver: document.getElementById('mtDriver').value.trim(),
+    rate: Number(document.getElementById('mtRate').value) || 0,
+    coordinator: '',
+    note: document.getElementById('mtNote').value.trim()
+  };
+  if(!entry.fname && !entry.lname){ alert('Please enter a name.'); return; }
+  if(!TRANSPORT_DATA[gid]) TRANSPORT_DATA[gid] = { group: gid, arrivals: [] };
+  TRANSPORT_DATA[gid].arrivals.push(entry);
+  btn.closest('.modal-overlay').remove();
+  renderGroupBar();
+  renderTransportTab();
+  scheduleCloudSave();
 }
 
 // ── IMPORT SCHEDULE ───────────────────────────────────────────────────────

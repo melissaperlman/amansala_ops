@@ -523,22 +523,20 @@ function doGet(e) {
       // ── IMPORT TRANSPORT FROM EXTERNAL SHEET ──────────────────
       case 'importTransport': {
         const sheetId = e.parameter.sheetId;
-        const gid = e.parameter.gid || '0';
         if (!sheetId) return respondError('Missing sheetId parameter');
 
         try {
           const extSS = SpreadsheetApp.openById(sheetId);
-          const sheets = extSS.getSheets();
-          const sheet = sheets.find(s => String(s.getSheetId()) === String(gid)) || sheets[0];
-          const data = sheet.getDataRange().getDisplayValues();
-          if (data.length <= 1) return respondOk({ transport: [], sheetName: sheet.getName() });
+          const allSheets = extSS.getSheets();
 
-          // Find header row (first row with content)
-          const headers = data[0].map(h => h.toString().toLowerCase().trim());
-          const rows = data.slice(1).filter(r => r.some(c => c !== ''));
+          // Find all tabs with "arrival" in the name (case insensitive)
+          const arrivalSheets = allSheets.filter(s =>
+            s.getName().toLowerCase().includes('arrival')
+          );
+          if (arrivalSheets.length === 0) return respondError('No tabs with "arrival" in the name found');
 
-          // Map columns flexibly
-          function findCol(names) {
+          // Helper: flexibly find a column by keywords
+          function findCol(headers, names) {
             for (const n of names) {
               const idx = headers.findIndex(h => h.includes(n));
               if (idx >= 0) return idx;
@@ -546,39 +544,62 @@ function doGet(e) {
             return -1;
           }
 
-          const colGroup = findCol(['group','retreat','leader']);
-          const colFname = findCol(['first','fname']);
-          const colLname = findCol(['last','lname','surname']);
-          const colRoom = findCol(['room','habitacion']);
-          const colFlight = findCol(['flight','vuelo']);
-          const colDate = findCol(['date','fecha','arrival']);
-          const colTime = findCol(['time','hora','hour']);
-          const colAirport = findCol(['airport','aeropuerto']);
-          const colDriver = findCol(['driver','chofer','conductor']);
-          const colRate = findCol(['rate','tarifa','cost','precio']);
-          const colCoord = findCol(['coordinator','coordinad','quien']);
-          const colNote = findCol(['note','nota','comment']);
+          const allTransport = [];
+          const tabsRead = [];
 
-          const transport = rows.map(r => ({
-            group_id: colGroup >= 0 ? r[colGroup].trim() : '',
-            fname: colFname >= 0 ? r[colFname].trim() : '',
-            lname: colLname >= 0 ? r[colLname].trim() : '',
-            room: colRoom >= 0 ? r[colRoom].trim() : '',
-            flight: colFlight >= 0 ? r[colFlight].trim() : '',
-            date: colDate >= 0 ? r[colDate].trim() : '',
-            time: colTime >= 0 ? r[colTime].trim() : '',
-            airport: colAirport >= 0 ? r[colAirport].trim() : '',
-            driver: colDriver >= 0 ? r[colDriver].trim() : '',
-            rate: colRate >= 0 ? r[colRate].trim() : '',
-            coordinator: colCoord >= 0 ? r[colCoord].trim() : '',
-            note: colNote >= 0 ? r[colNote].trim() : ''
-          })).filter(t => t.fname || t.lname);
+          arrivalSheets.forEach(sheet => {
+            const data = sheet.getDataRange().getDisplayValues();
+            if (data.length <= 1) return;
+            tabsRead.push(sheet.getName());
+
+            const headers = data[0].map(h => h.toString().toLowerCase().trim());
+            const rows = data.slice(1).filter(r => r.some(c => c !== ''));
+
+            // Detect airport from tab name if not in columns
+            const tabName = sheet.getName().toLowerCase();
+            let tabAirport = '';
+            if (tabName.includes('cancun') || tabName.includes('cun')) tabAirport = 'Cancun';
+            else if (tabName.includes('tulum') || tabName.includes('tqo')) tabAirport = 'Tulum';
+
+            const colGroup = findCol(headers, ['group','retreat','leader']);
+            const colFname = findCol(headers, ['first','fname']);
+            const colLname = findCol(headers, ['last','lname','surname']);
+            const colRoom = findCol(headers, ['room','habitacion']);
+            const colFlight = findCol(headers, ['flight','vuelo']);
+            const colDate = findCol(headers, ['date','fecha','arrival']);
+            const colTime = findCol(headers, ['time','hora','hour']);
+            const colAirport = findCol(headers, ['airport','aeropuerto']);
+            const colDriver = findCol(headers, ['driver','chofer','conductor']);
+            const colRate = findCol(headers, ['rate','tarifa','cost','precio']);
+            const colCoord = findCol(headers, ['coordinator','coordinad','quien']);
+            const colNote = findCol(headers, ['note','nota','comment']);
+
+            rows.forEach(r => {
+              const fname = colFname >= 0 ? r[colFname].trim() : '';
+              const lname = colLname >= 0 ? r[colLname].trim() : '';
+              if (!fname && !lname) return;
+
+              allTransport.push({
+                group_id: colGroup >= 0 ? r[colGroup].trim() : '',
+                fname: fname,
+                lname: lname,
+                room: colRoom >= 0 ? r[colRoom].trim() : '',
+                flight: colFlight >= 0 ? r[colFlight].trim() : '',
+                date: colDate >= 0 ? r[colDate].trim() : '',
+                time: colTime >= 0 ? r[colTime].trim() : '',
+                airport: colAirport >= 0 ? r[colAirport].trim() : tabAirport,
+                driver: colDriver >= 0 ? r[colDriver].trim() : '',
+                rate: colRate >= 0 ? r[colRate].trim() : '',
+                coordinator: colCoord >= 0 ? r[colCoord].trim() : '',
+                note: colNote >= 0 ? r[colNote].trim() : ''
+              });
+            });
+          });
 
           return respondOk({
-            transport: transport,
-            sheetName: sheet.getName(),
-            headers: headers,
-            count: transport.length
+            transport: allTransport,
+            tabsRead: tabsRead,
+            count: allTransport.length
           });
         } catch (err) {
           return respondError('Could not open transport sheet: ' + err.message + '. Make sure it is shared with the Apps Script service account.');
