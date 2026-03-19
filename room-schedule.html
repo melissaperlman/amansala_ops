@@ -2593,7 +2593,7 @@ function detectRoomConflicts() {
 
 // Render conflict banner — shown at top of day view and in a global panel
 function renderConflictBanner() {
-  const conflicts = detectRoomConflicts();
+  const conflicts = detectRoomConflicts().filter(c => c.day === activeDay);
   if (conflicts.length === 0) return '';
   const items = conflicts.map(c => {
     const gA = groupMeta(c.groupA), gB = groupMeta(c.groupB);
@@ -5250,6 +5250,10 @@ async function loadFromCloud(){
     cloudMode = true;
     showSyncStatus('Loaded from cloud', '#4a8c5c');
     render();
+    // Start background auto-poll after successful cloud load
+    setTimeout(() => {
+      setInterval(silentCloudRefresh, 3 * 60 * 1000);
+    }, 30000); // first poll 30s after load
   } catch(err) {
     console.warn('Cloud load failed, using local data:', err);
     showSyncStatus('Using local data (cloud unavailable)', '#c47d3e');
@@ -5354,6 +5358,80 @@ function scheduleCloudSave(){
   if(!cloudMode) return;
   clearTimeout(saveTimer);
   saveTimer = setTimeout(saveToCloud, 2000);
+}
+
+// ── AUTO-POLL: silently reload cloud data every 3 minutes ─────────────────
+let _lastCloudHash = '';
+async function silentCloudRefresh(){
+  if(!cloudMode) return;
+  try {
+    const resp = await fetch(API_URL + '?action=roomSchedule');
+    const json = await resp.json();
+    if(!json.success) return;
+    const data = json.data;
+    if(!data.bookings) return;
+
+    // Build a lightweight hash to detect real changes
+    const hash = JSON.stringify({
+      b: (data.bookings||[]).map(b=>[b.group_id,b.day,b.start,b.title].join('|')).sort(),
+      g: (data.groups||[]).map(g=>g.id+g.pax).join(','),
+      t: (data.transport||[]).length
+    });
+
+    if(hash === _lastCloudHash) return; // nothing changed
+    _lastCloudHash = hash;
+
+    // Re-use loadFromCloud logic but skip the status toast
+    if(data.groups && data.groups.length > 0){
+      GROUPS.length = 0;
+      GROUPS.push({ id:'all', label:'All Groups / Shared', color:'#9a9490', short:'Shared', lastDay:null });
+      data.groups.forEach(g => {
+        GROUPS.push({
+          id: g.id || g.label.toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,12),
+          label: g.label, color: g.color || '#9a9490',
+          short: g.short || g.label, pax: g.pax || 0,
+          lastDay: g.lastDay || null,
+          removed: g.removed === true || g.removed === 'true'
+        });
+      });
+    }
+    if(data.bookings && data.bookings.length > 0){
+      const dedupSet = new Set();
+      bookings = data.bookings.map(b => ({
+        id: b.id, group: b.group_id || 'all', day: b.day || '',
+        start: fixTime(b.start), end: fixTime(b.end), title: b.title || '',
+        subtitle: b.subtitle || '', teacher: b.teacher || '', room: b.room || '',
+        pax: b.pax || 0, notes: b.notes || '', status: b.status || 'confirmed',
+        category: b.category || 'classes', optional: b.optional === true || b.optional === 'true',
+        price: b.price || '', location: b.location || ''
+      })).filter(b => {
+        const key = [b.group,b.day,b.start,b.end,b.title,b.room].join('|');
+        if(dedupSet.has(key)) return false;
+        dedupSet.add(key); return true;
+      });
+      nextId = Math.max(...bookings.map(b=>b.id), 0) + 1;
+    }
+    if(data.transport && data.transport.length > 0){
+      const tDedup = new Set(); const byGroup = {};
+      data.transport.forEach(t => {
+        const gid = t.group_id || 'unknown';
+        const tKey = [gid,t.fname,t.lname,t.date].join('|');
+        if(tDedup.has(tKey)) return;
+        tDedup.add(tKey);
+        if(!byGroup[gid]) byGroup[gid] = [];
+        byGroup[gid].push({ room:t.room||'', fname:t.fname||'', lname:t.lname||'',
+          flight:t.flight||'', date:t.date||'', time:t.time||'', airport:t.airport||'',
+          driver:t.driver||'', rate:Number(String(t.rate||0).replace(/[^0-9.]/g,''))||0,
+          coordinator:t.coordinator||'', note:t.note||'' });
+      });
+      Object.keys(byGroup).forEach(gid => { TRANSPORT_DATA[gid] = { group:gid, arrivals:byGroup[gid] }; });
+    }
+
+    render();
+    showSyncStatus('Updated', '#4a8c5c');
+  } catch(e) {
+    // Silent fail — don't bother the user if polling fails
+  }
 }
 
 // Add sync buttons to header
