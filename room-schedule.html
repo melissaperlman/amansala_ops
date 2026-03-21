@@ -1324,9 +1324,22 @@ function groupStatus(g){
   const lastIdx = dayIndex(g.lastDay);
   const todayIdx = dayIndex(today);
   if(todayIdx > lastIdx) return 'departed';
-  if(todayIdx === lastIdx && currentHour() >= 15) return 'departed'; // 3pm auto-remove
+  if(todayIdx === lastIdx && currentHour() >= 12) return 'departed'; // 12pm auto-archive
   if(todayIdx === lastIdx) return 'departing-today';
   return 'active';
+}
+
+// Auto-archive groups that have departed — runs on load and after cloud sync
+function autoArchiveDeparted(){
+  let changed = false;
+  GROUPS.forEach(g => {
+    if(g.id === 'all' || g.removed) return;
+    if(groupStatus(g) === 'departed'){
+      g.removed = true;
+      changed = true;
+    }
+  });
+  if(changed){ render(); scheduleCloudSave(); }
 }
 
 function editGroupPax(gid){
@@ -5510,6 +5523,7 @@ async function loadFromCloud(){
     cloudMode = true;
     showSyncStatus('Loaded from cloud', '#4a8c5c');
     render();
+    autoArchiveDeparted();
     // Start background auto-poll after successful cloud load
     setTimeout(() => {
       setInterval(silentCloudRefresh, 3 * 60 * 1000);
@@ -5690,6 +5704,7 @@ async function silentCloudRefresh(){
     }
 
     render();
+    autoArchiveDeparted();
     showSyncStatus('Updated', '#4a8c5c');
   } catch(e) {
     // Silent fail — don't bother the user if polling fails
@@ -5720,6 +5735,7 @@ async function silentCloudRefresh(){
 // Auto-load from cloud on startup so all collaborators see latest data.
 cloudMode = true;
 render(); // render local data immediately so page isn't blank
+autoArchiveDeparted(); // archive any departed groups from local data
 loadFromCloud(); // then fetch latest from cloud and re-render
 </script>
 
