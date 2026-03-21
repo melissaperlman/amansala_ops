@@ -1326,7 +1326,7 @@ function doPost(e) {
         // Fast batch-write: pre-format time columns as text FIRST, then write all rows
         // in a single setValues() call instead of individual appendRow() calls.
         // This is 10-50x faster and prevents Sheets auto-converting times.
-        function syncTab(tabName, records, stampFn, textColNames) {
+        const syncTab = function(tabName, records, stampFn, textColNames) {
           const sheet = getTab(tabName);
           if (!sheet) return;
           const allHeaders = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
@@ -1354,7 +1354,7 @@ function doPost(e) {
 
           // Write all rows in one API call
           sheet.getRange(2, 1, rows.length, numCols).setValues(rows);
-        }
+        };
 
         let gSeq = 1, bSeq = 1, tSeq = 1;
         syncTab('rs_groups',   rsGroups,   g => { if(!g.id) g.id=gSeq++; if(!g.created_at) g.created_at=ts; }, []);
