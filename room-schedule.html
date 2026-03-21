@@ -5035,7 +5035,7 @@ function addParsedSchedule(){
   const pax = parseInt(document.getElementById('isGroupPax').value) || 0;
   const groupId = groupName.toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,12);
 
-  // Check if group already exists
+  // Check if group already exists (including archived ones — un-archive on re-import)
   let existing = GROUPS.find(g => g.id === groupId);
   if(!existing){
     GROUPS.push({
@@ -5046,7 +5046,15 @@ function addParsedSchedule(){
       pax: pax,
       lastDay: isParsedBookings.length ? isParsedBookings[isParsedBookings.length-1].day : null
     });
+  } else {
+    // Un-archive if previously removed, and update pax/label
+    existing.removed = false;
+    existing.pax = pax || existing.pax;
+    existing.lastDay = isParsedBookings.length ? isParsedBookings[isParsedBookings.length-1].day : existing.lastDay;
   }
+
+  // Remove any existing bookings for this group before adding new ones
+  bookings = bookings.filter(b => b.group !== groupId);
 
   // Add bookings
   isParsedBookings.forEach(b => {
@@ -5598,7 +5606,9 @@ async function saveToCloud(){
     showSyncStatus('Saved to cloud', '#4a8c5c');
   } catch(err) {
     console.error('Cloud save failed:', err);
-    showSyncStatus('Save failed: ' + (err.message||'unknown error'), '#cc3333');
+    const msg = 'Save failed: ' + (err.message||'unknown error');
+    showSyncStatus(msg, '#cc3333');
+    alert(msg);
   }
 }
 
