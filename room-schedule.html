@@ -793,6 +793,24 @@ function changeUser(){
 
 const DAYS = ['Sun 15','Mon 16','Tue 17','Wed 18','Thu 19','Fri 20','Sat 21','Sun 22','Mon 23','Tue 24','Wed 25','Thu 26','Fri 27'];
 const DAY_LABELS = { 'Sun 15':'Sunday, March 15','Mon 16':'Monday, March 16','Tue 17':'Tuesday, March 17','Wed 18':'Wednesday, March 18','Thu 19':'Thursday, March 19','Fri 20':'Friday, March 20','Sat 21':'Saturday, March 21','Sun 22':'Sunday, March 22','Mon 23':'Monday, March 23','Tue 24':'Tuesday, March 24','Wed 25':'Wednesday, March 25','Thu 26':'Thursday, March 26','Fri 27':'Friday, March 27' };
+
+// Figure out today's day key by comparing today's date to DAY_LABELS
+function todayDayKey(){
+  const today = new Date();
+  const todayStr = today.toLocaleDateString('en-US',{month:'long',day:'numeric'}); // e.g. "March 21"
+  for(const [key, label] of Object.entries(DAY_LABELS)){
+    // label is like "Saturday, March 21" — check if it contains today's month+day
+    if(label.includes(todayStr)) return key;
+  }
+  return null;
+}
+// Only show today and future days in navigation (past days still exist in data)
+function futureDays(){
+  const todayKey = todayDayKey();
+  if(!todayKey) return DAYS; // fallback: show all if date not in range
+  const todayIdx = DAYS.indexOf(todayKey);
+  return DAYS.slice(todayIdx);
+}
 const ROOMS = ['Heaven','Chica','BF','Grande','Sky'];
 const ROOM_CSS = { Heaven:'heaven', Chica:'chica', BF:'bf', Grande:'grande', Sky:'sky' };
 const TEACHER_COLORS = { 'Meghan Kinsey':'#e8a5b0', 'Sam Applebee':'#4a8c5c', 'I Am Woman':'#a8c5da', 'Melissa':'#c47d3e', 'Gudrun':'#2e86ab', 'Alyssa':'#45b7a0', 'Gudrun & Alyssa':'#2e86ab' };
@@ -1212,8 +1230,8 @@ let nextId = 900;
 let activeTab = 'day';   // 'day' | 'room' | 'teacher' | 'dayview'
 let activeCategory = 'all';
 let activeGroup = 'all'; // 'all' | 'meghan' | 'iamwoman' | 'sam'
-let activeDay = 'Sun 15';
-let activeDayViewDay = 'Sun 15';
+let activeDay = todayDayKey() || DAYS[0];
+let activeDayViewDay = todayDayKey() || DAYS[0];
 let activeRoom = 'All';
 let activeTeacher = 'All';
 let teacherSearchQuery = '';
@@ -1484,7 +1502,7 @@ function renderFilterBar(){
     // Row 1: days | rooms
     bar.innerHTML = `<div class="filter-row">
       <span class="filter-label">Day</span>
-      ${DAYS.map(d=>`<button class="pill${activeDay===d?' active':''}" onclick="setDay('${d}')">${d}</button>`).join('')}
+      ${futureDays().map(d=>`<button class="pill${activeDay===d?' active':''}" onclick="setDay('${d}')">${d}</button>`).join('')}
       <div style="width:1px;height:20px;background:var(--border);margin:0 4px"></div>
       <span class="filter-label">Room</span>
       <button class="pill${activeRoom==='All'?' active':''}" onclick="setRoom('All')">All</button>
@@ -2726,9 +2744,9 @@ function renderDayView(){
 
   function timeToMin(t){ const [h,m]=t.split(':').map(Number); return h*60+m; }
 
-  // Day nav
+  // Day nav — only show today and future
   let html = '<div class="dayview-day-nav">';
-  DAYS.forEach(d => {
+  futureDays().forEach(d => {
     const parts = DAY_LABELS[d].split(', ');
     html += `<button class="dayview-day-btn ${d===activeDayViewDay?'active':''}" onclick="setDayViewDay('${d}')">${parts[0]}<br><span style="font-size:11px;font-weight:400;opacity:0.7">${parts[1]||''}</span></button>`;
   });
@@ -4070,7 +4088,7 @@ const TRANSPORT_DATA = {
 };
 
 // ── BY RETREAT VIEW ──────────────────────────────────────────────────────
-let retreatViewDay = 'Sun 15';
+let retreatViewDay = todayDayKey() || DAYS[0];
 
 function renderRetreatView(){
   const content = document.getElementById('mainContent');
@@ -4164,7 +4182,7 @@ function renderRetreatView(){
   // Day nav
   let html = '<div class="retreat-wrap">';
   html += '<div class="retreat-day-nav">';
-  DAYS.forEach(d => {
+  futureDays().forEach(d => {
     // Count conflicts for this day
     const dayConf = bookings.filter(b => b.day===d && b.room && YOGA_ROOMS.includes(b.room) && (b.category==='classes'||b.category==='soul') && b.group!=='all');
     const dByRoom = {};
