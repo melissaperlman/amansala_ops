@@ -11,10 +11,10 @@
     --border: #e8e4df;
     --text: #1a1a1a;
     --muted: #9a9490;
-    --heaven: #a8c5da;
-    --chica: #e8a5b0;
-    --bf: #b8d4b0;
-    --grande: #d4b896;
+    --heaven: #bde0f5;
+    --chica: #f5b8c8;
+    --bf: #f5c842;
+    --grande: #a8d8a8;
     --sky: #c5b8d4;
     --conflict: #e8703a;
     --requested: #d4a017;
@@ -80,13 +80,14 @@
   .time-range { font-size: 15px; font-weight: 600; line-height: 1.2; }
   .duration { font-size: 12px; color: var(--muted); }
   .room-tag { display: inline-block; padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; width: fit-content; }
-  .room-tag.heaven { background: var(--heaven); color: #1a4a6e; }
-  .room-tag.chica  { background: var(--chica);  color: #7a2030; }
-  .room-tag.bf     { background: var(--bf);     color: #1a4a28; }
-  .room-tag.grande { background: var(--grande); color: #6a3a10; }
+  .room-tag.heaven { background: var(--heaven); color: #0c3a5a; }
+  .room-tag.chica  { background: var(--chica);  color: #8a1a30; }
+  .room-tag.bf     { background: var(--bf);     color: #6b4a00; }
+  .room-tag.grande { background: var(--grande); color: #1a4a28; }
   .room-tag.sky    { background: var(--sky);    color: #3a2a6a; }
   .room-tag.requested-room { border: 2px dashed var(--requested) !important; position: relative; }
   .room-tag.requested-room::after { content: '★'; margin-left: 4px; color: var(--requested); font-size: 10px; }
+  .room-tag.unassigned { background:#f5f5f5; color:#999; border:1.5px dashed #ccc; font-style:italic; }
   .status-tag { display: flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--requested); }
   .status-tag.conflict { color: var(--conflict); }
   .booking-right { display: flex; flex-direction: column; gap: 10px; }
@@ -2901,7 +2902,7 @@ function renderByTeacher(){
           <span class="trow-room">
             <select onchange="quickChangeRoom(${b.id},this.value,${JSON.stringify(b.title)},${JSON.stringify(b.teacher)})"
               style="font-size:11px;padding:2px 6px;border-radius:6px;border:1px solid var(--border);background:var(--card);cursor:pointer;font-family:inherit;font-weight:600;color:var(--text)">
-              ${b.room ? '' : '<option value="">— room —</option>'}
+              ${b.room ? '' : '<option value="">⚠ Unassigned</option>'}
               ${roomOpts}
             </select>
           </span>
@@ -2958,6 +2959,12 @@ function quickChangeRoom(bookingId, newRoom, title, teacher){
 }
 
 // ── CARD ─────────────────────────────────────────────────────────────────
+function roomTag(room, size){
+  const s = size || '12px';
+  if(room) return `<span class="room-tag ${ROOM_CSS[room]||''}" style="font-size:${s};padding:2px 9px">${room}</span>`;
+  return `<span class="room-tag unassigned" style="font-size:${s};padding:2px 9px">Unassigned</span>`;
+}
+
 function groupTag(b){
   if(!b.group||b.group==='all') return '';
   const g = groupMeta(b.group);
@@ -4053,7 +4060,8 @@ function renderRetreatView(){
           const catIcon = b.category==='classes'?'🧘':b.category==='meals'?'🍽':b.category==='tours'?'🗺':b.category==='soul'?'✨':'📌';
           const catColor = b.category==='classes'?'#5b7fa6':b.category==='meals'?'#b07340':b.category==='tours'?'#4a8c5c':b.category==='soul'?'#8a5ba6':'#999';
           const roomOpts = ROOMS.map(r=>`<option value="${r}"${r===b.room?' selected':''}>${r}</option>`).join('');
-          const roomPicker = b.category!=='meals' ? `<select onchange="quickChangeRoom(${b.id},this.value,${JSON.stringify(b.title)},${JSON.stringify(b.teacher)})" style="font-size:11px;padding:2px 6px;border-radius:6px;border:1px solid var(--border);background:var(--card);cursor:pointer;font-family:inherit;font-weight:600">${b.room?'':'<option value="">— room —</option>'}${roomOpts}</select>` : (b.location?`<span style="font-size:11px;background:#efebe9;border:1px solid #d7ccc8;border-radius:4px;padding:1px 6px;color:#6d4c41">📍 ${b.location}</span>`:'');
+          const unassignedStyle = !b.room ? 'color:#999;font-style:italic;border:1.5px dashed #ccc;background:#f5f5f5' : '';
+          const roomPicker = b.category!=='meals' ? `<select onchange="quickChangeRoom(${b.id},this.value,${JSON.stringify(b.title)},${JSON.stringify(b.teacher)})" style="font-size:11px;padding:2px 6px;border-radius:6px;border:1px solid var(--border);background:var(--card);cursor:pointer;font-family:inherit;font-weight:600;${unassignedStyle}">${b.room?'':'<option value="">⚠ Unassigned</option>'}${roomOpts}</select>` : (b.location?`<span style="font-size:11px;background:#efebe9;border:1px solid #d7ccc8;border-radius:4px;padding:1px 6px;color:#6d4c41">📍 ${b.location}</span>`:'');
           const teacherTag = b.teacher ? `<span style="font-size:11px;background:#e8f5e9;border:1px solid #c8e6c9;border-radius:4px;padding:1px 6px;color:#2e7d32">${b.teacher}</span>` : '';
           html += `<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:#fff;border:1px solid #eee;border-left:3px solid ${catColor};border-radius:6px;margin-bottom:4px;flex-wrap:wrap;font-size:12px">
             <span style="font-weight:600;min-width:130px">${catIcon} ${fmt12(b.start)}${b.end&&b.end!==b.start?' – '+fmt12(b.end):''}</span>
@@ -4305,13 +4313,13 @@ function renderRetreatsOverview(){
             ${dayBookings.map(b => {
               const catIcon = b.category==='classes'?'🧘':b.category==='meals'?'🍽':b.category==='tours'?'🗺':b.category==='soul'?'✨':'📌';
               const catColor = b.category==='classes'?'#5b7fa6':b.category==='meals'?'#b07340':b.category==='tours'?'#4a8c5c':b.category==='soul'?'#8a5ba6':'#999';
-              const roomTag = b.room ? '<span style="font-size:11px;font-weight:600;background:#f0f0f0;border:1px solid #ddd;border-radius:4px;padding:1px 6px">'+b.room+'</span>' : '';
+              const roomTagHtml = b.category!=='meals' ? roomTag(b.room,'11px') : '';
               const teacherTag = b.teacher ? '<span style="font-size:11px;font-weight:600;background:#e8f5e9;border:1px solid #c8e6c9;border-radius:4px;padding:1px 6px;color:#2e7d32">'+b.teacher+'</span>' : '';
               const locTag = (b.category==='meals' && b.location) ? '<span style="font-size:11px;font-weight:600;color:#6d4c41;background:#efebe9;border:1px solid #d7ccc8;border-radius:4px;padding:1px 6px">📍 '+b.location+'</span>' : '';
               return '<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:#fff;border:1px solid #eee;border-left:3px solid '+catColor+';border-radius:6px;margin-bottom:4px;flex-wrap:wrap;font-size:12px">' +
                 '<span style="font-weight:600;min-width:120px">'+catIcon+' '+fmt12(b.start)+(b.end&&b.end!==b.start?' – '+fmt12(b.end):'')+'</span>' +
                 '<span style="font-weight:600;flex:1;min-width:120px">'+b.title+(b.subtitle?' <span style="color:var(--muted);font-weight:400">'+b.subtitle+'</span>':'')+'</span>' +
-                roomTag + teacherTag + locTag +
+                roomTagHtml + teacherTag + locTag +
                 (b.pax?'<span style="font-size:11px;color:var(--muted)">'+b.pax+' pax</span>':'') +
                 '<button class="edit-btn" onclick="openModal('+b.id+')" style="font-size:11px;padding:2px 8px">✏</button>' +
               '</div>';
