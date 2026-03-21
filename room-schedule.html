@@ -2886,11 +2886,18 @@ function renderByTeacher(){
       html+=`<div class="empty-state" style="padding:16px 0">No classes this week.</div>`;
     } else {
       tb.forEach(b=>{
+        const roomOpts = ROOMS.map(r=>`<option value="${r}"${r===b.room?' selected':''}>${r}</option>`).join('');
         html+=`<div class="teacher-booking-row">
           <span class="trow-day">${b.day}</span>
           <span class="trow-time">${fmt12(b.start)}–${fmt12(b.end)}</span>
           <span class="trow-title"><strong>${b.title}</strong>${b.subtitle?` <span style="color:var(--muted)">${b.subtitle}</span>`:''}</span>
-          <span class="trow-room"><span class="room-tag ${ROOM_CSS[b.room]}" style="font-size:11px;padding:2px 9px">${b.room}</span></span>
+          <span class="trow-room">
+            <select onchange="quickChangeRoom(${b.id},this.value,${JSON.stringify(b.title)},${JSON.stringify(b.teacher)})"
+              style="font-size:11px;padding:2px 6px;border-radius:6px;border:1px solid var(--border);background:var(--card);cursor:pointer;font-family:inherit;font-weight:600;color:var(--text)">
+              ${b.room ? '' : '<option value="">— room —</option>'}
+              ${roomOpts}
+            </select>
+          </span>
           <span class="trow-pax">${b.pax} pax</span>
           <button class="edit-btn" onclick="openModal(${b.id})">✏ Edit</button>
         </div>`;
@@ -2900,6 +2907,47 @@ function renderByTeacher(){
   });
 
   content.innerHTML = html || `<div class="empty-state">No teachers found.</div>`;
+}
+
+// ── QUICK ROOM CHANGE FROM BY TEACHER VIEW ───────────────────────────────
+function quickChangeRoom(bookingId, newRoom, title, teacher){
+  const b = bookings.find(x => x.id === bookingId);
+  if(!b) return;
+
+  // Find sibling bookings: same title + same teacher, different days
+  const siblings = bookings.filter(x =>
+    x.id !== bookingId &&
+    x.title === title &&
+    x.teacher === teacher
+  );
+
+  if(siblings.length === 0){
+    // No other matching classes — just update this one silently
+    b.room = newRoom;
+    scheduleCloudSave();
+    render();
+    return;
+  }
+
+  // Ask if they want to apply to all days
+  const dayList = [b, ...siblings]
+    .sort((a,x) => DAYS.indexOf(a.day) - DAYS.indexOf(x.day))
+    .map(x => x.day).join(', ');
+
+  const applyAll = confirm(
+    `Change room to "${newRoom}" for just ${b.day}, or for ALL days?\n\n` +
+    `This class runs on: ${dayList}\n\n` +
+    `OK = change ALL days   •   Cancel = just ${b.day}`
+  );
+
+  if(applyAll){
+    [b, ...siblings].forEach(x => { x.room = newRoom; });
+  } else {
+    b.room = newRoom;
+  }
+
+  scheduleCloudSave();
+  render();
 }
 
 // ── CARD ─────────────────────────────────────────────────────────────────
