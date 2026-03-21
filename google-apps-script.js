@@ -1318,52 +1318,48 @@ function doPost(e) {
 
       // ── ROOM SCHEDULE: FULL SYNC (replace all data) ─────────
       case 'syncRoomSchedule': {
-        // Clear and re-populate all rs_ tabs with provided data
-        const rsGroups = payload.groups || [];
-        const rsBookings = payload.bookings || [];
-        const rsTransport = payload.transport || [];
+        const rsGroups   = payload.groups    || [];
+        const rsBookings = payload.bookings  || [];
+        const rsTransport= payload.transport || [];
+        const ts = now();
 
-        // Clear existing data (keep headers)
-        ['rs_groups','rs_bookings','rs_transport'].forEach(tabName => {
+        // Fast batch-write: pre-format time columns as text FIRST, then write all rows
+        // in a single setValues() call instead of individual appendRow() calls.
+        // This is 10-50x faster and prevents Sheets auto-converting times.
+        function syncTab(tabName, records, stampFn, textColNames) {
           const sheet = getTab(tabName);
-          if (sheet && sheet.getLastRow() > 1) {
-            sheet.deleteRows(2, sheet.getLastRow() - 1);
-          }
-        });
+          if (!sheet) return;
+          const allHeaders = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+          const numCols = allHeaders.length;
 
-        // Write groups
-        for (const g of rsGroups) {
-          g.id = g.id || nextId('rs_groups');
-          g.created_at = g.created_at || now();
-          appendRow('rs_groups', g);
+          // Clear old data rows
+          const lastRow = sheet.getLastRow();
+          if (lastRow > 1) sheet.getRange(2, 1, lastRow - 1, numCols).clearContent();
+
+          if (records.length === 0) return;
+
+          // Stamp each record
+          records.forEach(r => stampFn(r));
+
+          // Build rows array
+          const rows = records.map(r =>
+            allHeaders.map(h => (r[h] !== undefined && r[h] !== null) ? r[h] : '')
+          );
+
+          // Pre-format time/text columns BEFORE writing so Sheets won't auto-convert
+          textColNames.forEach(colName => {
+            const ci = allHeaders.indexOf(colName) + 1;
+            if (ci > 0) sheet.getRange(2, ci, rows.length, 1).setNumberFormat('@');
+          });
+
+          // Write all rows in one API call
+          sheet.getRange(2, 1, rows.length, numCols).setValues(rows);
         }
 
-        // Write bookings
-        for (const b of rsBookings) {
-          b.id = b.id || nextId('rs_bookings');
-          b.created_at = b.created_at || now();
-          b.updated_at = now();
-          appendRow('rs_bookings', b);
-        }
-        // Force start/end columns to plain text so Sheets doesn't convert times
-        const bSheet = getTab('rs_bookings');
-        const bHeaders = bSheet.getRange(1,1,1,bSheet.getLastColumn()).getValues()[0];
-        const startCol = bHeaders.indexOf('start') + 1;
-        const endCol = bHeaders.indexOf('end') + 1;
-        if(startCol > 0 && bSheet.getLastRow() > 1) bSheet.getRange(2, startCol, bSheet.getLastRow()-1, 1).setNumberFormat('@');
-        if(endCol > 0 && bSheet.getLastRow() > 1) bSheet.getRange(2, endCol, bSheet.getLastRow()-1, 1).setNumberFormat('@');
-
-        // Write transport
-        for (const t of rsTransport) {
-          t.id = t.id || nextId('rs_transport');
-          t.created_at = t.created_at || now();
-          appendRow('rs_transport', t);
-        }
-        // Force transport time column to plain text
-        const tSheet = getTab('rs_transport');
-        const tHeaders = tSheet.getRange(1,1,1,tSheet.getLastColumn()).getValues()[0];
-        const timeCol = tHeaders.indexOf('time') + 1;
-        if(timeCol > 0 && tSheet.getLastRow() > 1) tSheet.getRange(2, timeCol, tSheet.getLastRow()-1, 1).setNumberFormat('@');
+        let gSeq = 1, bSeq = 1, tSeq = 1;
+        syncTab('rs_groups',   rsGroups,   g => { if(!g.id) g.id=gSeq++; if(!g.created_at) g.created_at=ts; }, []);
+        syncTab('rs_bookings', rsBookings, b => { if(!b.id) b.id=bSeq++; if(!b.created_at) b.created_at=ts; b.updated_at=ts; }, ['start','end']);
+        syncTab('rs_transport',rsTransport,t => { if(!t.id) t.id=tSeq++; if(!t.created_at) t.created_at=ts; }, ['time']);
 
         return respondOk({ groups: rsGroups.length, bookings: rsBookings.length, transport: rsTransport.length });
       }

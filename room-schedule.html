@@ -5598,7 +5598,7 @@ async function saveToCloud(){
     showSyncStatus('Saved to cloud', '#4a8c5c');
   } catch(err) {
     console.error('Cloud save failed:', err);
-    showSyncStatus('Save failed — try again', '#cc3333');
+    showSyncStatus('Save failed: ' + (err.message||'unknown error'), '#cc3333');
   }
 }
 
