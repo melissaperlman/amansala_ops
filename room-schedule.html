@@ -3204,8 +3204,9 @@ function switchTab(tab){
     renderMealsCalendar();
   } else if(tab==='retreat'){
     if(catTabs) catTabs.style.display='none';
-    if(groupBar) groupBar.style.display='none';
+    if(groupBar) groupBar.style.display='';
     if(filterBar) filterBar.style.display='none';
+    renderGroupBar();
     renderRetreatView();
   } else if(tab==='requests'){
     if(catTabs) catTabs.style.display='none';
@@ -3226,7 +3227,7 @@ function switchTab(tab){
   }
 }
 function setCat(c){ activeCategory=c; render(); }
-function setGroup(g){ activeGroup=g; if(activeTab==='transport'){ renderGroupBar(); renderTransportTab(); } else if(activeTab==='dayview'){ renderGroupBar(); renderDayView(); } else if(activeTab==='mealcal'){ renderGroupBar(); renderMealsCalendar(); } else if(activeTab==='retreats'){ renderGroupBar(); renderRetreatsOverview(); } else render(); }
+function setGroup(g){ activeGroup=g; if(activeTab==='transport'){ renderGroupBar(); renderTransportTab(); } else if(activeTab==='dayview'){ renderGroupBar(); renderDayView(); } else if(activeTab==='mealcal'){ renderGroupBar(); renderMealsCalendar(); } else if(activeTab==='retreats'){ renderGroupBar(); renderRetreatsOverview(); } else if(activeTab==='retreat'){ renderGroupBar(); renderRetreatView(); } else render(); }
 function setDay(d){ activeDay=d; render(); }
 function setRoom(r){ activeRoom=r; render(); }
 function setTeacher(t){ activeTeacher=t; render(); }
@@ -3982,6 +3983,51 @@ let retreatViewDay = 'Sun 15';
 
 function renderRetreatView(){
   const content = document.getElementById('mainContent');
+
+  // When a specific group is selected, show their full schedule instead of room timeline
+  if(activeGroup !== 'all'){
+    content.style.maxWidth = '900px';
+    content.style.padding = '28px 24px';
+    const g = groupMeta(activeGroup);
+    const gb = bookings.filter(b => b.group === activeGroup)
+      .sort((a,b) => (DAYS.indexOf(a.day)-DAYS.indexOf(b.day))||a.start.localeCompare(b.start));
+    const activeDays = [...new Set(gb.map(b => b.day))].sort((a,b) => DAYS.indexOf(a)-DAYS.indexOf(b));
+
+    let html = `<div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap">
+      <span style="width:14px;height:14px;border-radius:50%;background:${g.color};display:inline-block"></span>
+      <span style="font-family:Playfair Display,serif;font-size:20px;font-weight:600">${g.label}</span>
+      <span style="font-size:13px;color:var(--muted)">${gb.length} bookings · ${activeDays.length} days</span>
+    </div>`;
+
+    if(activeDays.length === 0){
+      html += `<div class="empty-state">No schedule for this group yet.</div>`;
+    } else {
+      activeDays.forEach(day => {
+        const dayB = gb.filter(b => b.day === day);
+        const label = DAY_LABELS[day] || day;
+        html += `<div style="margin-bottom:18px">
+          <div style="font-size:13px;font-weight:700;color:#333;padding:6px 0;border-bottom:2px solid ${g.color}44;margin-bottom:6px">${label}</div>`;
+        dayB.forEach(b => {
+          const catIcon = b.category==='classes'?'🧘':b.category==='meals'?'🍽':b.category==='tours'?'🗺':b.category==='soul'?'✨':'📌';
+          const catColor = b.category==='classes'?'#5b7fa6':b.category==='meals'?'#b07340':b.category==='tours'?'#4a8c5c':b.category==='soul'?'#8a5ba6':'#999';
+          const roomOpts = ROOMS.map(r=>`<option value="${r}"${r===b.room?' selected':''}>${r}</option>`).join('');
+          const roomPicker = b.category!=='meals' ? `<select onchange="quickChangeRoom(${b.id},this.value,${JSON.stringify(b.title)},${JSON.stringify(b.teacher)})" style="font-size:11px;padding:2px 6px;border-radius:6px;border:1px solid var(--border);background:var(--card);cursor:pointer;font-family:inherit;font-weight:600">${b.room?'':'<option value="">— room —</option>'}${roomOpts}</select>` : (b.location?`<span style="font-size:11px;background:#efebe9;border:1px solid #d7ccc8;border-radius:4px;padding:1px 6px;color:#6d4c41">📍 ${b.location}</span>`:'');
+          const teacherTag = b.teacher ? `<span style="font-size:11px;background:#e8f5e9;border:1px solid #c8e6c9;border-radius:4px;padding:1px 6px;color:#2e7d32">${b.teacher}</span>` : '';
+          html += `<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:#fff;border:1px solid #eee;border-left:3px solid ${catColor};border-radius:6px;margin-bottom:4px;flex-wrap:wrap;font-size:12px">
+            <span style="font-weight:600;min-width:130px">${catIcon} ${fmt12(b.start)}${b.end&&b.end!==b.start?' – '+fmt12(b.end):''}</span>
+            <span style="font-weight:600;flex:1;min-width:120px">${b.title}${b.subtitle?` <span style="color:var(--muted);font-weight:400">${b.subtitle}</span>`:''}</span>
+            ${roomPicker}${teacherTag}
+            ${b.pax?`<span style="font-size:11px;color:var(--muted)">${b.pax} pax</span>`:''}
+            <button class="edit-btn" onclick="openModal(${b.id})" style="font-size:11px;padding:2px 8px">✏</button>
+          </div>`;
+        });
+        html += `</div>`;
+      });
+    }
+    content.innerHTML = html;
+    return;
+  }
+
   content.style.maxWidth = '1200px';
   content.style.padding = '0';
 
