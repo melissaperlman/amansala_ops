@@ -1377,6 +1377,22 @@ const CAT_META = {
 const CAT_ORDER = ['classes','tours','meals','soul'];
 
 // ── helpers ─────────────────────────────────────────────────────────────
+// Convert "H:MM", "HH:MM", or "9:30 AM/PM" to total minutes — handles unpadded times and 12h format
+function timeToMin(t){
+  if(!t) return 0;
+  const s = t.trim();
+  // Check for AM/PM suffix
+  const pm = /pm/i.test(s);
+  const am = /am/i.test(s);
+  const clean = s.replace(/[apmAPM\s]/g,'');  // strip AM/PM and spaces
+  const parts = clean.split(':').map(Number);
+  let h = isNaN(parts[0]) ? 0 : parts[0];
+  const m = (parts[1] !== undefined && !isNaN(parts[1])) ? parts[1] : 0;
+  if(pm && h < 12) h += 12;
+  if(am && h === 12) h = 0;
+  return h*60+m;
+}
+function cmpTime(a,b){ return timeToMin(a)-timeToMin(b); }
 function fmt12(t) {
   let [h,m] = t.split(':').map(Number);
   const ap = h>=12?'PM':'AM'; h=h%12||12;
@@ -1558,13 +1574,13 @@ function mergeMeals(meals){
     } else {
       slots[key]._merged.push(b);
       // Keep earliest start time
-      if(b.start < slots[key]._displayStart) {
+      if(timeToMin(b.start) < timeToMin(slots[key]._displayStart)) {
         slots[key]._displayStart = b.start;
         slots[key].start = b.start;
       }
     }
   });
-  return Object.values(slots).sort((a,b)=>a.start.localeCompare(b.start));
+  return Object.values(slots).sort((a,b)=>cmpTime(a.start,b.start));
 }
 
 // Merge optional tours at the same time slot across groups into one row
@@ -1578,10 +1594,10 @@ function mergeTours(tours){
       slots[key] = { ...b, _merged: [b] };
     } else {
       slots[key]._merged.push(b);
-      if(b.start < slots[key].start) slots[key].start = b.start;
+      if(timeToMin(b.start) < timeToMin(slots[key].start)) slots[key].start = b.start;
     }
   });
-  return Object.values(slots).sort((a,b)=>a.start.localeCompare(b.start));
+  return Object.values(slots).sort((a,b)=>cmpTime(a.start,b.start));
 }
 
 // Merge optional soul services at the same time slot into one row
@@ -1595,17 +1611,17 @@ function mergeSoul(souls){
       slots[key] = { ...b, _merged: [b] };
     } else {
       slots[key]._merged.push(b);
-      if(b.start < slots[key].start) slots[key].start = b.start;
+      if(timeToMin(b.start) < timeToMin(slots[key].start)) slots[key].start = b.start;
     }
   });
-  return Object.values(slots).sort((a,b)=>a.start.localeCompare(b.start));
+  return Object.values(slots).sort((a,b)=>cmpTime(a.start,b.start));
 }
 
 function renderByDay(){
   const content = document.getElementById('mainContent');
   const allDay = visibleBookings()
     .filter(b => b.day===activeDay && (activeRoom==='All'||b.room===activeRoom))
-    .sort((a,b)=>a.start.localeCompare(b.start));
+    .sort((a,b)=>cmpTime(a.start,b.start));
 
   // Build pax summary for header
   const { breakdown:paxBreakdown, total:paxTotal } = mealPaxForDay(activeDay);
@@ -2607,7 +2623,7 @@ function detectRoomConflicts() {
   Object.entries(byDayRoom).forEach(([key, bks]) => {
     if (bks.length < 2) return;
     // Sort by start time
-    bks.sort((a, b) => a.start.localeCompare(b.start));
+    bks.sort((a, b) => cmpTime(a.start, b.start));
     for (let i = 0; i < bks.length; i++) {
       for (let j = i + 1; j < bks.length; j++) {
         const a = bks[i], b = bks[j];
@@ -2635,7 +2651,7 @@ function detectRoomConflicts() {
     if(dayDiff !== 0) return dayDiff;
     const startA = a.timeA.split('–')[0];
     const startB = b.timeA.split('–')[0];
-    return startA.localeCompare(startB);
+    return timeToMin(startA.trim()) - timeToMin(startB.trim());
   });
   return conflicts;
 }
@@ -2879,7 +2895,7 @@ function renderByRoom(){
   let html = '';
 
   rooms.forEach(room=>{
-    const rb = visibleBookings().filter(b=>b.room===room).sort((a,b)=>(DAYS.indexOf(a.day)-DAYS.indexOf(b.day))||a.start.localeCompare(b.start));
+    const rb = visibleBookings().filter(b=>b.room===room).sort((a,b)=>(DAYS.indexOf(a.day)-DAYS.indexOf(b.day))||cmpTime(a.start,b.start));
     html+=`<div class="room-section">
       <div class="room-section-header">
         <span class="room-tag ${ROOM_CSS[room]}" style="font-size:13px">${room}</span>
@@ -2921,7 +2937,7 @@ function renderByTeacher(){
 
   teachers.forEach(teacher=>{
     const tb = visibleBookings().filter(b=>b.teacher===teacher)
-      .sort((a,b)=>(DAYS.indexOf(a.day)-DAYS.indexOf(b.day))||a.start.localeCompare(b.start));
+      .sort((a,b)=>(DAYS.indexOf(a.day)-DAYS.indexOf(b.day))||cmpTime(a.start,b.start));
     const totalPax = tb.reduce((s,b)=>s+b.pax,0);
 
     html+=`<div class="teacher-section">
@@ -4099,7 +4115,7 @@ function renderRetreatView(){
     content.style.padding = '28px 24px';
     const g = groupMeta(activeGroup);
     const gb = bookings.filter(b => b.group === activeGroup)
-      .sort((a,b) => (DAYS.indexOf(a.day)-DAYS.indexOf(b.day))||a.start.localeCompare(b.start));
+      .sort((a,b) => (DAYS.indexOf(a.day)-DAYS.indexOf(b.day))||cmpTime(a.start,b.start));
     const activeDays = [...new Set(gb.map(b => b.day))].sort((a,b) => DAYS.indexOf(a)-DAYS.indexOf(b));
 
     let html = `<div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap">
@@ -4366,7 +4382,7 @@ function renderRetreatsOverview(){
 
         <!-- Full day-by-day schedule -->
         ${activeDays.map(day => {
-          const dayBookings = gb.filter(b => b.day===day).sort((a,b) => a.start.localeCompare(b.start));
+          const dayBookings = gb.filter(b => b.day===day).sort((a,b) => cmpTime(a.start,b.start));
           const label = DAY_LABELS[day] || day;
           return `<div style="margin-bottom:16px">
             <div style="font-size:13px;font-weight:700;color:#333;padding:6px 0;border-bottom:2px solid ${g.color}44;margin-bottom:6px">${label}</div>
@@ -4414,7 +4430,7 @@ function generateSignUpSheet(gid){
 
   // Get activities: tours + soul services for this group
   const activities = gb.filter(b => b.category==='tours' || b.category==='soul')
-    .sort((a,b) => (DAYS.indexOf(a.day)-DAYS.indexOf(b.day)) || a.start.localeCompare(b.start));
+    .sort((a,b) => (DAYS.indexOf(a.day)-DAYS.indexOf(b.day)) || cmpTime(a.start,b.start));
 
   // Get guest names from transport data
   let guests = [];
@@ -5065,12 +5081,16 @@ function parseScheduleText(text){
   const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
   lines.forEach(line => {
-    // Check if this is a day header: "Monday | March 16" or "Tuesday | March 17"
-    const dayMatch = line.match(/^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)\s*[\|·\-]\s*(March|April|May|June)\s+(\d+)/i);
+    // Check if this is a day header — supports many formats:
+    // "Monday | March 16", "Tuesday, March 17", "Wednesday March 18", "Thursday Mar 19", "Fri 20 March"
+    const dayMatch = line.match(/^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)[,\s]*[\|·\-,]?\s*(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+(\d{1,2})/i)
+      || line.match(/^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)[,\s]+(\d{1,2})\s+(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)/i);
     if(dayMatch){
-      const dayNum = parseInt(dayMatch[3]);
+      // dayMatch[1] = day name; day number is in [3] for first pattern or [2] for second (day-num-month)
+      const dayNum = parseInt(dayMatch[3]) || parseInt(dayMatch[2]);
       const dayOfWeek = dayMatch[1].slice(0,3);
-      currentDay = dayOfWeek + ' ' + dayNum;
+      // Capitalize first letter of 3-char abbrev
+      currentDay = dayOfWeek.charAt(0).toUpperCase()+dayOfWeek.slice(1).toLowerCase() + ' ' + dayNum;
       return;
     }
 
@@ -5124,7 +5144,7 @@ function parseScheduleText(text){
     const knownRooms = ['Heaven','Chica','BF','Grande','Sky','Beachfront','Beach'];
     parts.slice(1).forEach(p => {
       if(knownRooms.some(r => p.toLowerCase().includes(r.toLowerCase()))){
-        room = p.replace(/Beachfront/i,'BF').replace(/Beach$/i,'BF');
+        room = p.replace(/Beachfront/i,'BF').replace(/Beach$/i,'BF').trim();
       } else if(p.toLowerCase().includes('orientation')){
         title += ' & Orientation';
       } else {
@@ -5133,6 +5153,20 @@ function parseScheduleText(text){
         else title += ' — ' + p;
       }
     });
+
+    // Fallback: if no room found via pipes, check if the title ends with a known room name
+    if(!room){
+      for(const r of knownRooms){
+        const re = new RegExp('\\b(' + r + ')\\s*$', 'i');
+        if(re.test(title)){
+          room = r.replace(/Beachfront/i,'BF').replace(/Beach$/i,'BF');
+          title = title.replace(re,'').replace(/[\|\-,\s]+$/,'').trim();
+          break;
+        }
+      }
+    }
+    // Also normalize common room aliases
+    room = room.replace(/Beachfront/i,'BF').replace(/^Beach$/i,'BF').trim();
 
     // Categorize
     let category = 'classes';
