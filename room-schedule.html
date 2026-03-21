@@ -3137,8 +3137,9 @@ function switchTab(tab){
   const filterBar = document.getElementById('filterBar');
   if(tab==='retreats'){
     if(catTabs) catTabs.style.display='none';
-    if(groupBar) groupBar.style.display='none';
+    if(groupBar) groupBar.style.display='';
     if(filterBar) filterBar.style.display='none';
+    renderGroupBar();
     renderRetreatsOverview();
   } else if(tab==='transport'){
     if(catTabs) catTabs.style.display='none';
@@ -3177,7 +3178,7 @@ function switchTab(tab){
   }
 }
 function setCat(c){ activeCategory=c; render(); }
-function setGroup(g){ activeGroup=g; if(activeTab==='transport'){ renderGroupBar(); renderTransportTab(); } else if(activeTab==='dayview'){ renderGroupBar(); renderDayView(); } else if(activeTab==='mealcal'){ renderGroupBar(); renderMealsCalendar(); } else render(); }
+function setGroup(g){ activeGroup=g; if(activeTab==='transport'){ renderGroupBar(); renderTransportTab(); } else if(activeTab==='dayview'){ renderGroupBar(); renderDayView(); } else if(activeTab==='mealcal'){ renderGroupBar(); renderMealsCalendar(); } else if(activeTab==='retreats'){ renderGroupBar(); renderRetreatsOverview(); } else render(); }
 function setDay(d){ activeDay=d; render(); }
 function setRoom(r){ activeRoom=r; render(); }
 function setTeacher(t){ activeTeacher=t; render(); }
@@ -4074,7 +4075,7 @@ function renderRetreatView(){
 // ── ALL RETREATS OVERVIEW ─────────────────────────────────────────────────
 function renderRetreatsOverview(){
   const content = document.getElementById('mainContent');
-  const groups = GROUPS.filter(g => g.id !== 'all' && !g.removed);
+  const groups = GROUPS.filter(g => g.id !== 'all' && !g.removed && (activeGroup === 'all' || g.id === activeGroup));
 
   // Derive first and last booking day per group
   function groupDateRange(gid){
