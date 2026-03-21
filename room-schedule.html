@@ -552,6 +552,7 @@
       </label>
       <div id="applyAllInfo" style="font-size:11px;color:var(--muted);margin-top:4px;padding-left:23px"></div>
     </div>
+    <div id="lastEditedInfo" style="display:none;font-size:11px;color:var(--muted);padding:6px 0 2px;border-top:1px solid var(--border);margin-top:8px"></div>
     <div class="modal-actions">
       <button class="btn-delete" id="deleteBtn" onclick="deleteBooking()" style="display: block;">🗑 Delete</button>
       <button class="btn-cancel" onclick="closeModal()">Cancel</button>
@@ -771,6 +772,24 @@ Sunday March 22
 const API_URL = 'https://script.google.com/macros/s/AKfycbzxMcsr_-kwzRghF7iD2Dgi5AEpYSzs22hqEaG7LACUaThbKshLxVni5Ex2ExJhhc3V1Q/exec';
 let cloudMode = false; // set to true once data loads from API
 let saveTimer = null;
+
+// ── CURRENT USER ──────────────────────────────────────────────────────────
+function getCurrentUser(){
+  let u = localStorage.getItem('opsUser');
+  if(!u){
+    u = prompt('Welcome! What is your name? (Used to track who makes changes)', '') || 'Unknown';
+    localStorage.setItem('opsUser', u.trim());
+  }
+  return u.trim();
+}
+function changeUser(){
+  const u = prompt('Enter your name:', localStorage.getItem('opsUser')||'');
+  if(u !== null){
+    localStorage.setItem('opsUser', u.trim());
+    const el = document.getElementById('headerUserName');
+    if(el) el.textContent = u.trim();
+  }
+}
 
 const DAYS = ['Sun 15','Mon 16','Tue 17','Wed 18','Thu 19','Fri 20','Sat 21','Sun 22','Mon 23','Tue 24','Wed 25','Thu 26','Fri 27'];
 const DAY_LABELS = { 'Sun 15':'Sunday, March 15','Mon 16':'Monday, March 16','Tue 17':'Tuesday, March 17','Wed 18':'Wednesday, March 18','Thu 19':'Thursday, March 19','Fri 20':'Friday, March 20','Sat 21':'Saturday, March 21','Sun 22':'Sunday, March 22','Mon 23':'Monday, March 23','Tue 24':'Tuesday, March 24','Wed 25':'Wednesday, March 25','Thu 26':'Thursday, March 26','Fri 27':'Friday, March 27' };
@@ -2921,6 +2940,7 @@ function renderByTeacher(){
 function quickChangeRoom(bookingId, newRoom, title, teacher){
   const b = bookings.find(x => x.id === bookingId);
   if(!b) return;
+  const stamp = { lastEditedBy: getCurrentUser(), lastEditedAt: new Date().toISOString() };
 
   // Find sibling bookings: same title + same teacher, different days
   const siblings = bookings.filter(x =>
@@ -2930,14 +2950,11 @@ function quickChangeRoom(bookingId, newRoom, title, teacher){
   );
 
   if(siblings.length === 0){
-    // No other matching classes — just update this one silently
-    b.room = newRoom;
-    scheduleCloudSave();
-    render();
+    b.room = newRoom; Object.assign(b, stamp);
+    scheduleCloudSave(); render();
     return;
   }
 
-  // Ask if they want to apply to all days
   const dayList = [b, ...siblings]
     .sort((a,x) => DAYS.indexOf(a.day) - DAYS.indexOf(x.day))
     .map(x => x.day).join(', ');
@@ -2949,13 +2966,12 @@ function quickChangeRoom(bookingId, newRoom, title, teacher){
   );
 
   if(applyAll){
-    [b, ...siblings].forEach(x => { x.room = newRoom; });
+    [b, ...siblings].forEach(x => { x.room = newRoom; Object.assign(x, stamp); });
   } else {
-    b.room = newRoom;
+    b.room = newRoom; Object.assign(b, stamp);
   }
 
-  scheduleCloudSave();
-  render();
+  scheduleCloudSave(); render();
 }
 
 // ── CARD ─────────────────────────────────────────────────────────────────
@@ -3060,7 +3076,10 @@ function card(b){
         <div class="setup-label">📋 Setup Notes</div>
         ${notesHtml}
       </div>
-      <div class="card-footer"><button class="edit-btn" onclick="openModal(${b.id})">✏ Edit</button></div>
+      <div class="card-footer">
+        ${b.lastEditedBy ? `<span style="font-size:10px;color:var(--muted);margin-right:auto">✏ ${b.lastEditedBy}${b.lastEditedAt?' · '+new Date(b.lastEditedAt).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):''}</span>` : ''}
+        <button class="edit-btn" onclick="openModal(${b.id})">✏ Edit</button>
+      </div>
     </div>
   </div>`;
 }
@@ -3124,6 +3143,20 @@ function openModal(id, defaultDay, defaultRoom){
   } else {
     document.getElementById('applyAllRow').style.display = 'none';
   }
+  // Show last edited info
+  const infoEl = document.getElementById('lastEditedInfo');
+  if(editingId){
+    const cur = bookings.find(b => b.id === editingId);
+    if(cur && cur.lastEditedBy){
+      const when = cur.lastEditedAt ? new Date(cur.lastEditedAt).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}) : '';
+      infoEl.textContent = `Last edited by ${cur.lastEditedBy}${when ? ' · ' + when : ''}`;
+      infoEl.style.display = '';
+    } else {
+      infoEl.style.display = 'none';
+    }
+  } else {
+    infoEl.style.display = 'none';
+  }
   document.getElementById('modalOverlay').classList.add('open');
 }
 function closeModal(){ document.getElementById('modalOverlay').classList.remove('open'); editingId=null; }
@@ -3180,6 +3213,8 @@ function checkApplyAllDays(){
 }
 
 function saveBooking(){
+  const now = new Date();
+  const stamp = { lastEditedBy: getCurrentUser(), lastEditedAt: now.toISOString() };
   const data={
     title:document.getElementById('fieldTitle').value.trim()||'Untitled',
     teacher:document.getElementById('fieldTeacher').value.trim()||'Unknown',
@@ -3194,6 +3229,7 @@ function saveBooking(){
     group:document.getElementById('fieldGroup').value||'all',
     location:document.getElementById('fieldLocation').value||'',
     subtitle:'',
+    ...stamp,
   };
   if(editingId){
     const i=bookings.findIndex(b=>b.id===editingId);
@@ -3204,6 +3240,8 @@ function saveBooking(){
       bookings.forEach(b => {
         if(b.id !== editingId && b.title === data.title && b.teacher === data.teacher){
           b.room = data.room;
+          b.lastEditedBy = stamp.lastEditedBy;
+          b.lastEditedAt = stamp.lastEditedAt;
         }
       });
     }
@@ -5586,7 +5624,11 @@ async function silentCloudRefresh(){
 
   const syncWrap = document.createElement('div');
   syncWrap.style.cssText = 'display:flex;gap:6px;margin-left:8px';
+  const user = getCurrentUser();
   syncWrap.innerHTML = `
+    <span onclick="changeUser()" title="Click to change your name" style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;padding:4px 8px;border-radius:8px;border:1.5px solid var(--border);background:var(--card)">
+      👤 <span id="headerUserName">${user}</span>
+    </span>
     <button onclick="loadFromCloud()" style="padding:6px 14px;border:1.5px solid #5b7fa6;border-radius:8px;background:#e8f0fa;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;color:#283593;display:flex;align-items:center;gap:5px">
       ↓ Load Cloud
     </button>
