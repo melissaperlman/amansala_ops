@@ -5596,11 +5596,10 @@ async function silentCloudRefresh(){
   headerTop.appendChild(syncWrap);
 })();
 
-// Don't auto-load from cloud — local data is the source of truth.
-// Use "Load Cloud" button to manually pull, "Save Cloud" to push.
+// Auto-load from cloud on startup so all collaborators see latest data.
 cloudMode = true;
-
-render();
+render(); // render local data immediately so page isn't blank
+loadFromCloud(); // then fetch latest from cloud and re-render
 </script>
 
 
