@@ -2517,17 +2517,21 @@ function parseTimeRange(str){
   if(!str) return {start:null,end:null};
   // Normalize: "9:30 – 10:30 am" or "9:30-10:30" or "9:00 am"
   str = str.replace(/–|—/g,'-').replace(/\s+/g,' ').trim();
+  // Detect if overall range is AM or PM (e.g. "6:00 - 7:00 PM" → both are PM)
+  const overallLower = str.toLowerCase();
+  const overallPm = overallLower.includes('pm');
+  const overallAm = overallLower.includes('am') && !overallPm;
   const parts = str.split('-').map(s=>s.trim());
-  const start = parseTime(parts[0]);
+  const start = parseTime(parts[0], null, overallPm, overallAm);
   const end = parts[1] ? parseTime(parts[1], start) : null;
   return {start, end};
 }
 
-function parseTime(s, refTime){
+function parseTime(s, refTime, forcePm, forceAm){
   if(!s) return null;
   s = s.trim().toLowerCase();
-  const pm = s.includes('pm');
-  const am = s.includes('am');
+  const pm = s.includes('pm') || (forcePm && !s.includes('am'));
+  const am = s.includes('am') || (forceAm && !s.includes('pm'));
   s = s.replace(/[apm]/g,'').trim();
   const [h,m] = s.split(':').map(Number);
   if(isNaN(h)) return null;
