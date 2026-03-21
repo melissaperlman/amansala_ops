@@ -485,7 +485,7 @@
       </div>
       <div class="form-row" style="margin-bottom:0" id="roomFieldRow">
         <label class="form-label">Room</label>
-        <select class="form-select" id="fieldRoom">
+        <select class="form-select" id="fieldRoom" onchange="checkApplyAllDays()">
           <option>Heaven</option><option>Chica</option><option>BF</option><option>Grande</option><option>Sky</option><option>Beach</option>
         </select>
         <label id="roomRequestedToggle" style="display:flex;align-items:center;gap:6px;margin-top:6px;cursor:pointer;font-size:12px;font-weight:500;color:#d4a017;user-select:none" onclick="toggleRoomRequested()">
@@ -543,6 +543,13 @@
         <option value="requested">Requested</option>
         <option value="conflict">Conflict</option>
       </select>
+    </div>
+    <div id="applyAllRow" style="display:none;padding:10px 0 4px;border-top:1px solid var(--border);margin-top:8px">
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;color:#5b7fa6;font-weight:600">
+        <input type="checkbox" id="applyAllDays" style="width:15px;height:15px;cursor:pointer">
+        Apply room change to all days with the same class
+      </label>
+      <div id="applyAllInfo" style="font-size:11px;color:var(--muted);margin-top:4px;padding-left:23px"></div>
     </div>
     <div class="modal-actions">
       <button class="btn-delete" id="deleteBtn" onclick="deleteBooking()" style="display: block;">🗑 Delete</button>
@@ -3092,6 +3099,10 @@ function openModal(id, defaultDay, defaultRoom){
   }
   toggleMealLocation();
   syncRoomRequestedCheckbox();
+  // Reset bulk-apply row
+  document.getElementById('applyAllRow').style.display = 'none';
+  const applyAllCb = document.getElementById('applyAllDays');
+  if(applyAllCb) applyAllCb.checked = false;
   document.getElementById('modalOverlay').classList.add('open');
 }
 function closeModal(){ document.getElementById('modalOverlay').classList.remove('open'); editingId=null; }
@@ -3143,6 +3154,27 @@ function toggleMealLocation(){
   document.getElementById('roomFieldRow').style.display = isMeal ? 'none' : '';
 }
 
+function checkApplyAllDays(){
+  if(!editingId) return;
+  const current = bookings.find(b => b.id === editingId);
+  if(!current) return;
+  const newRoom = document.getElementById('fieldRoom').value;
+  const title = document.getElementById('fieldTitle').value.trim() || current.title;
+  const teacher = document.getElementById('fieldTeacher').value.trim() || current.teacher;
+  const siblings = bookings.filter(b =>
+    b.id !== editingId && b.title === title && b.teacher === teacher
+  ).sort((a,b) => DAYS.indexOf(a.day)-DAYS.indexOf(b.day));
+  const row = document.getElementById('applyAllRow');
+  const info = document.getElementById('applyAllInfo');
+  if(siblings.length > 0 && newRoom !== current.room){
+    row.style.display = '';
+    const dayList = siblings.map(b => b.day).join(', ');
+    info.textContent = `Will also update: ${dayList}`;
+  } else {
+    row.style.display = 'none';
+  }
+}
+
 function saveBooking(){
   const data={
     title:document.getElementById('fieldTitle').value.trim()||'Untitled',
@@ -3159,8 +3191,21 @@ function saveBooking(){
     location:document.getElementById('fieldLocation').value||'',
     subtitle:'',
   };
-  if(editingId){ const i=bookings.findIndex(b=>b.id===editingId); bookings[i]={...bookings[i],...data}; }
-  else { bookings.push({id:nextId++,...data}); }
+  if(editingId){
+    const i=bookings.findIndex(b=>b.id===editingId);
+    bookings[i]={...bookings[i],...data};
+    // Apply room to all matching days if checkbox is checked
+    const applyAll = document.getElementById('applyAllDays');
+    if(applyAll && applyAll.checked && data.room){
+      bookings.forEach(b => {
+        if(b.id !== editingId && b.title === data.title && b.teacher === data.teacher){
+          b.room = data.room;
+        }
+      });
+    }
+  } else {
+    bookings.push({id:nextId++,...data});
+  }
   closeModal(); render(); scheduleCloudSave();
 }
 function deleteBooking(){
