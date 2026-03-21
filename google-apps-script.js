@@ -115,6 +115,30 @@ function appendRow(tabName, obj) {
   return obj;
 }
 
+// Batch-write all records to a tab in one setValues() call (fast, prevents time auto-convert)
+function batchWriteTab(tabName, records, textColNames) {
+  const sheet = getTab(tabName);
+  if (!sheet) return;
+  const allHeaders = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  const numCols = allHeaders.length;
+  // Clear old data
+  const lastRow = sheet.getLastRow();
+  if (lastRow > 1) sheet.getRange(2, 1, lastRow - 1, numCols).clearContent();
+  if (records.length === 0) return;
+  // Pre-format time columns as plain text BEFORE writing to prevent auto-conversion
+  textColNames.forEach(function(colName) {
+    const ci = allHeaders.indexOf(colName) + 1;
+    if (ci > 0) sheet.getRange(2, ci, records.length, 1).setNumberFormat('@');
+  });
+  // Build and write all rows in one API call
+  const rows = records.map(function(r) {
+    return allHeaders.map(function(h) {
+      return (r[h] !== undefined && r[h] !== null) ? r[h] : '';
+    });
+  });
+  sheet.getRange(2, 1, rows.length, numCols).setValues(rows);
+}
+
 function updateRow(tabName, rowIndex, headers, obj) {
   const sheet = getTab(tabName);
   const row = headers.map(h => obj[h] !== undefined ? obj[h] : '');
@@ -1318,49 +1342,16 @@ function doPost(e) {
 
       // ── ROOM SCHEDULE: FULL SYNC (replace all data) ─────────
       case 'syncRoomSchedule': {
-        const rsGroups   = payload.groups    || [];
-        const rsBookings = payload.bookings  || [];
-        const rsTransport= payload.transport || [];
-        const ts = now();
-
-        // Fast batch-write: pre-format time columns as text FIRST, then write all rows
-        // in a single setValues() call instead of individual appendRow() calls.
-        // This is 10-50x faster and prevents Sheets auto-converting times.
-        const syncTab = function(tabName, records, stampFn, textColNames) {
-          const sheet = getTab(tabName);
-          if (!sheet) return;
-          const allHeaders = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-          const numCols = allHeaders.length;
-
-          // Clear old data rows
-          const lastRow = sheet.getLastRow();
-          if (lastRow > 1) sheet.getRange(2, 1, lastRow - 1, numCols).clearContent();
-
-          if (records.length === 0) return;
-
-          // Stamp each record
-          records.forEach(r => stampFn(r));
-
-          // Build rows array
-          const rows = records.map(r =>
-            allHeaders.map(h => (r[h] !== undefined && r[h] !== null) ? r[h] : '')
-          );
-
-          // Pre-format time/text columns BEFORE writing so Sheets won't auto-convert
-          textColNames.forEach(colName => {
-            const ci = allHeaders.indexOf(colName) + 1;
-            if (ci > 0) sheet.getRange(2, ci, rows.length, 1).setNumberFormat('@');
-          });
-
-          // Write all rows in one API call
-          sheet.getRange(2, 1, rows.length, numCols).setValues(rows);
-        };
-
-        let gSeq = 1, bSeq = 1, tSeq = 1;
-        syncTab('rs_groups',   rsGroups,   g => { if(!g.id) g.id=gSeq++; if(!g.created_at) g.created_at=ts; }, []);
-        syncTab('rs_bookings', rsBookings, b => { if(!b.id) b.id=bSeq++; if(!b.created_at) b.created_at=ts; b.updated_at=ts; }, ['start','end']);
-        syncTab('rs_transport',rsTransport,t => { if(!t.id) t.id=tSeq++; if(!t.created_at) t.created_at=ts; }, ['time']);
-
+        var rsGroups    = payload.groups    || [];
+        var rsBookings  = payload.bookings  || [];
+        var rsTransport = payload.transport || [];
+        var ts = now();
+        rsGroups.forEach(function(g)  { if(!g.id) g.id=String(Date.now()); if(!g.created_at) g.created_at=ts; });
+        rsBookings.forEach(function(b){ if(!b.id) b.id=String(Date.now()); if(!b.created_at) b.created_at=ts; b.updated_at=ts; });
+        rsTransport.forEach(function(t){ if(!t.id) t.id=String(Date.now()); if(!t.created_at) t.created_at=ts; });
+        batchWriteTab('rs_groups',    rsGroups,    []);
+        batchWriteTab('rs_bookings',  rsBookings,  ['start','end']);
+        batchWriteTab('rs_transport', rsTransport, ['time']);
         return respondOk({ groups: rsGroups.length, bookings: rsBookings.length, transport: rsTransport.length });
       }
 
