@@ -5051,40 +5051,43 @@ function parseScheduleText(text){
 
     if(!currentDay) return;
 
-    // Parse time and event: "7:00 | Light Breakfast" or "5:30 - 7:00 | Welcome Yoga | Grande"
-    // Flexible: handles "630", "7:00", "945", etc.
-    const eventMatch = line.match(/^(\d{1,2}:?\d{2})\s*(?:AM|PM)?\s*(?:[\-–]\s*(\d{1,2}:?\d{2})\s*(?:AM|PM)?)?\s*[\|]?\s*(.+)/i);
+    // Parse time and event: "7:00 PM | Dinner" or "5:45 PM – 7:00 PM | Yoga | Grande"
+    // Capture AM/PM explicitly for each time part
+    const eventMatch = line.match(/^(\d{1,2}:?\d{2})\s*(AM|PM)?\s*(?:[–\-]\s*(\d{1,2}:?\d{2})\s*(AM|PM)?)?\s*[|]?\s*(.+)/i);
     if(!eventMatch) return;
 
     let startRaw = eventMatch[1];
-    let endRaw = eventMatch[2] || '';
-    let rest = eventMatch[3].trim();
+    let startAmPm = (eventMatch[2]||'').toUpperCase();
+    let endRaw   = eventMatch[3] || '';
+    let endAmPm  = (eventMatch[4]||'').toUpperCase();
+    let rest = eventMatch[5].trim();
 
-    // Normalize time: "630" → "6:30", "945" → "9:45"
-    function normalizeTime(t){
+    // If start has no AM/PM but end does, inherit it (e.g. "6:00 – 7:00 PM")
+    if(!startAmPm && endAmPm) startAmPm = endAmPm;
+
+    // Normalize "630" → "6:30"
+    function normT(t){
       if(!t) return '';
-      t = t.replace(/\s*(AM|PM)/i,'');
-      if(!t.includes(':') && t.length >= 3){
-        return t.slice(0,-2) + ':' + t.slice(-2);
-      }
+      if(!t.includes(':') && t.length >= 3) return t.slice(0,-2)+':'+t.slice(-2);
       return t;
     }
 
-    let start24 = normalizeTime(startRaw);
-    let end24 = normalizeTime(endRaw);
-
-    // Convert to 24h if needed (assume times < 12 before noon are AM, context-dependent)
-    function to24(t){
+    // Convert to 24h using explicit AM/PM
+    function to24(t, ampm){
       if(!t) return '';
-      const [h,m] = t.split(':').map(Number);
-      if(isNaN(h)) return t;
-      // Heuristic: if hour < 6, probably PM (like 1:45 = 13:45)
-      if(h < 6 && h !== 0) return (h+12)+':'+String(m).padStart(2,'0');
+      t = normT(t);
+      let [h,m] = t.split(':').map(Number);
+      if(isNaN(h)) return '';
+      m = m||0;
+      if(ampm==='PM' && h < 12) h += 12;
+      if(ampm==='AM' && h === 12) h = 0;
+      // No AM/PM: heuristic — hours 1-6 with no marker are likely PM
+      if(!ampm && h >= 1 && h <= 6) h += 12;
       return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');
     }
 
-    start24 = to24(start24);
-    end24 = to24(end24);
+    let start24 = to24(startRaw, startAmPm);
+    let end24   = to24(endRaw,   endAmPm);
 
     // Parse title and room from rest: "Welcome Yoga | Grande" or "Dinner | Orientation | Max"
     const parts = rest.split('|').map(p => p.trim()).filter(Boolean);
@@ -5109,11 +5112,11 @@ function parseScheduleText(text){
     // Categorize
     let category = 'classes';
     const lc = title.toLowerCase();
-    if(lc.includes('breakfast') || lc.includes('brunch') || lc.includes('lunch') || lc.includes('dinner') || lc.includes('snack') || lc.includes('fruit') || lc.includes('coffee') || lc.includes('banana')){
+    if(lc.includes('breakfast') || lc.includes('brunch') || lc.includes('lunch') || lc.includes('dinner') || lc.includes('snack') || lc.includes('fruit') || lc.includes('coffee') || lc.includes('banana') || lc.includes('welcome snack')){
       category = 'meals';
-    } else if(lc.includes('meditation') || lc.includes('ceremony') || lc.includes('sound') || lc.includes('cacao') || lc.includes('circle') || lc.includes('clay')){
+    } else if(lc.includes('meditation') || lc.includes('ceremony') || lc.includes('sound') || lc.includes('cacao') || lc.includes('circle') || lc.includes('clay') || lc.includes('temazcal') || lc.includes('healing')){
       category = 'soul';
-    } else if(lc.includes('cenote') || lc.includes('ruins') || lc.includes('mangrove') || lc.includes('tour')){
+    } else if(lc.includes('cenote') || lc.includes('ruins') || lc.includes('mangrove') || lc.includes('tour') || lc.includes('cooking class') || lc.includes('ice bath') || lc.includes('salsa')){
       category = 'tours';
     }
 
