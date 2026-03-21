@@ -5031,6 +5031,13 @@ function addParsedSchedule(){
 
 function parseScheduleText(text){
   const results = [];
+  // Normalize: Windows line endings, tabs → space, en/em dash → hyphen, curly quotes
+  text = text
+    .replace(/\r\n/g, '\n').replace(/\r/g, '\n')
+    .replace(/\t/g, ' ')
+    .replace(/[–—]/g, '-')   // en dash, em dash → hyphen
+    .replace(/['']/g, "'")
+    .replace(/[""]/g, '"');
   const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
 
   let currentDay = '';
@@ -5053,7 +5060,7 @@ function parseScheduleText(text){
 
     // Parse time and event: "7:00 PM | Dinner" or "5:45 PM – 7:00 PM | Yoga | Grande"
     // Capture AM/PM explicitly for each time part
-    const eventMatch = line.match(/^(\d{1,2}:?\d{2})\s*(AM|PM)?\s*(?:[–\-]\s*(\d{1,2}:?\d{2})\s*(AM|PM)?)?\s*[|]?\s*(.+)/i);
+    const eventMatch = line.match(/^(\d{1,2}:?\d{2})\s*(AM|PM)?\s*(?:[-]\s*(\d{1,2}:?\d{2})\s*(AM|PM)?)?\s*[|]?\s*(.+)/i);
     if(!eventMatch) return;
 
     let startRaw = eventMatch[1];
