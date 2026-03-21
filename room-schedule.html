@@ -2882,7 +2882,7 @@ function renderDayView(){
         ev.className = 'dayview-event '+catClass+' '+conflictClass;
         ev.style.cssText = 'position:absolute;pointer-events:auto;left:calc('+leftPercent+'% + 3px);width:calc('+colPercent+'% - 6px);top:'+topPx+'px;height:'+heightPx+'px;'+(isRequested?'border:2px dashed #d4a017;background:#fffbf0;':'');
         ev.title = fmt12(b.start)+'–'+fmt12(b.end)+' · '+b.title+(b.teacher?' · '+b.teacher:'');
-        ev.onclick = function(e){ e.stopPropagation(); openModal(b.id); };
+        ev.onclick = function(e){ e.stopPropagation(); if(!ev._dragged) openModal(b.id); ev._dragged=false; };
         const reqBadge = isRequested ? '<div style="font-size:9px;font-weight:700;color:#d4a017;letter-spacing:0.05em">★ REQUESTED</div>' : '';
         ev.innerHTML = reqBadge+groupLabel+teacherLine+'<div class="ev-title">'+groupDot+b.title+'</div>'+(heightPx > 30 ? '<div class="ev-time">'+fmt12(b.start)+'–'+fmt12(b.end)+paxLine+'</div>' : '');
         overlay.appendChild(ev);
@@ -2893,6 +2893,7 @@ function renderDayView(){
           evEl.addEventListener('mousedown', function(e){
             if(e.button !== 0) return;
             e.preventDefault(); e.stopPropagation();
+            evEl._dragged = false;
             const rect = evEl.getBoundingClientRect();
             const offsetY = e.clientY - rect.top; // where inside the event user grabbed
             dragState = { offsetY, booking, origStyle: evEl.style.cssText };
@@ -2908,6 +2909,7 @@ function renderDayView(){
             overlay.appendChild(indicator);
 
             function onMouseMove(me){
+              evEl._dragged = true;
               // Position event under cursor
               const overlayRect = overlay.getBoundingClientRect();
               const relY = me.clientY - overlayRect.top - dragState.offsetY;
