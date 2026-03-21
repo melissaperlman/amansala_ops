@@ -3043,7 +3043,7 @@ function card(b){
     <div class="booking-left">
       <div class="time-range">${fmt12(b.start)} – ${fmt12(b.end)}</div>
       <div class="duration">${dur(b.start,b.end)}</div>
-      ${b.room ? `<div class="room-tag ${ROOM_CSS[b.room]}" onclick="quickToggleRequested(${b.id},event)" title="Click to toggle room requested" style="cursor:pointer;${b.status==='requested'?'border:2px dashed #d4a017;':''}">${b.room}${b.status==='requested'?' ★':''}</div>` : ''}
+      ${b.room ? `<div class="room-tag ${ROOM_CSS[b.room]}" onclick="quickToggleRequested(${b.id},event)" title="Click to toggle room requested" style="cursor:pointer;${b.status==='requested'?'border:2px dashed #d4a017;':''}">${b.room}${b.status==='requested'?' ★':''}</div>` : (b.category!=='meals'?`<div class="room-tag unassigned" onclick="openModal(${b.id})" title="Click to assign a room" style="cursor:pointer">Unassigned</div>`:'')}
       ${statusTag}
     </div>
     <div class="booking-right">
