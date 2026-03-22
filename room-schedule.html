@@ -5368,6 +5368,7 @@ function addParsedSchedule(){
   });
 
   closeScheduleImport();
+  patchToursAndSoul(); // ensure managed tours/soul always correct after import
   render();
   scheduleCloudSave();
 }
