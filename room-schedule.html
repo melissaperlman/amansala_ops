@@ -2134,7 +2134,11 @@ function mergedSoulRow(b){
 
   // Group tags — show which groups have this soul service
   const soulEntries = b._merged || [b];
-  const soulGroupIds = [...new Set(soulEntries.map(x=>x.group).filter(g=>g&&g!=='all'))];
+  const hasAllGroup = soulEntries.some(x => x.group === 'all');
+  const specificGroupIds = [...new Set(soulEntries.map(x=>x.group).filter(g=>g&&g!=='all'))];
+  const soulGroupIds = hasAllGroup && specificGroupIds.length === 0
+    ? activeGroups.map(g => g.id)   // group:all — show every active group
+    : specificGroupIds;             // specific groups only
   const soulGroupTags = soulGroupIds.map(gid => {
     const gm = groupMeta(gid);
     return `<span style="display:inline-flex;align-items:center;gap:3px;background:${gm.color}18;border:1px solid ${gm.color}40;border-radius:4px;padding:1px 7px;font-size:11px;font-weight:600;color:${gm.color}">
