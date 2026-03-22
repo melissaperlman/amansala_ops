@@ -5642,6 +5642,7 @@ async function loadFromCloud(){
 // Save all data to Google Sheets
 async function saveToCloud(){
   if(!cloudMode) return;
+  _saveInFlight = true;
   try {
     showSyncStatus('Saving to cloud...', '#5b7fa6');
 
@@ -5731,6 +5732,8 @@ async function saveToCloud(){
     const msg = 'Save failed: ' + (err.message||'unknown error');
     showSyncStatus(msg, '#cc3333');
     alert(msg);
+  } finally {
+    _saveInFlight = false;
   }
 }
 
@@ -5743,8 +5746,11 @@ function scheduleCloudSave(){
 
 // ── AUTO-POLL: silently reload cloud data every 3 minutes ─────────────────
 let _lastCloudHash = '';
+let _saveInFlight = false;
 async function silentCloudRefresh(){
   if(!cloudMode) return;
+  // Don't overwrite local changes that haven't been saved yet
+  if(saveTimer || _saveInFlight) return;
   try {
     const resp = await fetch(API_URL + '?action=roomSchedule');
     const json = await resp.json();
