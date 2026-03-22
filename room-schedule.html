@@ -718,6 +718,15 @@ Sunday March 22
   <div class="import-box">
     <div class="import-title">Import Group Schedule</div>
     <div class="import-desc">Paste a Google Doc link or paste the schedule text directly. We'll read it and add the group.</div>
+    <div class="import-field" style="background:#fff8f0;border:1px solid #f5c0a0;border-radius:8px;padding:12px">
+      <label class="import-label" style="color:#c0522a">🗑 Clear an existing group's schedule first</label>
+      <div style="display:flex;gap:8px;align-items:center;margin-top:6px">
+        <select id="isClearGroup" class="import-input" style="flex:1;margin:0">
+          <option value="">— select group to clear —</option>
+        </select>
+        <button onclick="clearGroupSchedule()" style="padding:8px 14px;background:#e53935;color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">Clear Schedule</button>
+      </div>
+    </div>
     <div class="import-field">
       <label class="import-label">Group Name</label>
       <input class="import-input" id="isGroupName" placeholder="e.g. Lilian So, Hot Mamas">
@@ -5222,6 +5231,19 @@ const GROUP_COLORS = ['#e8a5b0','#5b7fa6','#4a8c5c','#8b5cf6','#c47d3e','#2e86ab
 let isSelectedColor = '#e8a5b0';
 let isParsedBookings = [];
 
+function clearGroupSchedule(){
+  const sel = document.getElementById('isClearGroup');
+  const gid = sel.value;
+  if(!gid){ alert('Please select a group to clear.'); return; }
+  const g = GROUPS.find(x => x.id === gid);
+  if(!confirm(`Delete ALL bookings for "${g.label}"? This cannot be undone.`)) return;
+  bookings = bookings.filter(b => b.group !== gid);
+  render();
+  saveToCloud();
+  sel.value = '';
+  alert(`✅ All bookings for "${g.label}" have been cleared. You can now re-import their schedule.`);
+}
+
 function openScheduleImport(){
   document.getElementById('isGroupName').value='';
   document.getElementById('isGroupPax').value='';
@@ -5232,6 +5254,12 @@ function openScheduleImport(){
   document.getElementById('isFetchBtn').style.display='';
   document.getElementById('isAddBtn').style.display='none';
   isParsedBookings = [];
+
+  // Populate clear-group dropdown with active non-shared groups
+  const clearSel = document.getElementById('isClearGroup');
+  clearSel.innerHTML = '<option value="">— select group to clear —</option>' +
+    GROUPS.filter(g => g.id !== 'all' && !g.removed)
+      .map(g => `<option value="${g.id}">${g.label}</option>`).join('');
 
   // Color picker
   const picker = document.getElementById('isColorPicker');
