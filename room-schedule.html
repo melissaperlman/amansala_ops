@@ -2056,8 +2056,9 @@ function mergedSoulRow(b){
   }).join('');
 
   // Notes line
+  const notesHasIncluded = /\bincluded\b/i.test(b.notes||'');
   const notesLine = b.notes
-    ? `<span style="font-size:12px;color:var(--muted)" title="${b.notes}">📋 ${b.notes}</span>`
+    ? `<span style="font-size:12px;font-weight:${notesHasIncluded?'700':'500'};color:${notesHasIncluded?'#c0392b':'var(--muted)'}" title="${b.notes}">📋 ${b.notes}</span>`
     : '';
 
   // Group tags with INC/OPT badges — built from merged entries
