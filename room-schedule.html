@@ -5626,18 +5626,18 @@ async function loadFromCloud(){
     }
 
     if(data.groups && data.groups.length > 0){
-      // Keep the 'all' group, replace the rest
+      // Keep the 'all' group, replace the rest — skip any that were removed
       GROUPS.length = 0;
       GROUPS.push({ id:'all', label:'All Groups / Shared', color:'#9a9490', short:'Shared', lastDay:null });
       data.groups.forEach(g => {
+        if(g.removed === true || g.removed === 'true') return; // permanently skip deleted groups
         GROUPS.push({
           id: g.id || g.label.toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,12),
           label: g.label,
           color: g.color || '#9a9490',
           short: g.short || g.label,
           pax: g.pax || 0,
-          lastDay: g.lastDay || null,
-          removed: g.removed === true || g.removed === 'true'
+          lastDay: g.lastDay || null
         });
       });
     }
