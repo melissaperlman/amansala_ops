@@ -1657,28 +1657,37 @@ function mergeSoul(souls){
     }
   });
 
-  // Second pass: merge any remaining separate entries at the same time slot
-  // (catches "Cacao + Sound Healing" group:all + "Cacao Ceremony" group:iamwoman)
+  // Second pass: merge entries at the same time only if titles are similar
+  // (catches "Cacao + Sound Healing" vs "Cacao Ceremony" but NOT Temazcal + Cacao)
+  const titleSimilar = (a, b) => {
+    const norm = t => t.toLowerCase().replace(/[^a-z]/g,'').slice(0,8);
+    return norm(a) === norm(b);
+  };
   const byTime = {};
   Object.values(slots).forEach(s => {
     const t = s._timeKey;
     if(!byTime[t]){
-      byTime[t] = s;
+      byTime[t] = [s];
     } else {
-      // merge into whichever has group:all, or the first one
-      const base = (byTime[t].group === 'all' || s.group !== 'all') ? byTime[t] : s;
-      const other = base === byTime[t] ? s : byTime[t];
-      base._merged = [...(base._merged||[base]), ...(other._merged||[other])];
-      byTime[t] = base;
+      const match = byTime[t].find(e => titleSimilar(e.title, s.title));
+      if(match){
+        const base = (match.group === 'all' || s.group !== 'all') ? match : s;
+        const other = base === match ? s : match;
+        base._merged = [...(base._merged||[base]), ...(other._merged||[other])];
+        if(base !== match){ byTime[t].splice(byTime[t].indexOf(match), 1, base); }
+      } else {
+        byTime[t].push(s);
+      }
     }
   });
+  const mergedSouls = Object.values(byTime).flat();
 
   // If any merged booking is optional, mark the whole row as optional
-  Object.values(byTime).forEach(s => {
+  mergedSouls.forEach(s => {
     if((s._merged||[s]).some(x => x.optional)) s.optional = true;
   });
 
-  return Object.values(byTime).sort((a,b)=>cmpTime(a.start,b.start));
+  return mergedSouls.sort((a,b)=>cmpTime(a.start,b.start));
 }
 
 function renderByDay(){
