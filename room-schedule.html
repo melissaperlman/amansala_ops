@@ -515,7 +515,8 @@
     </div>
     <div class="form-row">
       <label class="form-label">Group</label>
-      <select class="form-select" id="fieldGroup"></select>
+      <select class="form-select" id="fieldGroup" style="display:none"></select>
+      <div id="fieldGroupChips" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:2px"></div>
     </div>
     <div class="form-row">
       <label class="form-label">Category</label>
@@ -3289,15 +3290,68 @@ function card(b){
   </div>`;
 }
 
+// ── GROUP CHIP MULTI-SELECTOR ─────────────────────────────────────────────
+function renderGroupChips(selectedIds){
+  const container = document.getElementById('fieldGroupChips');
+  if(!container) return;
+  const groups = GROUPS.filter(g => !g.removed);
+  container.innerHTML = groups.map(g => {
+    const active = selectedIds.includes(g.id);
+    const bg = active ? g.color : 'var(--card)';
+    const color = active ? '#fff' : 'var(--text)';
+    const border = active ? g.color : 'var(--border)';
+    return `<span onclick="toggleGroupChip('${g.id}')" id="gchip-${g.id}" style="cursor:pointer;display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;border:1.5px solid ${border};background:${bg};color:${color};font-size:12px;font-weight:600;user-select:none;transition:all 0.12s">
+      <span style="width:7px;height:7px;border-radius:50%;background:${active?'#fff':g.color};display:inline-block"></span>${g.short}
+    </span>`;
+  }).join('');
+}
+
+function toggleGroupChip(gid){
+  const selected = getSelectedGroupIds();
+  const idx = selected.indexOf(gid);
+  // If clicking 'all', deselect everything else and select only 'all'
+  if(gid === 'all'){
+    renderGroupChips(['all']);
+    document.getElementById('fieldGroup').value = 'all';
+    return;
+  }
+  // Deselect 'all' when picking a specific group
+  const withoutAll = selected.filter(x => x !== 'all');
+  if(idx >= 0 && withoutAll.length > 1){
+    renderGroupChips(withoutAll.filter(x => x !== gid));
+  } else if(idx >= 0 && withoutAll.length === 1){
+    // Don't deselect the last one
+  } else {
+    renderGroupChips([...withoutAll, gid]);
+  }
+  const newSelected = getSelectedGroupIds();
+  document.getElementById('fieldGroup').value = newSelected[0] || 'all';
+}
+
+function getSelectedGroupIds(){
+  const container = document.getElementById('fieldGroupChips');
+  if(!container) return ['all'];
+  const chips = container.querySelectorAll('span[id^="gchip-"]');
+  const selected = [];
+  chips.forEach(chip => {
+    // Check if background is not var(--card) — active chips have group color bg
+    if(chip.style.background && chip.style.background !== 'var(--card)' && chip.style.background !== 'var(--bg)'){
+      selected.push(chip.id.replace('gchip-',''));
+    }
+  });
+  return selected.length ? selected : ['all'];
+}
+
 // ── MODAL ────────────────────────────────────────────────────────────────
 function openModal(id, defaultDay, defaultRoom){
   editingId = id;
   updateTeacherDatalist();
-  // Populate group dropdown dynamically from GROUPS
-  const groupSelect = document.getElementById('fieldGroup');
-  groupSelect.innerHTML = GROUPS.filter(g => !g.removed).map(g =>
-    `<option value="${g.id}">${g.label}${g.pax?' ('+g.pax+' pax)':''}</option>`
-  ).join('');
+  // Build group chip multi-selector
+  const selectedGroups = id
+    ? [bookings.find(x=>x.id===id)?.group || 'all']
+    : [activeGroup !== 'all' ? activeGroup : 'all'];
+  renderGroupChips(selectedGroups);
+
   document.getElementById('modalTitle').textContent = id ? 'Edit Booking' : 'Add Booking';
   document.getElementById('deleteBtn').style.display = id ? 'block' : 'none';
   if(id){
@@ -3420,7 +3474,8 @@ function checkApplyAllDays(){
 function saveBooking(){
   const now = new Date();
   const stamp = { lastEditedBy: getCurrentUser(), lastEditedAt: now.toISOString() };
-  const data={
+  const selectedGroupIds = getSelectedGroupIds();
+  const baseData={
     title:document.getElementById('fieldTitle').value.trim()||'Untitled',
     teacher:document.getElementById('fieldTeacher').value.trim()||'Unknown',
     day:document.getElementById('fieldDay').value,
@@ -3431,27 +3486,35 @@ function saveBooking(){
     notes:document.getElementById('fieldNotes').value.trim(),
     status:document.getElementById('fieldStatus').value,
     category:document.getElementById('fieldCategory').value,
-    group:document.getElementById('fieldGroup').value||'all',
     location:document.getElementById('fieldLocation').value||'',
     subtitle:'',
     ...stamp,
   };
+
   if(editingId){
-    const i=bookings.findIndex(b=>b.id===editingId);
-    bookings[i]={...bookings[i],...data};
+    // Update the booking being edited with the first selected group
+    const i = bookings.findIndex(b=>b.id===editingId);
+    bookings[i] = {...bookings[i], ...baseData, group: selectedGroupIds[0]};
     // Apply room to all matching days if checkbox is checked
     const applyAll = document.getElementById('applyAllDays');
-    if(applyAll && applyAll.checked && data.room){
+    if(applyAll && applyAll.checked && baseData.room){
       bookings.forEach(b => {
-        if(b.id !== editingId && b.title === data.title && b.teacher === data.teacher){
-          b.room = data.room;
+        if(b.id !== editingId && b.title === baseData.title && b.teacher === baseData.teacher){
+          b.room = baseData.room;
           b.lastEditedBy = stamp.lastEditedBy;
           b.lastEditedAt = stamp.lastEditedAt;
         }
       });
     }
+    // Create extra bookings for any additional selected groups
+    selectedGroupIds.slice(1).forEach(gid => {
+      bookings.push({id: nextId++, ...baseData, group: gid});
+    });
   } else {
-    bookings.push({id:nextId++,...data});
+    // New booking — create one per selected group
+    selectedGroupIds.forEach(gid => {
+      bookings.push({id: nextId++, ...baseData, group: gid});
+    });
   }
   closeModal(); render(); scheduleCloudSave();
 }
