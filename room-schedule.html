@@ -5961,75 +5961,70 @@ async function silentCloudRefresh(){
 
 // ── ONE-TIME SCHEDULE CORRECTION ─────────────────────────────────────────
 // Moves Temazcal to Tue, Cacao to Mon, and sets correct optional/price/included flags
-function applyScheduleCorrections(){
-  if(!confirm('This will move ALL Temazcals to Tuesday, ALL Cacao to Monday, and update price/included labels. Continue?')) return;
-  let changed = 0;
+function rebuildToursAndSoul(){
+  if(!confirm('This will DELETE all existing tour & soul service bookings and rebuild them correctly. Continue?')) return;
 
-  bookings.forEach(b => {
-    const title = (b.title || '').toLowerCase();
-    const gm = groupMeta(b.group);
-    const isMeghan = /meghan/i.test(gm.label || '') || /meghan/i.test(gm.short || '');
-    const isSam    = /sam/i.test(gm.label || '') || /sam/i.test(gm.short || '');
+  // Find group IDs
+  const meghanG = GROUPS.find(g => g.id !== 'all' && /meghan/i.test(g.label));
+  const samG    = GROUPS.find(g => g.id !== 'all' && /sam.*apple|applebee/i.test(g.label));
+  const iawG    = GROUPS.find(g => g.id !== 'all' && /i.?am.?woman/i.test(g.label));
 
-    // Move ALL Temazcal bookings to Tue 24 regardless of current day
-    if(/temaz|temez/.test(title)){
-      if(b.day !== 'Tue 24'){ b.day = 'Tue 24'; changed++; }
-      b.optional = true; b.price = b.price || '$95';
-    }
+  if(!meghanG || !samG || !iawG){
+    alert('Could not find all 3 groups.\nFound: ' + [meghanG&&meghanG.label, samG&&samG.label, iawG&&iawG.label].join(' | '));
+    return;
+  }
 
-    // Move ALL Cacao/Sound Healing bookings to Mon 23 regardless of current day
-    if(/cacao/.test(title)){
-      if(b.day !== 'Mon 23'){ b.day = 'Mon 23'; changed++; }
-      // Meghan & Sam = Included, IAW/others = Optional $75
-      if(isMeghan || isSam || b.group === 'all'){
-        b.optional = false; b.price = '';
-      } else {
-        b.optional = true; b.price = '$75';
-      }
-    }
+  const m = meghanG.id, s = samG.id, iaw = iawG.id;
+  const stamp = { lastEditedBy: getCurrentUser(), lastEditedAt: new Date().toISOString(), status:'confirmed', subtitle:'', location:'', room:'' };
 
-    // Mayan Clay: Meghan=Included, others=Optional $75
-    if(/mayan clay/.test(title)){
-      if(isMeghan){ b.optional = false; b.price = ''; }
-      else { b.optional = true; b.price = b.price || '$75'; }
-      changed++;
-    }
+  // Remove all existing tour & soul bookings
+  bookings = bookings.filter(b => b.category !== 'tours' && b.category !== 'soul');
 
-    // Grande Cenote: Sam=Included, others=Optional $85
-    if(/cenote/.test(title)){
-      if(isSam){ b.optional = false; b.price = ''; }
-      else { b.optional = true; b.price = '$85'; }
-    }
+  const fresh = [
+    // ── TOURS ──────────────────────────────────────────────────
+    // Grande Cenote Mon 23 — Sam: Included, Meghan & IAW: $85
+    { group:s,   day:'Mon 23', start:'11:45', end:'14:15', title:'Grande Cenote', category:'tours', optional:false, price:'',    pax:12, notes:'Included in Sam\'s package', teacher:'' },
+    { group:m,   day:'Mon 23', start:'11:45', end:'14:15', title:'Grande Cenote', category:'tours', optional:true,  price:'$85', pax:26, notes:'', teacher:'' },
+    { group:iaw, day:'Mon 23', start:'11:45', end:'14:15', title:'Grande Cenote', category:'tours', optional:true,  price:'$85', pax:12, notes:'', teacher:'' },
+    // Tulum Ruins Tue 24 — all: $85
+    { group:'all', day:'Tue 24', start:'11:45', end:'14:15', title:'Tulum Ruins', category:'tours', optional:true, price:'$85', pax:0, notes:'', teacher:'' },
+    // Mangroves Wed 25 — all: $85
+    { group:'all', day:'Wed 25', start:'11:45', end:'14:15', title:'Mangroves Tour', category:'tours', optional:true, price:'$85', pax:0, notes:'No local entry fee', teacher:'' },
 
-    // Ice Bath: all optional $75
-    if(/ice bath/.test(title)){ b.optional = true; b.price = '$75'; }
+    // ── SOUL SERVICES ───────────────────────────────────────────
+    // Cacao + Sound Healing Mon 23 — Meghan & Sam: Included, IAW: $75
+    { group:m,   day:'Mon 23', start:'19:15', end:'20:15', title:'Cacao + Sound Healing', category:'soul', optional:false, price:'',    pax:26, notes:'Meghan: Included', teacher:'Kun y Darlene' },
+    { group:s,   day:'Mon 23', start:'19:15', end:'20:15', title:'Cacao + Sound Healing', category:'soul', optional:false, price:'',    pax:12, notes:'Sam: Included', teacher:'Kun y Darlene' },
+    { group:iaw, day:'Mon 23', start:'19:15', end:'20:15', title:'Cacao + Sound Healing', category:'soul', optional:true,  price:'$75', pax:12, notes:'', teacher:'Kun y Darlene' },
+    // Ice Bath Tue 24 — all: $75
+    { group:'all', day:'Tue 24', start:'15:00', end:'16:00', title:'Ice Bath', category:'soul', optional:true, price:'$75', pax:0, notes:'Bring swimwear & towel', teacher:'' },
+    // Temazcal Tue 24 — all: $95
+    { group:'all', day:'Tue 24', start:'19:15', end:'22:00', title:'Temazcal', category:'soul', optional:true, price:'$95', pax:0, notes:'Bring towel & sandals · Meet reception 10 min early', teacher:'Maria & Gollo' },
+    // Mayan Clay Wed 25 — Meghan: Included, Sam & IAW: $75
+    { group:m,   day:'Wed 25', start:'15:00', end:'15:30', title:'Mayan Clay Ritual', category:'soul', optional:false, price:'',    pax:26, notes:'Meghan: Included · Bring old swimwear & towel', teacher:'' },
+    { group:s,   day:'Wed 25', start:'15:00', end:'15:30', title:'Mayan Clay Ritual', category:'soul', optional:true,  price:'$75', pax:12, notes:'Bring old swimwear & towel', teacher:'' },
+    { group:iaw, day:'Wed 25', start:'15:00', end:'15:30', title:'Mayan Clay Ritual', category:'soul', optional:true,  price:'$75', pax:12, notes:'Bring old swimwear & towel', teacher:'' },
+  ];
 
-    // Tulum Ruins: all optional $85
-    if(/tulum|ruins/.test(title)){ b.optional = true; b.price = '$85'; }
-
-    // Mangroves: all optional $85
-    if(/mangrove/.test(title)){ b.optional = true; b.price = b.price || '$85'; }
-  });
+  fresh.forEach(b => bookings.push({ id: nextId++, ...stamp, ...b }));
 
   render();
   saveToCloud();
-  const btn = document.getElementById('scheduleFixBtn');
-  if(btn) btn.remove();
-  alert('✅ Done! ' + changed + ' bookings moved and saved to cloud.');
+  document.getElementById('scheduleFixBtn').remove();
+  alert('✅ Done! Tours and soul services rebuilt correctly.');
 }
 
-// Show fix button in header (after cloud loads)
 (function addFixButton(){
   setTimeout(() => {
     const hw = document.querySelector('.header-top');
-    if(!hw) return;
+    if(!hw || document.getElementById('scheduleFixBtn')) return;
     const btn = document.createElement('button');
     btn.id = 'scheduleFixBtn';
-    btn.textContent = '🔧 Apply Schedule Fix';
-    btn.style.cssText = 'padding:6px 14px;border:1.5px solid #c47d3e;border-radius:8px;background:#fff3e0;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;color:#c47d3e';
-    btn.onclick = applyScheduleCorrections;
+    btn.textContent = '🔧 Rebuild Tours & Soul';
+    btn.style.cssText = 'padding:6px 14px;border:2px solid #c0392b;border-radius:8px;background:#fdecea;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;color:#c0392b';
+    btn.onclick = rebuildToursAndSoul;
     hw.appendChild(btn);
-  }, 4000); // wait for cloud load to finish
+  }, 5000);
 })();
 
 // Auto-load from cloud on startup so all collaborators see latest data.
