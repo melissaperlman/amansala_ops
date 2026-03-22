@@ -1401,9 +1401,10 @@ function renderCatTabs(){
 
 function visibleBookings(){
   let b = bookings;
-  // Hide bookings from removed groups
+  // Only show bookings for groups that exist and are not removed
+  const knownIds = new Set(GROUPS.map(g=>g.id));
   const removedIds = new Set(GROUPS.filter(g=>g.removed).map(g=>g.id));
-  b = b.filter(x => !removedIds.has(x.group));
+  b = b.filter(x => x.group==='all' || (knownIds.has(x.group) && !removedIds.has(x.group)));
   if(activeGroup !== 'all') b = b.filter(x => x.group===activeGroup || x.group==='all');
   if(activeCategory !== 'all') b = b.filter(x => x.category===activeCategory);
   return b;
