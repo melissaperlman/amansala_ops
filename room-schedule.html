@@ -6031,11 +6031,21 @@ async function silentCloudRefresh(){
 // Called every time cloud data loads — replaces only the specific managed tours/soul
 // so correct days, groups, and included/optional are always shown.
 function patchToursAndSoul(){
-  const meghanG = GROUPS.find(g => g.id !== 'all' && /meghan/i.test(g.label));
-  const samG    = GROUPS.find(g => g.id !== 'all' && /sam.*apple|applebee/i.test(g.label));
-  const iawG    = GROUPS.find(g => g.id !== 'all' && /i.?am.?woman/i.test(g.label));
+  // Prefer active (non-removed) groups; fall back to archived if needed
+  const findGroup = (rx) => {
+    const active = GROUPS.find(g => g.id !== 'all' && !g.removed && rx.test(g.label));
+    return active || GROUPS.find(g => g.id !== 'all' && rx.test(g.label));
+  };
+  const meghanG = findGroup(/megan/i);  // matches "Megan" or "Meghan"
+  const samG    = findGroup(/sam.*apple|applebee/i);
+  const iawG    = findGroup(/i.?am.?woman/i);
   if(!meghanG || !samG || !iawG) return; // groups not configured yet
   const m = meghanG.id, s = samG.id, iaw = iawG.id;
+
+  // Remove stale bookings from any OLD version of Meghan's group id
+  // (e.g. if user re-imported as "Megan" — clean up old "Meghan" class bookings)
+  const allMeganIds = GROUPS.filter(g => /megan/i.test(g.label) && g.id !== m).map(g => g.id);
+  if(allMeganIds.length) bookings = bookings.filter(b => !allMeganIds.includes(b.group));
 
   // Titles we manage — remove ALL existing bookings with these titles (any group/day)
   const managedTitles = [
