@@ -1241,11 +1241,14 @@ function editGroupPax(gid){
 }
 
 function removeGroup(gid){
-  if(!confirm(`Remove this group from the schedule? Their bookings will be hidden.`)) return;
   const g = GROUPS.find(x=>x.id===gid);
+  const label = g ? g.label : gid;
+  if(!confirm(`Remove "${label}" and DELETE all their bookings? This cannot be undone.`)) return;
   if(g) g.removed = true;
+  bookings = bookings.filter(b => b.group !== gid);
   if(activeGroup===gid) activeGroup='all';
-  render(); scheduleCloudSave();
+  render();
+  saveToCloud();
 }
 
 function restoreGroup(gid){
