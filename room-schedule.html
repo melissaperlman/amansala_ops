@@ -546,10 +546,14 @@
         <option value="conflict">Conflict</option>
       </select>
     </div>
-    <div class="form-row">
+    <div class="form-row" style="display:flex;gap:20px;flex-wrap:wrap">
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;font-weight:600;color:#2e7d32">
+        <input type="checkbox" id="fieldIncluded" style="width:15px;height:15px;cursor:pointer" onchange="if(this.checked){document.getElementById('fieldOptional').checked=false;}">
+        ✓ Included in retreat
+      </label>
       <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;font-weight:600;color:var(--requested)">
-        <input type="checkbox" id="fieldOptional" style="width:15px;height:15px;cursor:pointer">
-        Optional (guests can choose to join)
+        <input type="checkbox" id="fieldOptional" style="width:15px;height:15px;cursor:pointer" onchange="if(this.checked){document.getElementById('fieldIncluded').checked=false;}">
+        Optional (add-on)
       </label>
     </div>
     <div id="applyAllRow" style="display:none;padding:10px 0 4px;border-top:1px solid var(--border);margin-top:8px">
@@ -3288,6 +3292,8 @@ function openModal(id, defaultDay, defaultRoom){
     document.getElementById('fieldLocation').value=b.location||'';
     document.getElementById('fieldGroup').value=b.group||'all';
     document.getElementById('fieldOptional').checked=b.optional||false;
+    const isInc = /\bincluded\b/i.test(b.notes||'') || (!b.optional && !b.price && (b.category==='soul'||b.category==='tours'));
+    document.getElementById('fieldIncluded').checked=isInc||false;
   } else {
     document.getElementById('fieldTitle').value='';
     document.getElementById('fieldTeacher').value='';
@@ -3302,6 +3308,7 @@ function openModal(id, defaultDay, defaultRoom){
     document.getElementById('fieldLocation').value='';
     document.getElementById('fieldGroup').value=activeGroup!=='all'?activeGroup:'all';
     document.getElementById('fieldOptional').checked=false;
+    document.getElementById('fieldIncluded').checked=false;
   }
   toggleMealLocation();
   syncRoomRequestedCheckbox();
@@ -3409,6 +3416,8 @@ function saveBooking(){
     category:document.getElementById('fieldCategory').value,
     location:document.getElementById('fieldLocation').value||'',
     optional:document.getElementById('fieldOptional').checked||false,
+    price: document.getElementById('fieldIncluded').checked ? '' : undefined,
+    ...(document.getElementById('fieldIncluded').checked ? {optional:false, notes:'Included'} : {}),
     subtitle:'',
     ...stamp,
   };
