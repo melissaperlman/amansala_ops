@@ -909,8 +909,8 @@ let bookings = [
   { id:46, group:'all',      day:'Thu 26', start:'19:30', end:'20:30', title:'Dinner',                   subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
 
 
-  { id:226,group:'all',      day:'Thu 26', start:'11:45', end:'14:00', title:'Mangroves Tour',           subtitle:'', teacher:'', room:'', pax:0, notes:'No local entry fee', status:'confirmed', category:'tours', optional:true },
-  { id:227,group:'all',      day:'Thu 26', start:'15:30', end:'16:00', title:'Mayan Clay Ritual',        subtitle:'', teacher:'', room:'', pax:0, notes:'Bring old swimwear & towel', status:'confirmed', category:'soul', price:'$65', optional:true },
+  // id:226 Thu Mangroves and id:227 Thu Mayan Clay removed — not all groups have Thursday activities
+  // (Sam departs Thu; IAW only has clay Wed) — add via group import if needed
 
 
   // ══════════════════════════════════════════════════════════
@@ -5686,10 +5686,11 @@ async function loadFromCloud(){
       // ── Data migrations ──────────────────────────────────────────────────
       let migrationDirty = false;
 
-      // Remove the incorrectly placed Wednesday Temazcal (id 221) for all groups
-      const before221 = bookings.length;
-      bookings = bookings.filter(b => !(b.id === 221 && b.group === 'all'));
-      if(bookings.length < before221) migrationDirty = true;
+      // Remove shared bookings that don't apply to all groups
+      const removeSharedIds = new Set([221, 226, 227]); // Wed Temazcal, Thu Mangroves, Thu Mayan Clay
+      const beforeRemove = bookings.length;
+      bookings = bookings.filter(b => !(removeSharedIds.has(b.id) && b.group === 'all'));
+      if(bookings.length < beforeRemove) migrationDirty = true;
 
       // Fix any booking whose notes start with "Sam: Included · Others: $XX · "
       bookings.forEach(b => {
