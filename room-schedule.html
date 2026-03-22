@@ -2094,9 +2094,10 @@ function mergedSoulRow(b){
   const soulSignupCounts = {};
   activeGroups.forEach(g => { soulSignupCounts[g.id] = tourState[gKey(g.id)].signups||0; });
   const soulPaxBubbles = paxBubbles(b, soulSignupCounts);
+  const isExplicitlyIncluded = /\bincluded\b/i.test(b.notes||'') || /\bincluded\b/i.test(b.subtitle||'');
   const pricePill = pricePer
     ? `<span class="badge" style="background:#f5e0f5;color:#7a3a8a;border:1px solid #ddb0e8;font-size:11px;padding:2px 8px;border-radius:5px;font-weight:700">${pricePer}/pp</span>`
-    : (!b.optional ? `<span class="badge" style="background:#ecdaf5;color:#6a3b86;border:1px solid #d4a0e4;font-size:11px;padding:2px 8px;border-radius:5px;font-weight:700">Included</span>` : '');
+    : (isExplicitlyIncluded ? `<span class="badge" style="background:#ecdaf5;color:#6a3b86;border:1px solid #d4a0e4;font-size:11px;padding:2px 8px;border-radius:5px;font-weight:700">Included</span>` : '');
 
   const optBadge = b.optional ? `<span class="optional-badge">Optional</span>` : '';
 
