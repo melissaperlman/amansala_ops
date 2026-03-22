@@ -546,6 +546,12 @@
         <option value="conflict">Conflict</option>
       </select>
     </div>
+    <div class="form-row">
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;font-weight:600;color:var(--requested)">
+        <input type="checkbox" id="fieldOptional" style="width:15px;height:15px;cursor:pointer">
+        Optional (guests can choose to join)
+      </label>
+    </div>
     <div id="applyAllRow" style="display:none;padding:10px 0 4px;border-top:1px solid var(--border);margin-top:8px">
       <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;color:#5b7fa6;font-weight:600">
         <input type="checkbox" id="applyAllDays" style="width:15px;height:15px;cursor:pointer">
@@ -3298,9 +3304,9 @@ function renderGroupChips(selectedIds){
   container.innerHTML = groups.map(g => {
     const active = selectedIds.includes(g.id);
     const bg = active ? g.color : 'var(--card)';
-    const color = active ? '#fff' : 'var(--text)';
+    const txtColor = active ? '#fff' : 'var(--text)';
     const border = active ? g.color : 'var(--border)';
-    return `<span onclick="toggleGroupChip('${g.id}')" id="gchip-${g.id}" style="cursor:pointer;display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;border:1.5px solid ${border};background:${bg};color:${color};font-size:12px;font-weight:600;user-select:none;transition:all 0.12s">
+    return `<span onclick="toggleGroupChip('${g.id}')" id="gchip-${g.id}" data-selected="${active?'1':'0'}" data-gid="${g.id}" style="cursor:pointer;display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;border:1.5px solid ${border};background:${bg};color:${txtColor};font-size:12px;font-weight:600;user-select:none;transition:all 0.12s">
       <span style="width:7px;height:7px;border-radius:50%;background:${active?'#fff':g.color};display:inline-block"></span>${g.short}
     </span>`;
   }).join('');
@@ -3309,35 +3315,30 @@ function renderGroupChips(selectedIds){
 function toggleGroupChip(gid){
   const selected = getSelectedGroupIds();
   const idx = selected.indexOf(gid);
-  // If clicking 'all', deselect everything else and select only 'all'
   if(gid === 'all'){
     renderGroupChips(['all']);
     document.getElementById('fieldGroup').value = 'all';
     return;
   }
-  // Deselect 'all' when picking a specific group
   const withoutAll = selected.filter(x => x !== 'all');
+  let newSelected;
   if(idx >= 0 && withoutAll.length > 1){
-    renderGroupChips(withoutAll.filter(x => x !== gid));
-  } else if(idx >= 0 && withoutAll.length === 1){
-    // Don't deselect the last one
+    newSelected = withoutAll.filter(x => x !== gid);
+  } else if(idx >= 0){
+    newSelected = withoutAll; // keep at least one selected
   } else {
-    renderGroupChips([...withoutAll, gid]);
+    newSelected = [...withoutAll, gid];
   }
-  const newSelected = getSelectedGroupIds();
+  renderGroupChips(newSelected);
   document.getElementById('fieldGroup').value = newSelected[0] || 'all';
 }
 
 function getSelectedGroupIds(){
   const container = document.getElementById('fieldGroupChips');
   if(!container) return ['all'];
-  const chips = container.querySelectorAll('span[id^="gchip-"]');
   const selected = [];
-  chips.forEach(chip => {
-    // Check if background is not var(--card) — active chips have group color bg
-    if(chip.style.background && chip.style.background !== 'var(--card)' && chip.style.background !== 'var(--bg)'){
-      selected.push(chip.id.replace('gchip-',''));
-    }
+  container.querySelectorAll('[data-gid]').forEach(chip => {
+    if(chip.dataset.selected === '1') selected.push(chip.dataset.gid);
   });
   return selected.length ? selected : ['all'];
 }
@@ -3368,6 +3369,7 @@ function openModal(id, defaultDay, defaultRoom){
     document.getElementById('fieldCategory').value=b.category||'classes';
     document.getElementById('fieldLocation').value=b.location||'';
     document.getElementById('fieldGroup').value=b.group||'all';
+    document.getElementById('fieldOptional').checked=b.optional||false;
   } else {
     document.getElementById('fieldTitle').value='';
     document.getElementById('fieldTeacher').value='';
@@ -3381,6 +3383,7 @@ function openModal(id, defaultDay, defaultRoom){
     document.getElementById('fieldCategory').value=activeCategory!=='all'?activeCategory:'classes';
     document.getElementById('fieldLocation').value='';
     document.getElementById('fieldGroup').value=activeGroup!=='all'?activeGroup:'all';
+    document.getElementById('fieldOptional').checked=false;
   }
   toggleMealLocation();
   syncRoomRequestedCheckbox();
@@ -3487,6 +3490,7 @@ function saveBooking(){
     status:document.getElementById('fieldStatus').value,
     category:document.getElementById('fieldCategory').value,
     location:document.getElementById('fieldLocation').value||'',
+    optional:document.getElementById('fieldOptional').checked||false,
     subtitle:'',
     ...stamp,
   };
