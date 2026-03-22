@@ -1624,6 +1624,9 @@ function mergeTours(tours){
       byTime[t] = base;
     }
   });
+  Object.values(byTime).forEach(s => {
+    if((s._merged||[s]).some(x => x.optional)) s.optional = true;
+  });
   return Object.values(byTime).sort((a,b)=>cmpTime(a.start,b.start));
 }
 
@@ -1661,6 +1664,11 @@ function mergeSoul(souls){
       base._merged = [...(base._merged||[base]), ...(other._merged||[other])];
       byTime[t] = base;
     }
+  });
+
+  // If any merged booking is optional, mark the whole row as optional
+  Object.values(byTime).forEach(s => {
+    if((s._merged||[s]).some(x => x.optional)) s.optional = true;
   });
 
   return Object.values(byTime).sort((a,b)=>cmpTime(a.start,b.start));
