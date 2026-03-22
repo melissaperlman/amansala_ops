@@ -1126,13 +1126,8 @@ let editingId = null;
 
 
 const GROUPS = [
-  { id:'all',      label:'All Groups / Shared', color:'#9a9490', short:'Shared',                         lastDay:null  },
-  { id:'tww',      label:'The Wonder Women',     color:'#8b5cf6', short:'TWW',       pax:42, lastDay:'Sat 21' },
-  { id:'meghan',   label:"Meghan's Group",       color:'#e8a5b0', short:'Meghan',      pax:26, lastDay:'Thu 26' },
-  { id:'iamwoman', label:'I Am Woman',            color:'#5b7fa6', short:'I Am Woman',  pax:12, lastDay:'Fri 27' },
-  { id:'sam',      label:'Samantha Applebee',     color:'#4a8c5c', short:'Sam A.',      pax:12, lastDay:'Thu 26' },
-  { id:'gudrun',   label:'Gudrun & Alyssa Dasso',  color:'#2e86ab', short:'Gudrun & Alyssa', pax:31, lastDay:'Sat 21' },
-  { id:'lilian',   label:'Lilian So',              color:'#d4577a', short:'Lilian So',      pax:28, lastDay:'Sat 21' },
+  { id:'all', label:'All Groups / Shared', color:'#9a9490', short:'Shared', lastDay:null },
+  // All other groups are loaded from cloud — hardcoded entries removed to prevent ghosts
 ];
 function groupMeta(id){ return GROUPS.find(g=>g.id===id)||GROUPS[0]; }
 
@@ -1241,10 +1236,10 @@ function editGroupPax(gid){
 }
 
 function removeGroup(gid){
-  const g = GROUPS.find(x=>x.id===gid);
-  const label = g ? g.label : gid;
+  const idx = GROUPS.findIndex(x=>x.id===gid);
+  const label = idx>=0 ? GROUPS[idx].label : gid;
   if(!confirm(`Remove "${label}" and DELETE all their bookings? This cannot be undone.`)) return;
-  if(g) g.removed = true;
+  if(idx>=0) GROUPS.splice(idx,1); // fully remove from array
   bookings = bookings.filter(b => b.group !== gid);
   if(activeGroup===gid) activeGroup='all';
   render();
