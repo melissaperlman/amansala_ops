@@ -5962,71 +5962,63 @@ async function silentCloudRefresh(){
 // ── ONE-TIME SCHEDULE CORRECTION ─────────────────────────────────────────
 // Moves Temazcal to Tue, Cacao to Mon, and sets correct optional/price/included flags
 function applyScheduleCorrections(){
-  if(!confirm('This will move Temazcal to Tuesday, Cacao to Monday, and update all included/price labels. Continue?')) return;
+  if(!confirm('This will move ALL Temazcals to Tuesday, ALL Cacao to Monday, and update price/included labels. Continue?')) return;
   let changed = 0;
 
   bookings.forEach(b => {
-    // Move Temazcal: Mon 23 → Tue 24
-    if(/temazcal/i.test(b.title) && b.day === 'Mon 23'){
-      b.day = 'Tue 24'; b.optional = true; b.price = '$95'; changed++;
+    const title = (b.title || '').toLowerCase();
+    const gm = groupMeta(b.group);
+    const isMeghan = /meghan/i.test(gm.label || '') || /meghan/i.test(gm.short || '');
+    const isSam    = /sam/i.test(gm.label || '') || /sam/i.test(gm.short || '');
+
+    // Move ALL Temazcal bookings to Tue 24 regardless of current day
+    if(/temaz|temez/.test(title)){
+      if(b.day !== 'Tue 24'){ b.day = 'Tue 24'; changed++; }
+      b.optional = true; b.price = b.price || '$95';
     }
-    // Move Cacao/Sound Healing: Tue 24 → Mon 23
-    if(/cacao/i.test(b.title) && b.day === 'Tue 24'){
-      b.day = 'Mon 23'; changed++;
-    }
-    // Grande Cenote for Sam: mark included
-    if(/cenote/i.test(b.title) && b.day === 'Mon 23'){
-      const gm = groupMeta(b.group);
-      if(gm.short && /sam/i.test(gm.short)){
-        b.optional = false; b.price = ''; b.notes = (b.notes||'') + (b.notes ? ' · ' : '') + 'Included in Sam\'s package';
-        changed++;
-      } else {
-        b.optional = true; b.price = '$85';
-      }
-    }
-    // Mayan Clay: Meghan=Included, others=Optional $75
-    if(/mayan clay/i.test(b.title)){
-      const gm = groupMeta(b.group);
-      if(gm.short && /meghan/i.test(gm.short)){
-        b.optional = false; b.price = ''; changed++;
-      } else {
-        b.optional = true; b.price = b.price || '$75'; changed++;
-      }
-    }
-    // Cacao: Meghan & Sam = Included, IAW = Optional $75
-    if(/cacao/i.test(b.title)){
-      const gm = groupMeta(b.group);
-      if(gm.short && (/meghan/i.test(gm.short) || /sam/i.test(gm.short))){
+
+    // Move ALL Cacao/Sound Healing bookings to Mon 23 regardless of current day
+    if(/cacao/.test(title)){
+      if(b.day !== 'Mon 23'){ b.day = 'Mon 23'; changed++; }
+      // Meghan & Sam = Included, IAW/others = Optional $75
+      if(isMeghan || isSam || b.group === 'all'){
         b.optional = false; b.price = '';
-      } else if(gm.id === 'all'){
-        b.optional = false; b.price = ''; // shared booking = included
       } else {
         b.optional = true; b.price = '$75';
       }
     }
+
+    // Mayan Clay: Meghan=Included, others=Optional $75
+    if(/mayan clay/.test(title)){
+      if(isMeghan){ b.optional = false; b.price = ''; }
+      else { b.optional = true; b.price = b.price || '$75'; }
+      changed++;
+    }
+
+    // Grande Cenote: Sam=Included, others=Optional $85
+    if(/cenote/.test(title)){
+      if(isSam){ b.optional = false; b.price = ''; }
+      else { b.optional = true; b.price = '$85'; }
+    }
+
     // Ice Bath: all optional $75
-    if(/ice bath/i.test(b.title)){
-      b.optional = true; b.price = '$75';
-    }
+    if(/ice bath/.test(title)){ b.optional = true; b.price = '$75'; }
+
     // Tulum Ruins: all optional $85
-    if(/tulum ruins/i.test(b.title)){
-      b.optional = true; b.price = '$85';
-    }
+    if(/tulum|ruins/.test(title)){ b.optional = true; b.price = '$85'; }
+
     // Mangroves: all optional $85
-    if(/mangrove/i.test(b.title)){
-      b.optional = true; b.price = b.price || '$85';
-    }
+    if(/mangrove/.test(title)){ b.optional = true; b.price = b.price || '$85'; }
   });
 
   render();
   saveToCloud();
-  // Remove the fix button after running
   const btn = document.getElementById('scheduleFixBtn');
   if(btn) btn.remove();
-  alert('✅ Done! ' + changed + ' bookings updated and saved to cloud.');
+  alert('✅ Done! ' + changed + ' bookings moved and saved to cloud.');
 }
 
-// Show fix button in header
+// Show fix button in header (after cloud loads)
 (function addFixButton(){
   setTimeout(() => {
     const hw = document.querySelector('.header-top');
@@ -6037,7 +6029,7 @@ function applyScheduleCorrections(){
     btn.style.cssText = 'padding:6px 14px;border:1.5px solid #c47d3e;border-radius:8px;background:#fff3e0;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;color:#c47d3e';
     btn.onclick = applyScheduleCorrections;
     hw.appendChild(btn);
-  }, 100);
+  }, 4000); // wait for cloud load to finish
 })();
 
 // Auto-load from cloud on startup so all collaborators see latest data.
