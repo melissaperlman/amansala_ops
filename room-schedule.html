@@ -871,7 +871,7 @@ let bookings = [
   { id:21, group:'all',      day:'Mon 23', start:'19:30', end:'20:30', title:'Dinner',                   subtitle:'Late if Temazcal', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
 
   { id:18, group:'all',      day:'Mon 23', start:'11:45', end:'14:15', title:'Grande Cenote',            subtitle:'Sam: INC · Others: $75', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'tours', price:'$75', optional:true },
-  { id:20, group:'all',      day:'Mon 23', start:'19:15', end:'22:00', title:'Temazcal',                 subtitle:'', teacher:'', room:'', pax:0, notes:'Bring towel & sandals · Meet reception 10 min early', status:'confirmed', category:'soul', price:'$85', optional:true },
+  { id:20, group:'all',      day:'Mon 23', start:'19:15', end:'22:00', title:'Temazcal',                 subtitle:'', teacher:'', room:'', pax:0, notes:'Bring towel & sandals · Meet reception 10 min early', status:'confirmed', category:'soul', price:'$95', optional:true },
 
 
 
@@ -883,9 +883,9 @@ let bookings = [
   { id:29, group:'all',      day:'Tue 24', start:'14:30', end:'15:00', title:'Snack',                    subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
   { id:33, group:'all',      day:'Tue 24', start:'19:30', end:'20:30', title:'Dinner',                   subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
 
-  { id:26, group:'all',      day:'Tue 24', start:'15:00', end:'16:00', title:'Ice Bath',                 subtitle:'', teacher:'', room:'', pax:0, notes:'Bring swimwear & towel', status:'confirmed', category:'soul', price:'$65', optional:true },
+  { id:26, group:'all',      day:'Tue 24', start:'15:00', end:'16:00', title:'Ice Bath',                 subtitle:'', teacher:'', room:'', pax:0, notes:'Bring swimwear & towel', status:'confirmed', category:'soul', price:'$75', optional:true },
 
-  { id:213,group:'all',      day:'Tue 24', start:'11:45', end:'14:00', title:'Tulum Ruins',              subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'tours', price:'$75', optional:true },
+  { id:213,group:'all',      day:'Tue 24', start:'11:45', end:'14:00', title:'Tulum Ruins',              subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'tours', price:'$85', optional:true },
   { id:216,group:'all',      day:'Tue 24', start:'19:15', end:'20:15', title:'Cacao + Sound Healing',    subtitle:'w/ Kun y Darlene', teacher:'Kun y Darlene', room:'', pax:0, notes:'Sam: Included · Others: $65', status:'confirmed', category:'soul', price:'$65', optional:true },
 
 
@@ -896,10 +896,8 @@ let bookings = [
   // Shared
   { id:35, group:'all',      day:'Wed 25', start:'14:30', end:'15:00', title:'Snack',                    subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
 
-  { id:36, group:'all',      day:'Wed 25', start:'11:45', end:'14:15', title:'Mangroves Tour',           subtitle:'', teacher:'', room:'', pax:0, notes:'No local entry fee', status:'confirmed', category:'tours', optional:true },
-  { id:37, group:'all',      day:'Wed 25', start:'15:00', end:'15:30', title:'Mayan Clay Ritual',         subtitle:'', teacher:'', room:'', pax:0, notes:'Bring old swimwear & towel', status:'confirmed', category:'soul' },
-
-  { id:221,group:'all',      day:'Wed 25', start:'19:15', end:'22:00', title:'Temazcal',                 subtitle:'w/ Maria & Gollo', teacher:'Maria & Gollo', room:'', pax:0, notes:'Sam: Included · Others: $85 · Bring towel & sandals · Meet reception 10 min early', status:'confirmed', category:'soul', price:'$85', optional:true },
+  { id:36, group:'all',      day:'Wed 25', start:'11:45', end:'14:15', title:'Mangroves Tour',           subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'tours', price:'$85', optional:true },
+  { id:37, group:'all',      day:'Wed 25', start:'15:00', end:'15:30', title:'Mayan Clay Ritual',         subtitle:'', teacher:'', room:'', pax:0, notes:'Bring old swimwear & towel', status:'confirmed', category:'soul', price:'$75', optional:true },
 
 
   // ══════════════════════════════════════════════════════════
@@ -5684,6 +5682,38 @@ async function loadFromCloud(){
         return true;
       });
       nextId = Math.max(...bookings.map(b=>b.id), 0) + 1;
+
+      // ── Data migrations ──────────────────────────────────────────────────
+      let migrationDirty = false;
+
+      // Remove the incorrectly placed Wednesday Temazcal (id 221) for all groups
+      const before221 = bookings.length;
+      bookings = bookings.filter(b => !(b.id === 221 && b.group === 'all'));
+      if(bookings.length < before221) migrationDirty = true;
+
+      // Fix any booking whose notes start with "Sam: Included · Others: $XX · "
+      bookings.forEach(b => {
+        if(b.notes && /^Sam: Included · Others: \$\d+ · /.test(b.notes)){
+          b.notes = b.notes.replace(/^Sam: Included · Others: \$\d+ · /, '');
+          migrationDirty = true;
+        }
+      });
+
+      // Fix wrong prices on shared bookings
+      const priceFixes = { 20:'$95', 26:'$75', 213:'$85', 36:'$85', 37:'$75' };
+      bookings.forEach(b => {
+        if(priceFixes[b.id] && b.group === 'all' && b.price !== priceFixes[b.id]){
+          b.price = priceFixes[b.id];
+          migrationDirty = true;
+        }
+        if(b.id === 37 && b.group === 'all' && !b.optional){
+          b.optional = true;
+          migrationDirty = true;
+        }
+      });
+
+      if(migrationDirty) scheduleCloudSave();
+      // ────────────────────────────────────────────────────────────────────
     }
 
     // Load transport (deduplicate)
