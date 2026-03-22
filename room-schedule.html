@@ -841,12 +841,8 @@ let bookings = [
   { id:1,  group:'all',      day:'Sat 21', start:'16:00', end:'16:30', title:'Welcome Snack',            subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
   { id:4,  group:'all',      day:'Sat 21', start:'19:00', end:'20:30', title:'Dinner',                   subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
 
-  // Meghan's Group
-  { id:2,  group:'meghan',   day:'Sat 21', start:'17:00', end:'18:30', title:'Opening Yoga + Mobility',  subtitle:'w/ Megan', teacher:'Megan', room:'Chica', pax:26, notes:'Mats provided', status:'confirmed', category:'classes' },
   { id:3,  group:'all',      day:'Sat 21', start:'18:30', end:'19:00', title:'Welcome Orientation',      subtitle:'at Firepit', teacher:'', room:'Firepit', pax:0, notes:'Welcome drinks & intro', status:'confirmed', category:'soul' },
 
-  // Samantha Applebee Group
-  { id:101,group:'sam',      day:'Sat 21', start:'17:45', end:'19:00', title:'Opening Yoga | Orientation w Amansala', subtitle:'', teacher:'Sam Applebee', room:'Heaven', pax:12, notes:'', status:'confirmed', category:'classes' },
 
   // ══════════════════════════════════════════════════════════
   // SUNDAY MARCH 22
@@ -858,23 +854,9 @@ let bookings = [
   { id:10, group:'all',      day:'Sun 22', start:'14:30', end:'15:00', title:'Snack',                    subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
   { id:13, group:'all',      day:'Sun 22', start:'19:30', end:'20:30', title:'Dinner',                   subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
 
-  // Meghan's Group
-  { id:6,  group:'meghan',   day:'Sun 22', start:'07:00', end:'08:00', title:'Light Breakfast',          subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
-  { id:7,  group:'meghan',   day:'Sun 22', start:'09:00', end:'10:30', title:'Booty Bands',              subtitle:'', teacher:'Jess', room:'Chica', pax:26, notes:'', status:'confirmed', category:'classes' },
   { id:9,  group:'all',      day:'Sun 22', start:'11:45', end:'14:15', title:'Tulum Ruins',              subtitle:'', teacher:'', room:'', pax:0, notes:'Entry fee per group', status:'confirmed', category:'tours', price:'$75', optional:true },
-  { id:11, group:'meghan',   day:'Sun 22', start:'16:30', end:'18:00', title:'Afternoon Slow Flow Barre',subtitle:'', teacher:'Lauren', room:'Chica', pax:26, notes:'', status:'confirmed', category:'classes' },
-  { id:12, group:'meghan',   day:'Sun 22', start:'18:00', end:'19:30', title:'Cacao + Sound Healing Ceremony', subtitle:'All Group', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'soul' },
 
-  // I Am Woman
-  { id:201,group:'iamwoman', day:'Sun 22', start:'14:30', end:'15:00', title:'Welcome Snack',            subtitle:'', teacher:'', room:'', pax:12, notes:'Arrival day', status:'confirmed', category:'meals' },
-  { id:202,group:'iamwoman', day:'Sun 22', start:'19:00', end:'19:30', title:'Opening Ceremony – Welcome Amansala', subtitle:'', teacher:'', room:'Heaven', pax:12, notes:'', status:'confirmed', category:'soul' },
-  { id:203,group:'iamwoman', day:'Sun 22', start:'19:30', end:'20:30', title:'Dinner',                   subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
 
-  // Samantha Applebee Group
-  { id:102,group:'sam',      day:'Sun 22', start:'07:00', end:'08:00', title:'Light Breakfast',          subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
-  { id:103,group:'sam',      day:'Sun 22', start:'09:30', end:'10:30', title:'Morning Class',            subtitle:'', teacher:'Sam Applebee', room:'', pax:12, notes:'', status:'confirmed', category:'classes' },
-  { id:104,group:'sam',      day:'Sun 22', start:'10:45', end:'11:30', title:'Brunch',                   subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
-  { id:106,group:'sam',      day:'Sun 22', start:'18:00', end:'19:15', title:'Afternoon Yoga',           subtitle:'', teacher:'Sam Applebee', room:'', pax:12, notes:'', status:'confirmed', category:'classes' },
 
   // ══════════════════════════════════════════════════════════
   // MONDAY MARCH 23
@@ -884,27 +866,10 @@ let bookings = [
   { id:15, group:'all',      day:'Mon 23', start:'14:30', end:'15:00', title:'Snack',                    subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
   { id:21, group:'all',      day:'Mon 23', start:'19:30', end:'20:30', title:'Dinner',                   subtitle:'Late if Temazcal', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
 
-  // Meghan's Group
-  { id:14, group:'meghan',   day:'Mon 23', start:'06:30', end:'07:00', title:'Sunrise Yoga',             subtitle:'', teacher:'Megan', room:'Heaven', pax:26, notes:'', status:'confirmed', category:'classes' },
-  { id:16, group:'meghan',   day:'Mon 23', start:'07:00', end:'08:00', title:'Light Breakfast',          subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
-  { id:17, group:'meghan',   day:'Mon 23', start:'11:15', end:'11:45', title:'Brunch',                   subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
   { id:18, group:'all',      day:'Mon 23', start:'11:45', end:'14:15', title:'Grande Cenote',            subtitle:'Sam: INC · Others: $75', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'tours', price:'$75', optional:true },
-  { id:19, group:'meghan',   day:'Mon 23', start:'17:00', end:'18:30', title:'CBG',                      subtitle:'', teacher:'Meghan', room:'Chica', pax:26, notes:'', status:'confirmed', category:'classes' },
   { id:20, group:'all',      day:'Mon 23', start:'19:15', end:'22:00', title:'Temazcal',                 subtitle:'', teacher:'', room:'', pax:0, notes:'Bring towel & sandals · Meet reception 10 min early', status:'confirmed', category:'soul', price:'$85', optional:true },
 
-  // I Am Woman
-  { id:204,group:'iamwoman', day:'Mon 23', start:'07:00', end:'08:00', title:'Light Breakfast',          subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
-  { id:205,group:'iamwoman', day:'Mon 23', start:'09:00', end:'10:00', title:'Class',                    subtitle:'', teacher:'', room:'Heaven', pax:12, notes:'', notes:'', status:'confirmed', category:'classes' },
-  { id:206,group:'iamwoman', day:'Mon 23', start:'10:30', end:'11:30', title:'Brunch',                   subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
-  { id:208,group:'iamwoman', day:'Mon 23', start:'17:00', end:'18:30', title:'Class',                    subtitle:'', teacher:'', room:'Heaven', pax:12, notes:'', status:'confirmed', category:'classes' },
-  { id:209,group:'iamwoman', day:'Mon 23', start:'19:30', end:'20:30', title:'Dinner on Beach',          subtitle:'', teacher:'', room:'Beach', pax:0, notes:'', status:'confirmed', category:'meals' },
 
-  // Samantha Applebee Group
-  { id:107,group:'sam',      day:'Mon 23', start:'07:00', end:'08:00', title:'Light Breakfast',          subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
-  { id:108,group:'sam',      day:'Mon 23', start:'09:30', end:'10:30', title:'Morning Class',            subtitle:'', teacher:'Sam Applebee', room:'', pax:12, notes:'', status:'confirmed', category:'classes' },
-  { id:109,group:'sam',      day:'Mon 23', start:'10:45', end:'11:30', title:'Brunch',                   subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
-  { id:111,group:'sam',      day:'Mon 23', start:'15:00', end:'16:00', title:'Cooking Class',            subtitle:'', teacher:'', room:'', pax:12, notes:'', status:'confirmed', category:'soul' },
-  { id:112,group:'sam',      day:'Mon 23', start:'18:00', end:'19:15', title:'Afternoon Yoga',           subtitle:'', teacher:'Sam Applebee', room:'', pax:12, notes:'', status:'confirmed', category:'classes' },
 
   // ══════════════════════════════════════════════════════════
   // TUESDAY MARCH 24
@@ -914,27 +879,11 @@ let bookings = [
   { id:29, group:'all',      day:'Tue 24', start:'14:30', end:'15:00', title:'Snack',                    subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
   { id:33, group:'all',      day:'Tue 24', start:'19:30', end:'20:30', title:'Dinner',                   subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
 
-  // Meghan's Group
-  { id:22, group:'meghan',   day:'Tue 24', start:'07:00', end:'08:00', title:'Light Breakfast',          subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
-  { id:23, group:'meghan',   day:'Tue 24', start:'09:00', end:'10:30', title:'Pyramids',                 subtitle:'', teacher:'Jess', room:'Chica', pax:26, notes:'', status:'confirmed', category:'classes' },
-  { id:24, group:'meghan',   day:'Tue 24', start:'10:45', end:'11:45', title:'Brunch',                   subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
   { id:26, group:'all',      day:'Tue 24', start:'15:00', end:'16:00', title:'Ice Bath',                 subtitle:'', teacher:'', room:'', pax:0, notes:'Bring swimwear & towel', status:'confirmed', category:'soul', price:'$65', optional:true },
-  { id:27, group:'meghan',   day:'Tue 24', start:'17:00', end:'18:30', title:'Mat Pilates',              subtitle:'', teacher:'Robin', room:'Chica', pax:26, notes:'', status:'confirmed', category:'classes' },
-  { id:28, group:'meghan',   day:'Tue 24', start:'18:30', end:'19:30', title:'All Group Salsa',          subtitle:'w/ Sergio', teacher:'Sergio', room:'', pax:0, notes:'', status:'confirmed', category:'soul' },
 
-  // I Am Woman
-  { id:210,group:'iamwoman', day:'Tue 24', start:'07:00', end:'08:00', title:'Light Breakfast',          subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
-  { id:211,group:'iamwoman', day:'Tue 24', start:'09:00', end:'10:00', title:'Class',                    subtitle:'', teacher:'', room:'Beachfront', pax:12, notes:'', status:'confirmed', category:'classes' },
-  { id:212,group:'iamwoman', day:'Tue 24', start:'10:30', end:'11:30', title:'Brunch',                   subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
   { id:213,group:'all',      day:'Tue 24', start:'11:45', end:'14:00', title:'Tulum Ruins',              subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'tours', price:'$75', optional:true },
-  { id:215,group:'iamwoman', day:'Tue 24', start:'17:00', end:'18:00', title:'Class',                    subtitle:'', teacher:'', room:'Heaven', pax:12, notes:'', status:'confirmed', category:'classes' },
   { id:216,group:'all',      day:'Tue 24', start:'19:15', end:'20:15', title:'Cacao + Sound Healing',    subtitle:'w/ Kun y Darlene', teacher:'Kun y Darlene', room:'', pax:0, notes:'Sam: Included · Others: $65', status:'confirmed', category:'soul', price:'$65', optional:true },
 
-  // Samantha Applebee Group
-  { id:114,group:'sam',      day:'Tue 24', start:'07:00', end:'08:00', title:'Light Breakfast',          subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
-  { id:115,group:'sam',      day:'Tue 24', start:'09:30', end:'10:30', title:'Morning Class',            subtitle:'', teacher:'Sam Applebee', room:'', pax:12, notes:'', status:'confirmed', category:'classes' },
-  { id:116,group:'sam',      day:'Tue 24', start:'10:45', end:'11:45', title:'Brunch',                   subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
-  { id:118,group:'sam',      day:'Tue 24', start:'18:00', end:'19:00', title:'Afternoon Yoga',           subtitle:'', teacher:'Sam Applebee', room:'', pax:12, notes:'', status:'confirmed', category:'classes' },
 
   // ══════════════════════════════════════════════════════════
   // WEDNESDAY MARCH 25
@@ -943,30 +892,11 @@ let bookings = [
   // Shared
   { id:35, group:'all',      day:'Wed 25', start:'14:30', end:'15:00', title:'Snack',                    subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
 
-  // Meghan's Group
-  { id:30, group:'meghan',   day:'Wed 25', start:'06:30', end:'07:30', title:'Sunrise Breathwork',       subtitle:'', teacher:'Robin', room:'Heaven', pax:26, notes:'', status:'confirmed', category:'classes' },
-  { id:31, group:'meghan',   day:'Wed 25', start:'07:30', end:'08:30', title:'Light Breakfast',          subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
-  { id:32, group:'meghan',   day:'Wed 25', start:'09:00', end:'10:30', title:'CBG',                      subtitle:'', teacher:'Meghan', room:'Chica', pax:26, notes:'', status:'confirmed', category:'classes' },
-  { id:34, group:'meghan',   day:'Wed 25', start:'10:45', end:'11:45', title:'Brunch',                   subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
   { id:36, group:'all',      day:'Wed 25', start:'11:45', end:'14:15', title:'Mangroves Tour',           subtitle:'', teacher:'', room:'', pax:0, notes:'No local entry fee', status:'confirmed', category:'tours', optional:true },
   { id:37, group:'all',      day:'Wed 25', start:'15:00', end:'15:30', title:'Mayan Clay Ritual',         subtitle:'', teacher:'', room:'', pax:0, notes:'Bring old swimwear & towel', status:'confirmed', category:'soul' },
-  { id:38, group:'meghan',   day:'Wed 25', start:'19:30', end:'22:00', title:'Offsite Dinner',           subtitle:'Great night for Gitano', teacher:'', room:'Gitano', pax:0, notes:'', status:'confirmed', category:'meals' },
 
-  // I Am Woman
-  { id:217,group:'iamwoman', day:'Wed 25', start:'07:00', end:'08:00', title:'Light Breakfast',          subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
-  { id:218,group:'iamwoman', day:'Wed 25', start:'09:00', end:'10:00', title:'Class',                    subtitle:'', teacher:'', room:'Beachfront', pax:12, notes:'', status:'confirmed', category:'classes' },
-  { id:219,group:'iamwoman', day:'Wed 25', start:'10:30', end:'11:30', title:'Brunch',                   subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
-  { id:220,group:'iamwoman', day:'Wed 25', start:'17:00', end:'18:00', title:'Class',                    subtitle:'', teacher:'', room:'Heaven', pax:12, notes:'', status:'confirmed', category:'classes' },
   { id:221,group:'all',      day:'Wed 25', start:'19:15', end:'22:00', title:'Temazcal',                 subtitle:'w/ Maria & Gollo', teacher:'Maria & Gollo', room:'', pax:0, notes:'Sam: Included · Others: $85 · Bring towel & sandals · Meet reception 10 min early', status:'confirmed', category:'soul', price:'$85', optional:true },
-  { id:222,group:'iamwoman', day:'Wed 25', start:'19:30', end:'20:30', title:'Dinner',                   subtitle:'Late if Temazcal', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
 
-  // Samantha Applebee Group
-  { id:120,group:'sam',      day:'Wed 25', start:'07:00', end:'08:00', title:'Light Breakfast',          subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
-  { id:121,group:'sam',      day:'Wed 25', start:'09:30', end:'10:30', title:'Morning Class',            subtitle:'', teacher:'Sam Applebee', room:'', pax:12, notes:'', status:'confirmed', category:'classes' },
-  { id:122,group:'sam',      day:'Wed 25', start:'10:45', end:'11:45', title:'Brunch',                   subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
-  { id:125,group:'sam',      day:'Wed 25', start:'16:30', end:'17:30', title:'Afternoon Class',          subtitle:'', teacher:'Sam Applebee', room:'', pax:12, notes:'', status:'confirmed', category:'classes' },
-  { id:126,group:'sam',      day:'Wed 25', start:'19:30', end:'21:00', title:'Special Set-Up Dinner',    subtitle:'On-site celebration', teacher:'', room:'', pax:12, notes:'$45 per person', status:'confirmed', category:'meals', price:'$45' },
-  { id:127,group:'sam',      day:'Wed 25', start:'19:00', end:'19:30', title:'Salsa Class Before Dinner',subtitle:'', teacher:'', room:'', pax:12, notes:'', status:'confirmed', category:'soul' },
 
   // ══════════════════════════════════════════════════════════
   // THURSDAY MARCH 26
@@ -976,63 +906,17 @@ let bookings = [
   { id:45, group:'all',      day:'Thu 26', start:'14:30', end:'15:00', title:'Snack',                    subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
   { id:46, group:'all',      day:'Thu 26', start:'19:30', end:'20:30', title:'Dinner',                   subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
 
-  // Meghan's Group
-  { id:39, group:'meghan',   day:'Thu 26', start:'06:30', end:'07:00', title:'Final Group Sunrise on Beach', subtitle:'', teacher:'', room:'Beach', pax:0, notes:'', status:'confirmed', category:'soul' },
-  { id:40, group:'meghan',   day:'Thu 26', start:'07:00', end:'08:00', title:'Light Breakfast',          subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
-  { id:41, group:'meghan',   day:'Thu 26', start:'08:00', end:'09:30', title:'Pyramids or CBG',          subtitle:'retreaters choice', teacher:'Meghan', room:'Heaven', pax:26, notes:'', status:'confirmed', category:'classes' },
-  { id:42, group:'meghan',   day:'Thu 26', start:'11:15', end:'12:30', title:'Brunch & Departures',      subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
 
-  // I Am Woman
-  { id:223,group:'iamwoman', day:'Thu 26', start:'07:00', end:'08:00', title:'Light Breakfast',          subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
-  { id:224,group:'iamwoman', day:'Thu 26', start:'09:45', end:'10:45', title:'Class',                    subtitle:'', teacher:'', room:'Heaven', pax:12, notes:'', status:'confirmed', category:'classes' },
-  { id:225,group:'iamwoman', day:'Thu 26', start:'10:45', end:'11:45', title:'Brunch',                   subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
   { id:226,group:'all',      day:'Thu 26', start:'11:45', end:'14:00', title:'Mangroves Tour',           subtitle:'', teacher:'', room:'', pax:0, notes:'No local entry fee', status:'confirmed', category:'tours', optional:true },
   { id:227,group:'all',      day:'Thu 26', start:'15:30', end:'16:00', title:'Mayan Clay Ritual',        subtitle:'', teacher:'', room:'', pax:0, notes:'Bring old swimwear & towel', status:'confirmed', category:'soul', price:'$65', optional:true },
-  { id:228,group:'iamwoman', day:'Thu 26', start:'17:45', end:'18:45', title:'Class',                    subtitle:'', teacher:'', room:'Heaven', pax:12, notes:'', status:'confirmed', category:'classes' },
-  { id:229,group:'iamwoman', day:'Thu 26', start:'20:30', end:'21:30', title:'Closing Ceremony',         subtitle:'', teacher:'', room:'Heaven',         subtitle:'', teacher:'', room:'Heaven', pax:12, notes:'', status:'confirmed', category:'soul' },
 
-  // Samantha Applebee Group — departures day
-  { id:128,group:'sam',      day:'Thu 26', start:'07:00', end:'08:00', title:'Light Breakfast',          subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
-  { id:129,group:'sam',      day:'Thu 26', start:'08:00', end:'09:00', title:'Morning Class',            subtitle:'', teacher:'Sam Applebee', room:'', pax:12, notes:'', status:'confirmed', category:'classes' },
-  { id:130,group:'sam',      day:'Thu 26', start:'09:00', end:'10:00', title:'Full Breakfast & Departures', subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
 
   // ══════════════════════════════════════════════════════════
-  // FRIDAY MARCH 27  (I Am Woman only)
   // ══════════════════════════════════════════════════════════
-  { id:230,group:'iamwoman', day:'Fri 27', start:'07:00', end:'08:00', title:'Light Breakfast',          subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
-  { id:231,group:'iamwoman', day:'Fri 27', start:'09:00', end:'10:00', title:'Morning Class',            subtitle:'', teacher:'', room:'Grande', pax:12, notes:'', status:'confirmed', category:'classes' },
-  { id:232,group:'iamwoman', day:'Fri 27', start:'10:45', end:'11:45', title:'Brunch & Departures',      subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
 
-  // ── MISSING ENTRIES — all three groups fully filled ───────────────────
 
-  // MEGHAN — Tue 24: dinner
-  { id:301, group:'meghan',   day:'Tue 24', start:'19:30', end:'21:00', title:'Dinner',                    subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
-  // MEGHAN — Thu 26: farewell dinner
-  { id:302, group:'meghan',   day:'Thu 26', start:'19:30', end:'21:00', title:'Farewell Dinner',            subtitle:'Special set-up', teacher:'', room:'', pax:0, notes:'Special set-up dinner', status:'confirmed', category:'meals' },
 
-  // I AM WOMAN — Tue 24: dinner
-  { id:303, group:'iamwoman', day:'Tue 24', start:'19:30', end:'20:30', title:'Dinner',                    subtitle:'', teacher:'', room:'', pax:12, notes:'', status:'confirmed', category:'meals' },
-  // I AM WOMAN — Wed 25: Mangroves tour
-  // I AM WOMAN — Wed 25: Mayan Clay
-  // I AM WOMAN — Thu 26: dinner
-  { id:306, group:'iamwoman', day:'Thu 26', start:'19:30', end:'20:30', title:'Dinner',                    subtitle:'', teacher:'', room:'', pax:12, notes:'', status:'confirmed', category:'meals' },
-  // I AM WOMAN — Fri 27: closing circle
-  { id:307, group:'iamwoman', day:'Fri 27', start:'09:00', end:'10:00', title:'Closing Circle',            subtitle:'', teacher:'', room:'Heaven', pax:12, notes:'', status:'confirmed', category:'soul' },
 
-  // SAM — Sat 21: welcome snack, orientation, dinner
-  { id:308, group:'sam',      day:'Sat 21', start:'16:00', end:'16:30', title:'Welcome Snack',             subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
-  { id:310, group:'sam',      day:'Sat 21', start:'19:00', end:'20:30', title:'Welcome Dinner',            subtitle:'', teacher:'', room:'', pax:12, notes:'', status:'confirmed', category:'meals' },
-  // SAM — Sun 22: dinner
-  { id:311, group:'sam',      day:'Sun 22', start:'19:00', end:'20:30', title:'Dinner',                    subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
-  // SAM — Mon 23: dinner
-  { id:312, group:'sam',      day:'Mon 23', start:'19:30', end:'21:00', title:'Dinner',                    subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
-  // SAM — Tue 24: dinner
-  { id:313, group:'sam',      day:'Tue 24', start:'20:00', end:'21:00', title:'Dinner',                    subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
-  // SAM — Wed 25: Temazcal (INC for Sam)
-  // SAM — Thu 26: brunch & departures, optional mangroves, closing ceremony, farewell dinner
-  { id:315, group:'sam',      day:'Thu 26', start:'10:45', end:'11:30', title:'Brunch & Departures',       subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
-  { id:317, group:'sam',      day:'Thu 26', start:'18:00', end:'19:00', title:'Closing Circle & Ceremony', subtitle:'', teacher:'', room:'Chica', pax:12, notes:'', status:'confirmed', category:'soul' },
-  { id:318, group:'sam',      day:'Thu 26', start:'19:30', end:'21:00', title:'Farewell Dinner',           subtitle:'Special set-up', teacher:'', room:'', pax:12, notes:'', status:'confirmed', category:'meals' },
 
   // SHARED — afternoon snacks every day
   { id:319, group:'all',      day:'Sun 22', start:'14:30', end:'15:00', title:'Afternoon Snack',           subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
@@ -1041,20 +925,6 @@ let bookings = [
   { id:322, group:'all',      day:'Wed 25', start:'14:30', end:'15:00', title:'Afternoon Snack',           subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
   { id:323, group:'all',      day:'Thu 26', start:'14:30', end:'15:00', title:'Afternoon Snack',           subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
 
-  // ── I Am Woman — additional/corrected bookings ─────────────────────────
-  { id:500, group:'iamwoman', day:'Mon 23', start:'14:30', end:'15:00', title:'Snack',              subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
-  { id:501, group:'iamwoman', day:'Mon 23', start:'11:45', end:'14:00', title:'Grande Cenote Tour', subtitle:'Optional', teacher:'', room:'', pax:12, notes:'Optional · $75 pp', status:'confirmed', category:'tours', price:'$75', optional:true },
-  { id:502, group:'iamwoman', day:'Tue 24', start:'14:30', end:'15:00', title:'Snack',              subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
-  { id:503, group:'iamwoman', day:'Tue 24', start:'11:45', end:'14:00', title:'Tulum Ruins Tour',   subtitle:'Optional', teacher:'', room:'', pax:12, notes:'Optional · $75 pp', status:'confirmed', category:'tours', price:'$75', optional:true },
-  { id:504, group:'iamwoman', day:'Tue 24', start:'15:00', end:'17:00', title:'Ice Bath',           subtitle:'Optional', teacher:'', room:'', pax:12, notes:'Optional · $65 pp', status:'confirmed', category:'soul', price:'$65', optional:true },
-  { id:505, group:'iamwoman', day:'Tue 24', start:'19:15', end:'20:15', title:'Cacao Ceremony',     subtitle:'w/ Kun y Darlene', teacher:'Kun y Darlene', room:'', pax:12, notes:'Optional · $65 pp · w/ Kun y Darlene', status:'confirmed', category:'soul', price:'$65', optional:true },
-  { id:506, group:'iamwoman', day:'Wed 25', start:'14:30', end:'15:00', title:'Snack',              subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
-  { id:507, group:'iamwoman', day:'Wed 25', start:'19:15', end:'22:00', title:'Temazcal',           subtitle:'w/ Maria & Gollo', teacher:'Maria & Gollo', room:'', pax:12, notes:'Optional · $85 pp · Meet reception 10 min early · Bring towel & sandals', status:'confirmed', category:'soul', price:'$85', optional:true },
-  { id:508, group:'iamwoman', day:'Wed 25', start:'19:30', end:'20:30', title:'Dinner',             subtitle:'Late if Temazcal', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
-  { id:509, group:'iamwoman', day:'Thu 26', start:'11:45', end:'14:00', title:'Mangroves Tour',     subtitle:'Optional', teacher:'', room:'', pax:12, notes:'Optional · $75 pp', status:'confirmed', category:'tours', price:'$75', optional:true },
-  { id:510, group:'iamwoman', day:'Thu 26', start:'14:30', end:'15:00', title:'Snack',              subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
-  { id:511, group:'iamwoman', day:'Thu 26', start:'15:30', end:'16:00', title:'Mayan Clay',         subtitle:'Optional', teacher:'', room:'', pax:12, notes:'Optional · $65 pp', status:'confirmed', category:'soul', price:'$65', optional:true },
-  { id:512, group:'iamwoman', day:'Thu 26', start:'19:30', end:'20:30', title:'Dinner',             subtitle:'', teacher:'', room:'', pax:0, notes:'', status:'confirmed', category:'meals' },
 
   // ══════════════════════════════════════════════════════════
   // TWW — The Wonder Women (March 15–21)
@@ -5231,7 +5101,7 @@ const GROUP_COLORS = ['#e8a5b0','#5b7fa6','#4a8c5c','#8b5cf6','#c47d3e','#2e86ab
 let isSelectedColor = '#e8a5b0';
 let isParsedBookings = [];
 
-function clearGroupSchedule(){
+async function clearGroupSchedule(){
   const sel = document.getElementById('isClearGroup');
   const gid = sel.value;
   if(!gid){ alert('Please select a group to clear.'); return; }
@@ -5239,9 +5109,11 @@ function clearGroupSchedule(){
   if(!confirm(`Delete ALL bookings for "${g.label}"? This cannot be undone.`)) return;
   bookings = bookings.filter(b => b.group !== gid);
   render();
-  saveToCloud();
+  showSyncStatus('Clearing…', '#c47d3e');
+  await saveToCloud();
   sel.value = '';
-  alert(`✅ All bookings for "${g.label}" have been cleared. You can now re-import their schedule.`);
+  showSyncStatus('Cleared & saved', '#4a8c5c');
+  alert(`✅ All bookings for "${g.label}" have been cleared and saved. You can now re-import.`);
 }
 
 function openScheduleImport(){
