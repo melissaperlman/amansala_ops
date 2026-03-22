@@ -5743,6 +5743,10 @@ async function loadFromCloud(){
 
     cloudMode = true;
     showSyncStatus('Loaded from cloud', '#4a8c5c');
+    // Run one-time tour/soul rebuild immediately after cloud data loads
+    if(!localStorage.getItem('toursRebuildDone_v2')) {
+      rebuildToursAndSoul(true); // true = silent (no confirm/alert)
+    }
     render();
     autoArchiveDeparted();
     // Start background auto-poll after successful cloud load
@@ -5961,8 +5965,8 @@ async function silentCloudRefresh(){
 
 // ── ONE-TIME SCHEDULE CORRECTION ─────────────────────────────────────────
 // Moves Temazcal to Tue, Cacao to Mon, and sets correct optional/price/included flags
-function rebuildToursAndSoul(){
-  if(!confirm('This will DELETE all existing tour & soul service bookings and rebuild them correctly. Continue?')) return;
+function rebuildToursAndSoul(silent){
+  if(!silent && !confirm('This will DELETE all existing tour & soul service bookings and rebuild them correctly. Continue?')) return;
 
   // Find group IDs
   const meghanG = GROUPS.find(g => g.id !== 'all' && /meghan/i.test(g.label));
@@ -6008,10 +6012,12 @@ function rebuildToursAndSoul(){
 
   fresh.forEach(b => bookings.push({ id: nextId++, ...stamp, ...b }));
 
+  localStorage.setItem('toursRebuildDone_v2', '1');
   render();
   saveToCloud();
-  document.getElementById('scheduleFixBtn').remove();
-  alert('✅ Done! Tours and soul services rebuilt correctly.');
+  const btn = document.getElementById('scheduleFixBtn');
+  if(btn) btn.remove();
+  if(!silent) alert('✅ Done! Tours and soul services rebuilt correctly.');
 }
 
 (function addFixButton(){
