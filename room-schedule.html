@@ -1541,7 +1541,10 @@ function mergeSoul(souls){
   // (catches "Cacao + Sound Healing" vs "Cacao Ceremony" but NOT Temazcal + Cacao)
   const titleSimilar = (a, b) => {
     const norm = t => t.toLowerCase().replace(/[^a-z]/g,'').slice(0,8);
-    return norm(a) === norm(b);
+    if(norm(a) === norm(b)) return true;
+    // Any "Mayan Clay ..." variant is the same activity regardless of extra words
+    if(/mayan\s*clay/i.test(a) && /mayan\s*clay/i.test(b)) return true;
+    return false;
   };
   const byTime = {};
   Object.values(slots).forEach(s => {
@@ -5379,14 +5382,14 @@ function parseScheduleText(text){
       if(sm+30 >= 60) end24 = String(sh+1).padStart(2,'0') + ':' + String((sm+30)-60).padStart(2,'0');
     }
 
-    // Detect "included" or "optional" anywhere in the original line
+    // Detect "included"/"inc"/"INC" or "optional" anywhere in the original line
     const lineLower = rest.toLowerCase();
     let optional = undefined;
     let includedFlag = false;
-    if(/\bincluded\b/.test(lineLower)){
+    if(/\b(?:included|inc)\b/i.test(rest)){
       optional = false;
       includedFlag = true;
-    } else if(/\boptional\b/.test(lineLower)){
+    } else if(/\boptional\b/i.test(rest)){
       optional = true;
     }
 
@@ -5394,9 +5397,9 @@ function parseScheduleText(text){
     const priceMatch = rest.match(/\$\s*(\d+)(?:\/pp)?/i) || rest.match(/(\d+)\s*(?:usd|mxn)\/pp/i);
     const price = priceMatch ? '$' + priceMatch[1] : '';
 
-    // Strip "(Included)", "(Optional)", price strings, "All Group(s)" prefix, and parentheses leftovers from title
+    // Strip "(Included)", "(Inc)", "(Optional)", price strings, "All Group(s)" prefix from title
     title = title
-      .replace(/\(?\bincluded\b\)?/gi, '')
+      .replace(/\(?\b(?:included|inc)\b\)?/gi, '')
       .replace(/\(?\boptional\b\)?/gi, '')
       .replace(/\$\d+(?:\/pp)?/gi, '')
       .replace(/^All\s+Groups?\s+/i, '')
