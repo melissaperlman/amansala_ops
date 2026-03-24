@@ -5394,11 +5394,12 @@ function parseScheduleText(text){
     const priceMatch = rest.match(/\$\s*(\d+)(?:\/pp)?/i) || rest.match(/(\d+)\s*(?:usd|mxn)\/pp/i);
     const price = priceMatch ? '$' + priceMatch[1] : '';
 
-    // Strip "(Included)", "(Optional)", price strings, and parentheses leftovers from title
+    // Strip "(Included)", "(Optional)", price strings, "All Group(s)" prefix, and parentheses leftovers from title
     title = title
       .replace(/\(?\bincluded\b\)?/gi, '')
       .replace(/\(?\boptional\b\)?/gi, '')
       .replace(/\$\d+(?:\/pp)?/gi, '')
+      .replace(/^All\s+Groups?\s+/i, '')
       .replace(/\s{2,}/g, ' ')
       .trim();
 
