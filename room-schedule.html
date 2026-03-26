@@ -1145,6 +1145,49 @@ let activeTeacher = 'All';
 let teacherSearchQuery = '';
 let editingId = null;
 
+// ── WEEK NAVIGATION ───────────────────────────────────────────────────────
+// Only show 7 days at a time; navigate with ‹ / › arrows
+let activeWeekIdx = 0;
+
+function getWeeks(){
+  // Chunk DAYS into groups of 7
+  const all = DAYS;
+  const weeks = [];
+  for(let i = 0; i < all.length; i += 7) weeks.push(all.slice(i, i + 7));
+  return weeks;
+}
+
+function weekLabel(week){
+  if(!week || !week.length) return '';
+  const fmt = lbl => { const m = (lbl||'').match(/(\w{3,})\s+(\d+)$/); return m ? m[1].slice(0,3)+' '+m[2] : lbl; };
+  return fmt(DAY_LABELS[week[0]]||week[0]) + ' – ' + fmt(DAY_LABELS[week[week.length-1]]||week[week.length-1]);
+}
+
+function initWeekFromDay(dayKey){
+  const weeks = getWeeks();
+  for(let w = 0; w < weeks.length; w++){
+    if(weeks[w].includes(dayKey)){ activeWeekIdx = w; return; }
+  }
+  activeWeekIdx = 0;
+}
+
+function setWeekOffset(delta){
+  const weeks = getWeeks();
+  const newIdx = activeWeekIdx + delta;
+  if(newIdx < 0 || newIdx >= weeks.length) return;
+  activeWeekIdx = newIdx;
+  const week = weeks[newIdx];
+  if(!week.includes(activeDay)){
+    activeDay = week[0];
+    activeDayViewDay = week[0];
+  }
+  renderFilterBar();
+  render();
+}
+
+// Call once on load
+initWeekFromDay(activeDay);
+
 
 
 const GROUPS = [
@@ -1435,10 +1478,19 @@ function visibleBookings(){
 function renderFilterBar(){
   const bar = document.getElementById('filterBar');
   if(activeTab==='day'){
-    // Row 1: days | rooms
+    const weeks = getWeeks();
+    const currentWeek = weeks[activeWeekIdx] || weeks[0] || [];
+    const prevOk = activeWeekIdx > 0;
+    const nextOk = activeWeekIdx < weeks.length - 1;
+    const navBtn = (dir, enabled) => `<button onclick="setWeekOffset(${dir})" ${enabled?'':'disabled'} style="padding:3px 10px;border:1.5px solid var(--border);border-radius:6px;background:${enabled?'var(--card)':'#f5f5f5'};font-size:15px;cursor:${enabled?'pointer':'default'};color:${enabled?'var(--text)':'var(--muted)'};line-height:1;transition:all 0.15s">${dir<0?'‹':'›'}</button>`;
+    // Row 1: week nav + days | rooms
     bar.innerHTML = `<div class="filter-row">
       <span class="filter-label">Day</span>
-      ${futureDays().map(d=>`<button class="pill${activeDay===d?' active':''}" onclick="setDay('${d}')">${d}</button>`).join('')}
+      ${navBtn(-1, prevOk)}
+      <span style="font-size:11px;font-weight:600;color:var(--muted);min-width:128px;text-align:center;letter-spacing:0.03em">${weekLabel(currentWeek)}</span>
+      ${navBtn(1, nextOk)}
+      <div style="width:1px;height:20px;background:var(--border);margin:0 4px"></div>
+      ${currentWeek.map(d=>`<button class="pill${activeDay===d?' active':''}" onclick="setDay('${d}')">${d}</button>`).join('')}
       <div style="width:1px;height:20px;background:var(--border);margin:0 4px"></div>
       <span class="filter-label">Room</span>
       <button class="pill${activeRoom==='All'?' active':''}" onclick="setRoom('All')">All</button>
@@ -3536,7 +3588,7 @@ function switchTab(tab){
 }
 function setCat(c){ activeCategory=c; render(); }
 function setGroup(g){ activeGroup=g; if(activeTab==='transport'){ renderGroupBar(); renderTransportTab(); } else if(activeTab==='dayview'){ renderGroupBar(); renderDayView(); } else if(activeTab==='mealcal'){ renderGroupBar(); renderMealsCalendar(); } else if(activeTab==='retreats'){ renderGroupBar(); renderRetreatsOverview(); } else if(activeTab==='retreat'){ renderGroupBar(); renderRetreatView(); } else render(); }
-function setDay(d){ activeDay=d; render(); }
+function setDay(d){ activeDay=d; initWeekFromDay(d); render(); }
 function setRoom(r){ activeRoom=r; render(); }
 function setTeacher(t){ activeTeacher=t; render(); }
 function onTeacherSearch(val){ teacherSearchQuery=val; activeTeacher='All'; render(); setTimeout(()=>{ const el=document.getElementById('teacherSearch'); if(el){el.focus();el.setSelectionRange(el.value.length,el.value.length);} },10); }
