@@ -1135,44 +1135,50 @@ let activeTeacher = 'All';
 let teacherSearchQuery = '';
 let editingId = null;
 
-// ── WEEK NAVIGATION ───────────────────────────────────────────────────────
-// Only show 7 days at a time; navigate with ‹ / › arrows
-let activeWeekIdx = 0;
+// ── ROLLING 7-DAY WINDOW ─────────────────────────────────────────────────
+// Always shows today (or tomorrow if ≥2pm) + next 6 days.
+// › shifts the window forward by 7; ‹ returns toward today.
+// activeWindowOffset=0 means "this week" (today-anchored).
+let activeWindowOffset = 0;
 
-function getWeeks(){
-  // Chunk DAYS into groups of 7
-  const all = DAYS;
-  const weeks = [];
-  for(let i = 0; i < all.length; i += 7) weeks.push(all.slice(i, i + 7));
-  return weeks;
+function todayStartIdx(){
+  const todayKey = todayDayKey();
+  if(!todayKey) return 0;
+  const idx = DAYS.indexOf(todayKey);
+  const isPastToday = new Date().getHours() >= 14;
+  return isPastToday ? idx + 1 : idx;
 }
 
-function weekLabel(week){
-  if(!week || !week.length) return '';
+function getVisibleWindow(){
+  const start = todayStartIdx() + (activeWindowOffset * 7);
+  return DAYS.slice(Math.max(0, start), start + 7);
+}
+
+function windowLabel(days){
+  if(!days || !days.length) return '';
   const fmt = lbl => { const m = (lbl||'').match(/(\w{3,})\s+(\d+)$/); return m ? m[1].slice(0,3)+' '+m[2] : lbl; };
-  return fmt(DAY_LABELS[week[0]]||week[0]) + ' – ' + fmt(DAY_LABELS[week[week.length-1]]||week[week.length-1]);
-}
-
-function initWeekFromDay(dayKey){
-  const weeks = getWeeks();
-  for(let w = 0; w < weeks.length; w++){
-    if(weeks[w].includes(dayKey)){ activeWeekIdx = w; return; }
-  }
-  activeWeekIdx = 0;
+  return fmt(DAY_LABELS[days[0]]||days[0]) + ' – ' + fmt(DAY_LABELS[days[days.length-1]]||days[days.length-1]);
 }
 
 function setWeekOffset(delta){
-  const weeks = getWeeks();
-  const newIdx = activeWeekIdx + delta;
-  if(newIdx < 0 || newIdx >= weeks.length) return;
-  activeWeekIdx = newIdx;
-  const week = weeks[newIdx];
-  if(!week.includes(activeDay)){
-    activeDay = week[0];
-    activeDayViewDay = week[0];
+  const newOffset = activeWindowOffset + delta;
+  if(newOffset < 0) return; // can't go before today
+  activeWindowOffset = newOffset;
+  const win = getVisibleWindow();
+  if(win.length && !win.includes(activeDay)){
+    activeDay = win[0];
+    activeDayViewDay = win[0];
   }
   renderFilterBar();
   render();
+}
+
+// Keep setDay in sync with window offset
+function initWeekFromDay(dayKey){
+  const start = todayStartIdx();
+  const idx = DAYS.indexOf(dayKey);
+  if(idx < start){ activeWindowOffset = 0; return; }
+  activeWindowOffset = Math.floor((idx - start) / 7);
 }
 
 // Call once on load
@@ -1517,30 +1523,20 @@ function visibleBookings(){
 function renderFilterBar(){
   const bar = document.getElementById('filterBar');
   if(activeTab==='day'){
-    const weeks = getWeeks();
-    const _allWeek = weeks[activeWeekIdx] || weeks[0] || [];
-    const _visible = new Set(futureDays());
-    const currentWeek = _allWeek.filter(d => _visible.has(d));
-    // If current week has no visible days, auto-advance to next week
-    if(currentWeek.length === 0 && activeWeekIdx < weeks.length - 1){
-      activeWeekIdx++;
-      renderFilterBar(); return;
-    }
-    // Sync activeDay to a visible day if needed
-    if(currentWeek.length && !currentWeek.includes(activeDay)){
-      activeDay = currentWeek[0];
-    }
-    const prevOk = activeWeekIdx > 0 && weeks.slice(0, activeWeekIdx).some(w => w.some(d => _visible.has(d)));
-    const nextOk = activeWeekIdx < weeks.length - 1;
+    const currentWindow = getVisibleWindow();
+    // Sync activeDay into visible window if it drifted
+    if(currentWindow.length && !currentWindow.includes(activeDay)) activeDay = currentWindow[0];
+    const prevOk = activeWindowOffset > 0;
+    const nextOk = (todayStartIdx() + (activeWindowOffset + 1) * 7) < DAYS.length;
     const navBtn = (dir, enabled) => `<button onclick="setWeekOffset(${dir})" ${enabled?'':'disabled'} style="padding:3px 10px;border:1.5px solid var(--border);border-radius:6px;background:${enabled?'var(--card)':'#f5f5f5'};font-size:15px;cursor:${enabled?'pointer':'default'};color:${enabled?'var(--text)':'var(--muted)'};line-height:1;transition:all 0.15s">${dir<0?'‹':'›'}</button>`;
-    // Row 1: week nav + days | rooms
+    // Row 1: rolling window nav + days | rooms
     bar.innerHTML = `<div class="filter-row">
       <span class="filter-label">Day</span>
       ${navBtn(-1, prevOk)}
-      <span style="font-size:11px;font-weight:600;color:var(--muted);min-width:128px;text-align:center;letter-spacing:0.03em">${weekLabel(currentWeek)}</span>
+      <span style="font-size:11px;font-weight:600;color:var(--muted);min-width:128px;text-align:center;letter-spacing:0.03em">${windowLabel(currentWindow)}</span>
       ${navBtn(1, nextOk)}
       <div style="width:1px;height:20px;background:var(--border);margin:0 4px"></div>
-      ${currentWeek.map(d=>`<button class="pill${activeDay===d?' active':''}" onclick="setDay('${d}')">${d}</button>`).join('')}
+      ${currentWindow.map(d=>`<button class="pill${activeDay===d?' active':''}" onclick="setDay('${d}')">${d}</button>`).join('')}
       <div style="width:1px;height:20px;background:var(--border);margin:0 4px"></div>
       <span class="filter-label">Room</span>
       <button class="pill${activeRoom==='All'?' active':''}" onclick="setRoom('All')">All</button>
