@@ -812,7 +812,8 @@ function _genDays(start, end){
   }
   return {days,labels};
 }
-const _base = _genDays(new Date('2026-03-15'), new Date('2026-09-30'));
+// Use local date constructor (year, month-1, day) — avoids UTC-parse timezone shift
+const _base = _genDays(new Date(2026, 2, 15), new Date(2026, 8, 30));
 let DAYS = _base.days;
 let DAY_LABELS = _base.labels;
 // Call after any import to register day keys from retreats beyond the pre-generated range
