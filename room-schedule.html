@@ -469,19 +469,7 @@
       <div class="form-row" style="margin-bottom:0">
         <label class="form-label">Day</label>
         <select class="form-select" id="fieldDay">
-          <option value="Sun 15">Sun, Mar 15</option>
-          <option value="Mon 16">Mon, Mar 16</option>
-          <option value="Tue 17">Tue, Mar 17</option>
-          <option value="Wed 18">Wed, Mar 18</option>
-          <option value="Thu 19">Thu, Mar 19</option>
-          <option value="Fri 20">Fri, Mar 20</option>
-          <option value="Sat 21">Sat, Mar 21</option>
-          <option value="Sun 22">Sun, Mar 22</option>
-          <option value="Mon 23">Mon, Mar 23</option>
-          <option value="Tue 24">Tue, Mar 24</option>
-          <option value="Wed 25">Wed, Mar 25</option>
-          <option value="Thu 26">Thu, Mar 26</option>
-          <option value="Fri 27">Fri, Mar 27</option>
+          <!-- Populated dynamically by populateDayDropdown() -->
         </select>
       </div>
       <div class="form-row" style="margin-bottom:0" id="roomFieldRow">
@@ -1187,6 +1175,30 @@ function setWeekOffset(delta){
 
 // Call once on load
 initWeekFromDay(activeDay);
+
+// ── MODAL DAY DROPDOWN — today through today + 2 weeks, plus any selected day ──
+function populateDayDropdown(selectedDay){
+  const sel = document.getElementById('fieldDay');
+  if(!sel) return;
+  sel.innerHTML = '';
+  const todayKey = todayDayKey();
+  const todayIdx = todayKey ? DAYS.indexOf(todayKey) : 0;
+  const windowEnd = Math.min(todayIdx + 14, DAYS.length - 1); // 2 weeks ahead
+  // Collect days: today through +14, always include selectedDay even if outside range
+  const pool = new Set(DAYS.slice(Math.max(0, todayIdx), windowEnd + 1));
+  if(selectedDay) pool.add(selectedDay);
+  const sorted = DAYS.filter(d => pool.has(d));
+  sorted.forEach(d => {
+    const lbl = DAY_LABELS[d] || d;
+    // "Monday, March 23" → "Mon, March 23"
+    const friendly = lbl.replace(/^(\w{3})\w+,/, '$1,');
+    const opt = document.createElement('option');
+    opt.value = d;
+    opt.textContent = friendly;
+    if(d === selectedDay) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
 
 
 
@@ -3353,6 +3365,7 @@ function openModal(id, defaultDay, defaultRoom){
   document.getElementById('deleteBtn').style.display = id ? 'block' : 'none';
   if(id){
     const b=bookings.find(x=>x.id===id);
+    populateDayDropdown(b.day);
     document.getElementById('fieldTitle').value=b.title;
     document.getElementById('fieldTeacher').value=b.teacher;
     document.getElementById('fieldDay').value=b.day;
@@ -3369,9 +3382,11 @@ function openModal(id, defaultDay, defaultRoom){
     const isInc = /\bincluded\b/i.test(b.notes||'') || (!b.optional && !b.price && (b.category==='soul'||b.category==='tours'));
     document.getElementById('fieldIncluded').checked=isInc||false;
   } else {
+    const _newDay = defaultDay||activeDay||DAYS[0];
+    populateDayDropdown(_newDay);
     document.getElementById('fieldTitle').value='';
     document.getElementById('fieldTeacher').value='';
-    document.getElementById('fieldDay').value=defaultDay||activeDay||'Sun 15';
+    document.getElementById('fieldDay').value=_newDay;
     document.getElementById('fieldRoom').value=defaultRoom||'Heaven';
     document.getElementById('fieldStart').value='08:00';
     document.getElementById('fieldEnd').value='09:30';
