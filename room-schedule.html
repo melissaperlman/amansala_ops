@@ -837,7 +837,9 @@ function futureDays(){
   const todayKey = todayDayKey();
   if(!todayKey) return DAYS; // fallback: show all if date not in range
   const todayIdx = DAYS.indexOf(todayKey);
-  return DAYS.slice(todayIdx);
+  // Hide today itself once it's 2pm or later — day is effectively over
+  const isPastToday = new Date().getHours() >= 14;
+  return DAYS.slice(isPastToday ? todayIdx + 1 : todayIdx);
 }
 const ROOMS = ['Heaven','Chica','BF','Grande','Sky'];
 const ROOM_CSS = { Heaven:'heaven', Chica:'chica', BF:'bf', Grande:'grande', Sky:'sky' };
@@ -1206,9 +1208,11 @@ function populateDayDropdown(selectedDay){
   sel.innerHTML = '';
   const todayKey = todayDayKey();
   const todayIdx = todayKey ? DAYS.indexOf(todayKey) : 0;
-  const windowEnd = Math.min(todayIdx + 14, DAYS.length - 1); // 2 weeks ahead
-  // Collect days: today through +14, always include selectedDay even if outside range
-  const pool = new Set(DAYS.slice(Math.max(0, todayIdx), windowEnd + 1));
+  const isPastToday = new Date().getHours() >= 14;
+  const startIdx = isPastToday ? todayIdx + 1 : todayIdx;
+  const windowEnd = Math.min(startIdx + 14, DAYS.length - 1); // 2 weeks ahead
+  // Collect days: today (or tomorrow if ≥2pm) through +14, always include selectedDay for edits
+  const pool = new Set(DAYS.slice(Math.max(0, startIdx), windowEnd + 1));
   if(selectedDay) pool.add(selectedDay);
   const sorted = DAYS.filter(d => pool.has(d));
   sorted.forEach(d => {
@@ -1514,8 +1518,19 @@ function renderFilterBar(){
   const bar = document.getElementById('filterBar');
   if(activeTab==='day'){
     const weeks = getWeeks();
-    const currentWeek = weeks[activeWeekIdx] || weeks[0] || [];
-    const prevOk = activeWeekIdx > 0;
+    const _allWeek = weeks[activeWeekIdx] || weeks[0] || [];
+    const _visible = new Set(futureDays());
+    const currentWeek = _allWeek.filter(d => _visible.has(d));
+    // If current week has no visible days, auto-advance to next week
+    if(currentWeek.length === 0 && activeWeekIdx < weeks.length - 1){
+      activeWeekIdx++;
+      renderFilterBar(); return;
+    }
+    // Sync activeDay to a visible day if needed
+    if(currentWeek.length && !currentWeek.includes(activeDay)){
+      activeDay = currentWeek[0];
+    }
+    const prevOk = activeWeekIdx > 0 && weeks.slice(0, activeWeekIdx).some(w => w.some(d => _visible.has(d)));
     const nextOk = activeWeekIdx < weeks.length - 1;
     const navBtn = (dir, enabled) => `<button onclick="setWeekOffset(${dir})" ${enabled?'':'disabled'} style="padding:3px 10px;border:1.5px solid var(--border);border-radius:6px;background:${enabled?'var(--card)':'#f5f5f5'};font-size:15px;cursor:${enabled?'pointer':'default'};color:${enabled?'var(--text)':'var(--muted)'};line-height:1;transition:all 0.15s">${dir<0?'‹':'›'}</button>`;
     // Row 1: week nav + days | rooms
@@ -4024,6 +4039,12 @@ ${raw.slice(0,4000)}`}]
   }
 
   data.bookings.forEach(b => {
+    // Default missing times: start → 09:00, end → start + 1 hour
+    if(!b.start) b.start = '09:00';
+    if(!b.end){
+      const [h,m] = b.start.split(':').map(Number);
+      b.end = `${String(h+1).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+    }
     bookings.push({ id:nextId++, group:gid, subtitle:b.subtitle||'', status:'confirmed', ...b });
   });
 
