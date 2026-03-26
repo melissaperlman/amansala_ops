@@ -486,11 +486,11 @@
     <div class="form-row-half" style="margin-top:14px">
       <div class="form-row" style="margin-bottom:0">
         <label class="form-label">Start Time</label>
-        <input class="form-input" id="fieldStart" type="time" value="08:00">
+        <select class="form-select" id="fieldStart"><!-- populated by buildTimeOptions() --></select>
       </div>
       <div class="form-row" style="margin-bottom:0">
         <label class="form-label">End Time</label>
-        <input class="form-input" id="fieldEnd" type="time" value="09:30">
+        <select class="form-select" id="fieldEnd"><!-- populated by buildTimeOptions() --></select>
       </div>
     </div>
     <div class="form-row" style="margin-top:14px">
@@ -1175,6 +1175,29 @@ function setWeekOffset(delta){
 
 // Call once on load
 initWeekFromDay(activeDay);
+
+// ── TIME DROPDOWNS — :00, :15, :30, :45 only, 5 AM – 11 PM ──────────────────
+function buildTimeOptions(selId, selectedVal){
+  const sel = document.getElementById(selId);
+  if(!sel) return;
+  sel.innerHTML = '';
+  const ampm = (h, m) => {
+    const suffix = h < 12 ? 'AM' : 'PM';
+    const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+    return `${h12}:${String(m).padStart(2,'0')} ${suffix}`;
+  };
+  for(let h = 5; h <= 23; h++){
+    for(const m of [0, 15, 30, 45]){
+      if(h === 23 && m > 0) break; // stop at 11:00 PM
+      const val = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+      const opt = document.createElement('option');
+      opt.value = val;
+      opt.textContent = ampm(h, m);
+      if(val === selectedVal) opt.selected = true;
+      sel.appendChild(opt);
+    }
+  }
+}
 
 // ── MODAL DAY DROPDOWN — today through today + 2 weeks, plus any selected day ──
 function populateDayDropdown(selectedDay){
@@ -3366,12 +3389,12 @@ function openModal(id, defaultDay, defaultRoom){
   if(id){
     const b=bookings.find(x=>x.id===id);
     populateDayDropdown(b.day);
+    buildTimeOptions('fieldStart', b.start);
+    buildTimeOptions('fieldEnd', b.end);
     document.getElementById('fieldTitle').value=b.title;
     document.getElementById('fieldTeacher').value=b.teacher;
     document.getElementById('fieldDay').value=b.day;
     document.getElementById('fieldRoom').value=b.room;
-    document.getElementById('fieldStart').value=b.start;
-    document.getElementById('fieldEnd').value=b.end;
     document.getElementById('fieldPax').value=b.pax;
     document.getElementById('fieldNotes').value=b.notes;
     document.getElementById('fieldStatus').value=b.status;
@@ -3384,12 +3407,12 @@ function openModal(id, defaultDay, defaultRoom){
   } else {
     const _newDay = defaultDay||activeDay||DAYS[0];
     populateDayDropdown(_newDay);
+    buildTimeOptions('fieldStart', '08:00');
+    buildTimeOptions('fieldEnd', '09:30');
     document.getElementById('fieldTitle').value='';
     document.getElementById('fieldTeacher').value='';
     document.getElementById('fieldDay').value=_newDay;
     document.getElementById('fieldRoom').value=defaultRoom||'Heaven';
-    document.getElementById('fieldStart').value='08:00';
-    document.getElementById('fieldEnd').value='09:30';
     document.getElementById('fieldPax').value='';
     document.getElementById('fieldNotes').value='';
     document.getElementById('fieldStatus').value='confirmed';
