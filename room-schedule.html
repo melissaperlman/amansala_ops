@@ -838,9 +838,8 @@ function futureDays(){
   const todayKey = todayDayKey();
   if(!todayKey) return DAYS; // fallback: show all if date not in range
   const todayIdx = DAYS.indexOf(todayKey);
-  // Hide today itself once it's 2pm or later — day is effectively over
-  const isPastToday = new Date().getHours() >= 14;
-  return DAYS.slice(isPastToday ? todayIdx + 1 : todayIdx);
+  // Always include today — only days strictly before today are hidden
+  return DAYS.slice(todayIdx);
 }
 const ROOMS = ['Heaven','Chica','BF','Grande','Sky'];
 const ROOM_CSS = { Heaven:'heaven', Chica:'chica', BF:'bf', Grande:'grande', Sky:'sky' };
@@ -1145,9 +1144,8 @@ let activeWindowOffset = 0;
 function todayStartIdx(){
   const todayKey = todayDayKey();
   if(!todayKey) return 0;
-  const idx = DAYS.indexOf(todayKey);
-  const isPastToday = new Date().getHours() >= 14;
-  return isPastToday ? idx + 1 : idx;
+  // Always start from today — yesterday and before are hidden, today stays visible all day
+  return DAYS.indexOf(todayKey);
 }
 
 function getVisibleWindow(){
@@ -1214,9 +1212,7 @@ function populateDayDropdown(selectedDay){
   if(!sel) return;
   sel.innerHTML = '';
   const todayKey = todayDayKey();
-  const todayIdx = todayKey ? DAYS.indexOf(todayKey) : 0;
-  const isPastToday = new Date().getHours() >= 14;
-  const startIdx = isPastToday ? todayIdx + 1 : todayIdx;
+  const startIdx = todayKey ? DAYS.indexOf(todayKey) : 0;
   const windowEnd = Math.min(startIdx + 14, DAYS.length - 1); // 2 weeks ahead
   // Collect days: today (or tomorrow if ≥2pm) through +14, always include selectedDay for edits
   const pool = new Set(DAYS.slice(Math.max(0, startIdx), windowEnd + 1));
