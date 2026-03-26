@@ -811,8 +811,28 @@ function changeUser(){
   }
 }
 
-const DAYS = ['Sun 15','Mon 16','Tue 17','Wed 18','Thu 19','Fri 20','Sat 21','Sun 22','Mon 23','Tue 24','Wed 25','Thu 26','Fri 27'];
-const DAY_LABELS = { 'Sun 15':'Sunday, March 15','Mon 16':'Monday, March 16','Tue 17':'Tuesday, March 17','Wed 18':'Wednesday, March 18','Thu 19':'Thursday, March 19','Fri 20':'Friday, March 20','Sat 21':'Saturday, March 21','Sun 22':'Sunday, March 22','Mon 23':'Monday, March 23','Tue 24':'Tuesday, March 24','Wed 25':'Wednesday, March 25','Thu 26':'Thursday, March 26','Fri 27':'Friday, March 27' };
+// ── DYNAMIC DAY REGISTRY — extends automatically as retreats are imported ──
+const _DS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const _DF = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const _MF = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+function _genDays(start, end){
+  const days=[], labels={};
+  for(let d=new Date(start); d<=end; d.setDate(d.getDate()+1)){
+    const key=`${_DS[d.getDay()]} ${d.getDate()}`;
+    const lbl=`${_DF[d.getDay()]}, ${_MF[d.getMonth()]} ${d.getDate()}`;
+    if(!labels[key]){ days.push(key); labels[key]=lbl; }
+  }
+  return {days,labels};
+}
+const _base = _genDays(new Date('2026-03-15'), new Date('2026-09-30'));
+let DAYS = _base.days;
+let DAY_LABELS = _base.labels;
+// Call after any import to register day keys from retreats beyond the pre-generated range
+function ensureBookingDaysExist(newBookings){
+  (newBookings||[]).forEach(b=>{
+    if(b.day && !DAY_LABELS[b.day]){ DAY_LABELS[b.day]=b.day; DAYS.push(b.day); }
+  });
+}
 
 // Figure out today's day key by comparing today's date to DAY_LABELS
 function todayDayKey(){
@@ -3695,13 +3715,13 @@ Return ONLY a JSON object (no markdown, no explanation):
 {
   "groupName": "string",
   "pax": number (0 if not found),
-  "lastDay": "one of: Sat 21, Sun 22, Mon 23, Tue 24, Wed 25, Thu 26, Fri 27 — the last day with activities",
+  "lastDay": "day key of the last day with activities — format: 'Mon 23' (3-letter day + space + date number)",
   "bookings": [
     {
       "title": "string",
       "subtitle": "string or ''",
       "teacher": "string or ''",
-      "day": "Sat 21|Sun 22|Mon 23|Tue 24|Wed 25|Thu 26|Fri 27",
+      "day": "day key — format: 'Mon 23' (3-letter weekday abbreviation + space + date number, e.g. 'Sat 28', 'Wed 1', 'Thu 9')",
       "room": "Heaven|Chica|BF|Grande|Sky or ''",
       "start": "HH:MM 24h",
       "end": "HH:MM 24h",
@@ -3715,7 +3735,7 @@ Return ONLY a JSON object (no markdown, no explanation):
   ]
 }
 
-Week is March 21–27 2026. Map all dates to the correct day pill.
+Map all dates to day keys in the format 'Mon 23' (3-letter weekday + space + date number). Use the actual dates from the schedule — this tool covers March 2026 through September 2026.
 Categories: classes=yoga/fitness/movement, meals=food/drinks, tours=excursions/outings, soul=ceremonies/rituals/wellness.
 
 Schedule text:
@@ -3922,6 +3942,7 @@ ${raw.slice(0,4000)}`}]
     Object.assign(dietaryState[gid], data.dietary);
   }
 
+  ensureBookingDaysExist(data.bookings);
   closeLeaderImportModal();
   render();
 
