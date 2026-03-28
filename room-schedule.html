@@ -3588,7 +3588,7 @@ function saveBooking(){
       bookings.push({id: nextId++, ...baseData, group: gid});
     });
   }
-  closeModal(); render(); scheduleCloudSave();
+  closeModal(); render(); saveToCloud();
 }
 let _lastDeleted = null;
 function deleteBooking(){
@@ -5855,9 +5855,8 @@ async function loadFromCloud(){
         costPP: Number(b.costPP) || 0,
         pricePP: Number(b.pricePP) || 0
       })).filter(b => {
-        const key = [b.group, b.day, b.start, b.end, b.title, b.room].join('|');
-        if(dedupSet.has(key)) return false;
-        dedupSet.add(key);
+        if(dedupSet.has(b.id)) return false;
+        dedupSet.add(b.id);
         return true;
       });
       nextId = Math.max(...bookings.map(b=>b.id), 0) + 1;
@@ -5966,12 +5965,11 @@ async function saveToCloud(){
       removed: g.removed || false
     }));
 
-    // Deduplicate bookings by group+day+start+end+title+room
+    // Deduplicate bookings by ID (unique identifier)
     const seen = new Set();
     const uniqueBookings = bookings.filter(b => {
-      const key = [b.group, b.day, b.start, b.end, b.title, b.room].join('|');
-      if(seen.has(key)) return false;
-      seen.add(key);
+      if(seen.has(b.id)) return false;
+      seen.add(b.id);
       return true;
     });
 
@@ -6105,9 +6103,8 @@ async function silentCloudRefresh(){
         price: b.price || '', location: b.location || '',
         costPP: Number(b.costPP) || 0, pricePP: Number(b.pricePP) || 0
       })).filter(b => {
-        const key = [b.group,b.day,b.start,b.end,b.title,b.room].join('|');
-        if(dedupSet.has(key)) return false;
-        dedupSet.add(key); return true;
+        if(dedupSet.has(b.id)) return false;
+        dedupSet.add(b.id); return true;
       });
       nextId = Math.max(...bookings.map(b=>b.id), 0) + 1;
     }
