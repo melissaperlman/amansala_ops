@@ -1468,7 +1468,7 @@ function renderGroupBar(){
     const border = isActive ? `2px solid ${g.color}` : '2px solid var(--border)';
     const bg = isActive ? g.color+'22' : 'var(--card)';
     const paxBadge = g.id !== 'all'
-      ? `<span onclick="event.stopPropagation();editGroupPax('${g.id}')" title="Click to edit guest count" style="margin-left:6px;background:${g.pax?'#1a1a1a':'#ccc'};color:#fff;border-radius:4px;padding:1px 7px;font-size:12px;font-weight:700;cursor:pointer">${g.pax||'+ pax'}</span>`
+      ? `<span onclick="event.stopPropagation();editGroupPax('${g.id}')" title="Click to edit guest count" style="margin-left:7px;color:${g.pax?g.color:'var(--muted)'};font-size:13px;font-weight:700;cursor:pointer;border-left:1.5px solid var(--border);padding-left:7px;letter-spacing:0.01em">${g.pax ? g.pax+' guests' : '+ guests'}</span>`
       : '';
 
     // Departure indicator
