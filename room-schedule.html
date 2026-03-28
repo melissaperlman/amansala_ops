@@ -508,7 +508,7 @@
     </div>
     <div class="form-row">
       <label class="form-label">Category</label>
-      <select class="form-select" id="fieldCategory" onchange="toggleMealLocation()">
+      <select class="form-select" id="fieldCategory" onchange="toggleMealLocation();toggleTourPriceFields()">
         <option value="classes">🧘 Classes</option>
         <option value="meals">🍽 Meals</option>
         <option value="tours">🗺 Tours</option>
@@ -546,6 +546,18 @@
       <div id="priceInputRow" style="display:none;align-items:center;gap:6px">
         <span style="font-size:12px;font-weight:600;color:var(--muted)">Price:</span>
         <input type="text" id="fieldPrice" placeholder="e.g. $85 or 450 MXN" style="font-size:13px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;width:140px;font-family:inherit">
+      </div>
+    </div>
+    <div id="tourPriceRow" style="display:none;gap:16px;flex-wrap:wrap;padding:10px 0 4px;border-top:1px solid var(--border);margin-top:8px">
+      <div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:160px">
+        <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted)">💸 Our Cost / person</label>
+        <input type="number" id="fieldCostPP" min="0" step="0.01" placeholder="e.g. 45" style="font-size:14px;padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-family:inherit;width:100%">
+        <span style="font-size:11px;color:var(--muted)">What we pay per guest (USD)</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:160px">
+        <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#4a8c5c">💰 We Charge / person</label>
+        <input type="number" id="fieldPricePP" min="0" step="0.01" placeholder="e.g. 85" style="font-size:14px;padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-family:inherit;width:100%">
+        <span style="font-size:11px;color:var(--muted)">What guests pay (USD)</span>
       </div>
     </div>
     <div id="applyAllRow" style="display:none;padding:10px 0 4px;border-top:1px solid var(--border);margin-top:8px">
@@ -1812,6 +1824,9 @@ function mergedTourRow(b){
   const slotKey = 'tour-' + b.start + '-' + b.title.toLowerCase().replace(/optional\s*/i,'').replace(/[^a-z0-9]/g,'-').slice(0,24);
   const cfg = matchTourConfig(b.title);
   const pesos = cfg ? cfg.pesosPerPerson : 0;
+  // Per-person cost and sell price from booking (USD) — supersede config
+  const costPP  = b.costPP  || ((b._merged||[b]).find(x=>x.costPP)  || {}).costPP  || 0;
+  const pricePP = b.pricePP || ((b._merged||[b]).find(x=>x.pricePP) || {}).pricePP || 0;
 
   // Shared state: guide, transport, vehicle, driver, notes
   if(!tourState[slotKey]) tourState[slotKey] = { guide:'', transport:'none', vehicle:'', driver:'', extraNotes:'' };
@@ -1888,35 +1903,35 @@ function mergedTourRow(b){
       </div>`;
   }).join('');
 
-  // Cost breakdown summary
+  // Earnings breakdown: cost vs revenue
   function costBreakdownHtml(){
-    let rows = '', grand = 0;
-    activeGroups.forEach(g => {
-      const n = (tourState[gKey(g.id)]||{}).signups||0;
-      if(!n) return;
-      const sub = pesos * n;
-      grand += sub;
-      if(pesos > 0) rows += `<div class="tour-cost-row"><span>${g.label}</span><span>${n} × ${pesos} MXN = <strong>${sub.toLocaleString()} MXN</strong></span></div>`;
-    });
-    if(totalSignups > 0 && pesos === 0)
-      return `<div class="tour-cost-bar"><div style="font-size:13px;color:#4a8c5c;font-weight:500">✓ No local entry fee — ${totalSignups} guests attending</div></div>`;
-    if(!grand) return '';
-    return `<div class="tour-cost-bar">
-      <div class="tour-cost-title">💰 Cost Breakdown</div>
-      ${rows}
-      <div class="tour-cost-total">
-        <span>Total estimated</span>
-        <span>${grand.toLocaleString()} MXN <span style="color:var(--muted);font-size:12px;font-weight:400">≈ $${(grand/17).toFixed(0)} USD</span></span>
-      </div>
-    </div>`;
+    if(!totalSignups) return '';
+    const totalCost    = costPP  * totalSignups;
+    const totalRevenue = pricePP * totalSignups;
+    const totalProfit  = totalRevenue - totalCost;
+    const hasPricing   = costPP > 0 || pricePP > 0;
+    if(!hasPricing && pesos === 0)
+      return `<div class="tour-cost-bar"><div style="font-size:13px;color:#4a8c5c;font-weight:500">✓ No fee — ${totalSignups} guests attending</div></div>`;
+    let html = `<div class="tour-cost-bar"><div class="tour-cost-title">💰 Earnings Summary — ${totalSignups} guests</div>`;
+    html += `<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:8px">`;
+    if(costPP > 0) html += `<div style="background:#fff3e0;border-radius:6px;padding:10px 12px;text-align:center"><div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#b07340;letter-spacing:0.06em">Our Cost</div><div style="font-size:18px;font-weight:700;color:#b07340;margin-top:2px">$${totalCost.toLocaleString()}</div><div style="font-size:11px;color:var(--muted)">$${costPP}/person</div></div>`;
+    if(pricePP > 0) html += `<div style="background:#e8f5e9;border-radius:6px;padding:10px 12px;text-align:center"><div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#2e7d32;letter-spacing:0.06em">Revenue</div><div style="font-size:18px;font-weight:700;color:#2e7d32;margin-top:2px">$${totalRevenue.toLocaleString()}</div><div style="font-size:11px;color:var(--muted)">$${pricePP}/person</div></div>`;
+    if(costPP > 0 && pricePP > 0){
+      const profitColor = totalProfit >= 0 ? '#4a8c5c' : '#cc3333';
+      const profitBg    = totalProfit >= 0 ? '#f0faf4' : '#fdecea';
+      html += `<div style="background:${profitBg};border-radius:6px;padding:10px 12px;text-align:center"><div style="font-size:10px;font-weight:700;text-transform:uppercase;color:${profitColor};letter-spacing:0.06em">${totalProfit>=0?'Profit':'Loss'}</div><div style="font-size:18px;font-weight:700;color:${profitColor};margin-top:2px">${totalProfit>=0?'+':''}\$${totalProfit.toLocaleString()}</div><div style="font-size:11px;color:var(--muted)">$${Math.abs(pricePP-costPP)}/person</div></div>`;
+    }
+    html += `</div></div>`;
+    return html;
   }
 
-  // Collapsed cost pill — shows total MXN needed right on the row
-  const totalMXN = pesos > 0 ? activeGroups.reduce((s,g) => s + pesos * (tourState[gKey(g.id)].signups||0), 0) : 0;
-  const collapsedCost = totalMXN > 0
-    ? `<span id="tour-cost-pill-${slotKey}" style="background:#fff8e1;border:1px solid #f5c842;color:#7a5c00;border-radius:6px;padding:2px 9px;font-size:12px;font-weight:700">💰 ${totalMXN.toLocaleString()} MXN <span style="font-weight:400;color:#a07800">≈ $${(totalMXN/17).toFixed(0)} USD</span></span>`
-    : pesos === 0 && totalSignups > 0
-      ? `<span id="tour-cost-pill-${slotKey}" style="background:#f0faf0;border:1px solid #90cc90;color:#2a6e2a;border-radius:6px;padding:2px 9px;font-size:12px;font-weight:700">✓ No fee</span>`
+  // Collapsed pill showing revenue/profit at a glance
+  const totalRevCollapsed = pricePP > 0 ? pricePP * totalSignups : 0;
+  const totalCostCollapsed = costPP > 0 ? costPP * totalSignups : 0;
+  const collapsedCost = (totalRevCollapsed > 0 || totalCostCollapsed > 0)
+    ? `<span id="tour-cost-pill-${slotKey}" style="background:#e8f5e9;border:1px solid #90cc90;color:#2a6e2a;border-radius:6px;padding:2px 9px;font-size:12px;font-weight:700">💰 $${totalRevCollapsed.toLocaleString()} rev${totalCostCollapsed>0?' · $'+totalCostCollapsed.toLocaleString()+' cost':''}</span>`
+    : pesos > 0
+      ? `<span id="tour-cost-pill-${slotKey}" style="background:#fff8e1;border:1px solid #f5c842;color:#7a5c00;border-radius:6px;padding:2px 9px;font-size:12px;font-weight:700">💰 ${pesos} MXN/pp</span>`
       : `<span id="tour-cost-pill-${slotKey}" style="background:var(--bg);border:1px solid var(--border);color:var(--muted);border-radius:6px;padding:2px 9px;font-size:12px">—</span>`;
 
   // Per-group included/optional chips — built from merged bookings directly
@@ -3405,6 +3420,8 @@ function openModal(id, defaultDay, defaultRoom){
     document.getElementById('fieldIncluded').checked=isInc||false;
     document.getElementById('fieldPrice').value=b.price||'';
     document.getElementById('priceInputRow').style.display=(b.optional && !isInc)?'':'none';
+    document.getElementById('fieldCostPP').value=b.costPP||'';
+    document.getElementById('fieldPricePP').value=b.pricePP||'';
   } else {
     const _newDay = defaultDay||activeDay||DAYS[0];
     populateDayDropdown(_newDay);
@@ -3424,8 +3441,11 @@ function openModal(id, defaultDay, defaultRoom){
     document.getElementById('fieldIncluded').checked=false;
     document.getElementById('fieldPrice').value='';
     document.getElementById('priceInputRow').style.display='none';
+    document.getElementById('fieldCostPP').value='';
+    document.getElementById('fieldPricePP').value='';
   }
   toggleMealLocation();
+  toggleTourPriceFields();
   syncRoomRequestedCheckbox();
   // Show bulk-apply row if this class repeats on other days
   const applyAllCb = document.getElementById('applyAllDays');
@@ -3509,6 +3529,12 @@ function toggleMealLocation(){
   document.getElementById('mealLocationRow').style.display = isMeal ? '' : 'none';
   document.getElementById('roomFieldRow').style.display = isMeal ? 'none' : '';
 }
+function toggleTourPriceFields(){
+  const cat = document.getElementById('fieldCategory').value;
+  const show = cat==='tours' || cat==='soul';
+  const row = document.getElementById('tourPriceRow');
+  if(row) row.style.display = show ? 'flex' : 'none';
+}
 
 function checkApplyAllDays(){
   // No-op — bulk-apply row is shown on modal open; checkbox is always visible for repeating classes
@@ -3532,6 +3558,8 @@ function saveBooking(){
     location:document.getElementById('fieldLocation').value||'',
     optional:document.getElementById('fieldOptional').checked||false,
     price: document.getElementById('fieldIncluded').checked ? '' : (document.getElementById('fieldPrice').value.trim()||undefined),
+    costPP: parseFloat(document.getElementById('fieldCostPP').value)||undefined,
+    pricePP: parseFloat(document.getElementById('fieldPricePP').value)||undefined,
     ...(document.getElementById('fieldIncluded').checked ? {optional:false, notes:'Included'} : {}),
     subtitle:'',
     ...stamp,
@@ -5826,7 +5854,9 @@ async function loadFromCloud(){
         category: b.category || 'classes',
         optional: b.optional === true || b.optional === 'true',
         price: b.price || '',
-        location: b.location || ''
+        location: b.location || '',
+        costPP: Number(b.costPP) || 0,
+        pricePP: Number(b.pricePP) || 0
       })).filter(b => {
         const key = [b.group, b.day, b.start, b.end, b.title, b.room].join('|');
         if(dedupSet.has(key)) return false;
@@ -5965,7 +5995,9 @@ async function saveToCloud(){
       category: b.category || 'classes',
       optional: b.optional || false,
       price: b.price || '',
-      location: b.location || ''
+      location: b.location || '',
+      costPP: b.costPP || 0,
+      pricePP: b.pricePP || 0
     }));
 
     // Prepare transport (deduplicate)
@@ -6073,7 +6105,8 @@ async function silentCloudRefresh(){
         subtitle: b.subtitle || '', teacher: b.teacher || '', room: b.room || '',
         pax: b.pax || 0, notes: b.notes || '', status: b.status || 'confirmed',
         category: b.category || 'classes', optional: b.optional === true || b.optional === 'true',
-        price: b.price || '', location: b.location || ''
+        price: b.price || '', location: b.location || '',
+        costPP: Number(b.costPP) || 0, pricePP: Number(b.pricePP) || 0
       })).filter(b => {
         const key = [b.group,b.day,b.start,b.end,b.title,b.room].join('|');
         if(dedupSet.has(key)) return false;
