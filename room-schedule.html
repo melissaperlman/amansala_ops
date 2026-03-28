@@ -1742,29 +1742,17 @@ function renderByDay(){
     html += `<div class="cat-section-header"><span class="cat-section-icon">${cm.icon}</span><span class="cat-section-label ${cm.css}">${cm.label}</span><div class="cat-divider"></div></div>`;
     nonMealsNonToursSoul.filter(b=>b.category===activeCategory).forEach(b=>{ html += activeCategory==='classes' ? card(b) : compactRow(b); });
   } else {
-    CAT_ORDER.forEach(cat=>{
-      if(cat==='meals'){
-        if(meals.length===0) return;
-        const cm = CAT_META['meals'];
-        html += `<div class="cat-section-header"><span class="cat-section-icon">${cm.icon}</span><span class="cat-section-label ${cm.css}">${cm.label}</span><div class="cat-divider"></div></div>`;
-        meals.forEach(b=>{ html += mergedMealRow(b); });
-      } else if(cat==='tours'){
-        if(tours.length===0) return;
-        const cm = CAT_META['tours'];
-        html += `<div class="cat-section-header"><span class="cat-section-icon">${cm.icon}</span><span class="cat-section-label ${cm.css}">${cm.label}</span><div class="cat-divider"></div></div>`;
-        tours.forEach(b=>{ html += mergedTourRow(b); });
-      } else if(cat==='soul'){
-        if(souls.length===0) return;
-        const cm = CAT_META['soul'];
-        html += `<div class="cat-section-header"><span class="cat-section-icon">${cm.icon}</span><span class="cat-section-label ${cm.css}">${cm.label}</span><div class="cat-divider"></div></div>`;
-        souls.forEach(b=>{ html += mergedSoulRow(b); });
-      } else {
-        const group = nonMealsNonToursSoul.filter(b=>b.category===cat);
-        if(group.length===0) return;
-        const cm = CAT_META[cat];
-        html += `<div class="cat-section-header"><span class="cat-section-icon">${cm.icon}</span><span class="cat-section-label ${cm.css}">${cm.label}</span><div class="cat-divider"></div></div>`;
-        group.forEach(b=>{ html += cat==='classes' ? card(b) : compactRow(b); });
-      }
+    // All activities (no meals) — single chronological list, no category headers
+    const allActivities = [
+      ...tours.map(b=>({b, type:'tour'})),
+      ...souls.map(b=>({b, type:'soul'})),
+      ...nonMealsNonToursSoul.map(b=>({b, type:b.category==='classes'?'card':'compact'}))
+    ].sort((a,z)=>cmpTime(a.b.start, z.b.start));
+    allActivities.forEach(({b, type})=>{
+      if(type==='tour') html += mergedTourRow(b);
+      else if(type==='soul') html += mergedSoulRow(b);
+      else if(type==='card') html += card(b);
+      else html += compactRow(b);
     });
   }
 
