@@ -1619,23 +1619,11 @@ function mergeTours(tours){
       if(b.group === 'all') Object.assign(slots[key], b, { _merged: slots[key]._merged, _timeKey: roundedStart });
     }
   });
-  // Second pass: merge entries at the same time with slightly different titles
-  const byTime = {};
-  Object.values(slots).forEach(s => {
-    const t = s._timeKey;
-    if(!byTime[t]){
-      byTime[t] = s;
-    } else {
-      const base = (byTime[t].group === 'all' || s.group !== 'all') ? byTime[t] : s;
-      const other = base === byTime[t] ? s : byTime[t];
-      base._merged = [...(base._merged||[base]), ...(other._merged||[other])];
-      byTime[t] = base;
-    }
-  });
-  Object.values(byTime).forEach(s => {
+  const results = Object.values(slots);
+  results.forEach(s => {
     if((s._merged||[s]).some(x => x.optional)) s.optional = true;
   });
-  return Object.values(byTime).sort((a,b)=>cmpTime(a.start,b.start));
+  return results.sort((a,b)=>cmpTime(a.start,b.start));
 }
 
 // Merge optional soul services at the same time slot into one row
