@@ -1852,10 +1852,14 @@ function mergedTourRow(b){
   activeGroups.forEach(g => { tourSignupCounts[g.id] = tourState[gKey(g.id)].signups||0; });
   const tourPaxBubbles = paxBubbles(b, tourSignupCounts);
 
-  // Cost pill
-  const costPill = pesos > 0
-    ? `<span class="cost-pill ${costPillClass(pesos)}">${pesos} MXN/pp</span>`
-    : `<span class="cost-pill cost-free">No local fee</span>`;
+  // Cost pill — show USD price if set, otherwise MXN local fee
+  const costPill = pricePP > 0
+    ? `<span class="cost-pill cost-mid" onclick="openModal(${b.id})" style="cursor:pointer" title="Edit cost/price">$${pricePP}/pp USD</span>`
+    : costPP > 0
+      ? `<span class="cost-pill cost-low" onclick="openModal(${b.id})" style="cursor:pointer" title="Edit cost/price">Cost $${costPP}/pp</span>`
+      : pesos > 0
+        ? `<span class="cost-pill ${costPillClass(pesos)}">${pesos} MXN/pp</span>`
+        : `<span class="cost-pill cost-free" onclick="openModal(${b.id})" style="cursor:pointer;opacity:0.7" title="Click to set cost/price">No fee set</span>`;
 
   // Only show Optional if every group has it optional (no one has it Included)
   const allOptionalTour = (b._merged||[b]).filter(x=>x.group!=='all').every(x=>x.optional);
@@ -1905,21 +1909,24 @@ function mergedTourRow(b){
 
   // Earnings breakdown: cost vs revenue
   function costBreakdownHtml(){
-    if(!totalSignups) return '';
-    const totalCost    = costPP  * totalSignups;
-    const totalRevenue = pricePP * totalSignups;
+    const hasPricing = costPP > 0 || pricePP > 0;
+    if(!hasPricing && !totalSignups) return '';
+    const count = totalSignups || 0;
+    const totalCost    = costPP  * count;
+    const totalRevenue = pricePP * count;
     const totalProfit  = totalRevenue - totalCost;
-    const hasPricing   = costPP > 0 || pricePP > 0;
     if(!hasPricing && pesos === 0)
-      return `<div class="tour-cost-bar"><div style="font-size:13px;color:#4a8c5c;font-weight:500">✓ No fee — ${totalSignups} guests attending</div></div>`;
-    let html = `<div class="tour-cost-bar"><div class="tour-cost-title">💰 Earnings Summary — ${totalSignups} guests</div>`;
+      return count > 0 ? `<div class="tour-cost-bar"><div style="font-size:13px;color:#4a8c5c;font-weight:500">✓ No fee — ${count} guests attending</div></div>` : '';
+    const title = count > 0 ? `💰 Earnings Summary — ${count} guests` : `💰 Cost / Price (per person)`;
+    let html = `<div class="tour-cost-bar"><div class="tour-cost-title">${title}</div>`;
     html += `<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:8px">`;
-    if(costPP > 0) html += `<div style="background:#fff3e0;border-radius:6px;padding:10px 12px;text-align:center"><div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#b07340;letter-spacing:0.06em">Our Cost</div><div style="font-size:18px;font-weight:700;color:#b07340;margin-top:2px">$${totalCost.toLocaleString()}</div><div style="font-size:11px;color:var(--muted)">$${costPP}/person</div></div>`;
-    if(pricePP > 0) html += `<div style="background:#e8f5e9;border-radius:6px;padding:10px 12px;text-align:center"><div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#2e7d32;letter-spacing:0.06em">Revenue</div><div style="font-size:18px;font-weight:700;color:#2e7d32;margin-top:2px">$${totalRevenue.toLocaleString()}</div><div style="font-size:11px;color:var(--muted)">$${pricePP}/person</div></div>`;
+    if(costPP > 0) html += `<div style="background:#fff3e0;border-radius:6px;padding:10px 12px;text-align:center"><div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#b07340;letter-spacing:0.06em">Our Cost</div><div style="font-size:18px;font-weight:700;color:#b07340;margin-top:2px">${count>0?'$'+totalCost.toLocaleString():'—'}</div><div style="font-size:11px;color:var(--muted)">$${costPP}/person</div></div>`;
+    if(pricePP > 0) html += `<div style="background:#e8f5e9;border-radius:6px;padding:10px 12px;text-align:center"><div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#2e7d32;letter-spacing:0.06em">Revenue</div><div style="font-size:18px;font-weight:700;color:#2e7d32;margin-top:2px">${count>0?'$'+totalRevenue.toLocaleString():'—'}</div><div style="font-size:11px;color:var(--muted)">$${pricePP}/person</div></div>`;
     if(costPP > 0 && pricePP > 0){
-      const profitColor = totalProfit >= 0 ? '#4a8c5c' : '#cc3333';
-      const profitBg    = totalProfit >= 0 ? '#f0faf4' : '#fdecea';
-      html += `<div style="background:${profitBg};border-radius:6px;padding:10px 12px;text-align:center"><div style="font-size:10px;font-weight:700;text-transform:uppercase;color:${profitColor};letter-spacing:0.06em">${totalProfit>=0?'Profit':'Loss'}</div><div style="font-size:18px;font-weight:700;color:${profitColor};margin-top:2px">${totalProfit>=0?'+':''}\$${totalProfit.toLocaleString()}</div><div style="font-size:11px;color:var(--muted)">$${Math.abs(pricePP-costPP)}/person</div></div>`;
+      const profitColor = (pricePP-costPP) >= 0 ? '#4a8c5c' : '#cc3333';
+      const profitBg    = (pricePP-costPP) >= 0 ? '#f0faf4' : '#fdecea';
+      const profitLabel = (pricePP-costPP) >= 0 ? 'Margin/person' : 'Loss/person';
+      html += `<div style="background:${profitBg};border-radius:6px;padding:10px 12px;text-align:center"><div style="font-size:10px;font-weight:700;text-transform:uppercase;color:${profitColor};letter-spacing:0.06em">${count>0?(totalProfit>=0?'Profit':'Loss'):profitLabel}</div><div style="font-size:18px;font-weight:700;color:${profitColor};margin-top:2px">${count>0?((totalProfit>=0?'+':'')+'\$'+totalProfit.toLocaleString()):((pricePP-costPP>=0?'+':'')+'\$'+Math.abs(pricePP-costPP))}</div><div style="font-size:11px;color:var(--muted)">$${Math.abs(pricePP-costPP)}/person</div></div>`;
     }
     html += `</div></div>`;
     return html;
