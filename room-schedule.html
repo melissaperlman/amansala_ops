@@ -534,15 +534,19 @@
         <option value="conflict">Conflict</option>
       </select>
     </div>
-    <div class="form-row" style="display:flex;gap:20px;flex-wrap:wrap">
+    <div class="form-row" style="display:flex;gap:20px;flex-wrap:wrap;align-items:center">
       <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;font-weight:600;color:#2e7d32">
-        <input type="checkbox" id="fieldIncluded" style="width:15px;height:15px;cursor:pointer" onchange="if(this.checked){document.getElementById('fieldOptional').checked=false;}">
+        <input type="checkbox" id="fieldIncluded" style="width:15px;height:15px;cursor:pointer" onchange="if(this.checked){document.getElementById('fieldOptional').checked=false;document.getElementById('priceInputRow').style.display='none';}else{document.getElementById('priceInputRow').style.display=document.getElementById('fieldOptional').checked?'':'none';}">
         ✓ Included in retreat
       </label>
       <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;font-weight:600;color:var(--requested)">
-        <input type="checkbox" id="fieldOptional" style="width:15px;height:15px;cursor:pointer" onchange="if(this.checked){document.getElementById('fieldIncluded').checked=false;}">
+        <input type="checkbox" id="fieldOptional" style="width:15px;height:15px;cursor:pointer" onchange="if(this.checked){document.getElementById('fieldIncluded').checked=false;document.getElementById('priceInputRow').style.display='';}else{document.getElementById('priceInputRow').style.display='none';}">
         Optional (add-on)
       </label>
+      <div id="priceInputRow" style="display:none;align-items:center;gap:6px">
+        <span style="font-size:12px;font-weight:600;color:var(--muted)">Price:</span>
+        <input type="text" id="fieldPrice" placeholder="e.g. $85 or 450 MXN" style="font-size:13px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;width:140px;font-family:inherit">
+      </div>
     </div>
     <div id="applyAllRow" style="display:none;padding:10px 0 4px;border-top:1px solid var(--border);margin-top:8px">
       <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;color:#5b7fa6;font-weight:600">
@@ -1785,7 +1789,9 @@ function paxSummaryHtml(day){
 function compactRow(b){
   if(b.category==='meals') return mergedMealRow({...b, _merged:[b]});
   if(b.category==='tours') return tourRow(b);
-  return `<div class="compact-row">
+  const _cgm = groupMeta(b.group);
+  const _cAccent = b.group && b.group !== 'all' ? `border-left:3px solid ${_cgm.color};` : '';
+  return `<div class="compact-row" style="${_cAccent}">
     <span class="compact-time">${fmt12(b.start)}${b.end&&b.end!==b.start?' – '+fmt12(b.end):''}</span>
     <span class="compact-title">${b.title}${b.subtitle?' <span style="color:var(--muted);font-weight:400">'+b.subtitle+'</span>':''}</span>
     ${groupTag(b)}
@@ -3285,10 +3291,12 @@ function card(b){
     ? `<div class="status-tag conflict">⚠ CONFLICT</div>`
     : '';
   const conflictStyle = isConflicted ? 'border:2px solid #e8703a !important;box-shadow:0 0 0 3px rgba(232,112,58,0.15) !important;' : '';
+  const _gm = groupMeta(b.group);
+  const groupAccent = b.group && b.group !== 'all' ? `border-left:4px solid ${_gm.color} !important;` : '';
   const notesHtml = b.notes
     ? `<div class="setup-notes has-content">${b.notes}</div>`
     : `<div class="setup-notes">Add setup needs…</div>`;
-  return `<div class="booking-card" style="${conflictStyle}">
+  return `<div class="booking-card" style="${conflictStyle}${groupAccent}">
     <div class="booking-left">
       <div class="time-range">${fmt12(b.start)} – ${fmt12(b.end)}</div>
       <div class="duration">${dur(b.start,b.end)}</div>
@@ -3394,6 +3402,8 @@ function openModal(id, defaultDay, defaultRoom){
     document.getElementById('fieldOptional').checked=b.optional||false;
     const isInc = /\bincluded\b/i.test(b.notes||'') || (!b.optional && !b.price && (b.category==='soul'||b.category==='tours'));
     document.getElementById('fieldIncluded').checked=isInc||false;
+    document.getElementById('fieldPrice').value=b.price||'';
+    document.getElementById('priceInputRow').style.display=(b.optional && !isInc)?'':'none';
   } else {
     const _newDay = defaultDay||activeDay||DAYS[0];
     populateDayDropdown(_newDay);
@@ -3411,6 +3421,8 @@ function openModal(id, defaultDay, defaultRoom){
     document.getElementById('fieldGroup').value=activeGroup!=='all'?activeGroup:'all';
     document.getElementById('fieldOptional').checked=false;
     document.getElementById('fieldIncluded').checked=false;
+    document.getElementById('fieldPrice').value='';
+    document.getElementById('priceInputRow').style.display='none';
   }
   toggleMealLocation();
   syncRoomRequestedCheckbox();
@@ -3518,7 +3530,7 @@ function saveBooking(){
     category:document.getElementById('fieldCategory').value,
     location:document.getElementById('fieldLocation').value||'',
     optional:document.getElementById('fieldOptional').checked||false,
-    price: document.getElementById('fieldIncluded').checked ? '' : undefined,
+    price: document.getElementById('fieldIncluded').checked ? '' : (document.getElementById('fieldPrice').value.trim()||undefined),
     ...(document.getElementById('fieldIncluded').checked ? {optional:false, notes:'Included'} : {}),
     subtitle:'',
     ...stamp,
