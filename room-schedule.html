@@ -548,7 +548,7 @@
         <input type="text" id="fieldPrice" placeholder="e.g. $85 or 450 MXN" style="font-size:13px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;width:140px;font-family:inherit">
       </div>
     </div>
-    <div id="tourPriceRow" style="display:none;gap:16px;flex-wrap:wrap;padding:10px 0 4px;border-top:1px solid var(--border);margin-top:8px">
+    <div id="tourPriceRow" style="display:flex;gap:16px;flex-wrap:wrap;padding:10px 0 4px;border-top:1px solid var(--border);margin-top:8px">
       <div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:160px">
         <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted)">💸 Our Cost / person</label>
         <input type="number" id="fieldCostPP" min="0" step="0.01" placeholder="e.g. 45" style="font-size:14px;padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-family:inherit;width:100%">
@@ -3530,10 +3530,7 @@ function toggleMealLocation(){
   document.getElementById('roomFieldRow').style.display = isMeal ? 'none' : '';
 }
 function toggleTourPriceFields(){
-  const cat = document.getElementById('fieldCategory').value;
-  const show = cat==='tours' || cat==='soul';
-  const row = document.getElementById('tourPriceRow');
-  if(row) row.style.display = show ? 'flex' : 'none';
+  // Always visible — cost/price fields apply to all booking types
 }
 
 function checkApplyAllDays(){
