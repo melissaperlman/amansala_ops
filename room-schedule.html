@@ -4427,9 +4427,15 @@ function renderRetreatView(){
         const label = DAY_LABELS[day] || day;
         html += `<div style="margin-bottom:18px">
           <div style="font-size:13px;font-weight:700;color:#333;padding:6px 0;border-bottom:2px solid ${g.color}44;margin-bottom:6px">${label}</div>`;
-        dayB.forEach(b => {
-          const catIcon = b.category==='classes'?'🧘':b.category==='meals'?'🍽':b.category==='tours'?'🗺':b.category==='soul'?'✨':'📌';
-          const catColor = b.category==='classes'?'#5b7fa6':b.category==='meals'?'#b07340':b.category==='tours'?'#4a8c5c':b.category==='soul'?'#8a5ba6':'#999';
+        // Group bookings by category for this day
+        const dayTours = mergeTours(dayB.filter(b2=>b2.category==='tours'));
+        const dayOther = dayB.filter(b2=>b2.category!=='tours');
+        // Render tours with full sign-up panel
+        dayTours.forEach(t => { html += mergedTourRow(t); });
+        // Render everything else as compact rows
+        dayOther.forEach(b => {
+          const catIcon = b.category==='classes'?'🧘':b.category==='meals'?'🍽':b.category==='soul'?'✨':'📌';
+          const catColor = b.category==='classes'?'#5b7fa6':b.category==='meals'?'#b07340':b.category==='soul'?'#8a5ba6':'#999';
           const roomOpts = ROOMS.map(r=>`<option value="${r}"${r===b.room?' selected':''}>${r}</option>`).join('');
           const ROOM_BG = {Heaven:'#bde0f5',Chica:'#f5b8c8',BF:'#f5c842',Grande:'#a8d8a8',Sky:'#c5b8d4'};
           const ROOM_COLOR = {Heaven:'#0c3a5a',Chica:'#8a1a30',BF:'#6b4a00',Grande:'#1a4a28',Sky:'#3a2a6a'};
