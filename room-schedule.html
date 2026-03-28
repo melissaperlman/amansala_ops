@@ -2100,6 +2100,7 @@ function saveTourSlot(slotKey){
   const s = document.getElementById('tsaved-'+slotKey);
   s.style.display='inline';
   setTimeout(()=>{ s.style.display='none'; render(); }, 900);
+  scheduleCloudSave();
 }
 
 function tourRow(b){ return mergedTourRow(b); }
@@ -5899,6 +5900,11 @@ async function loadFromCloud(){
       });
     }
 
+    // Restore tour sign-up state (guide, driver, signups per group)
+    if(data.tourState && typeof data.tourState === 'object'){
+      Object.assign(tourState, data.tourState);
+    }
+
     cloudMode = true;
     showSyncStatus('Loaded from cloud', '#4a8c5c');
     // Always patch tour/soul data to canonical values after cloud load
@@ -5995,7 +6001,8 @@ async function saveToCloud(){
         action: 'syncRoomSchedule',
         groups: groupsToSave,
         bookings: bookingsToSave,
-        transport: transportToSave
+        transport: transportToSave,
+        tourState: tourState
       })
     });
 
@@ -6088,6 +6095,9 @@ async function silentCloudRefresh(){
           coordinator:t.coordinator||'', note:t.note||'' });
       });
       Object.keys(byGroup).forEach(gid => { TRANSPORT_DATA[gid] = { group:gid, arrivals:byGroup[gid] }; });
+    }
+    if(data.tourState && typeof data.tourState === 'object'){
+      Object.assign(tourState, data.tourState);
     }
 
     render();
