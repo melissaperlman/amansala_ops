@@ -1430,6 +1430,12 @@ function render(){
   setTimeout(updateConflictPill, 0);
   if(activeTab==='day') renderByDay();
   else if(activeTab==='room') renderByRoom();
+  else if(activeTab==='retreat'){ renderGroupBar(); renderRetreatView(); }
+  else if(activeTab==='retreats'){ renderGroupBar(); renderRetreatsOverview(); }
+  else if(activeTab==='dayview') renderDayView();
+  else if(activeTab==='mealcal'){ renderGroupBar(); renderMealsCalendar(); }
+  else if(activeTab==='transport'){ renderGroupBar(); renderTransportTab(); }
+  else if(activeTab==='requests') renderTeacherRequestTab();
   else renderByTeacher();
 
   // Set sticky tops for non-dayview tabs
@@ -3438,7 +3444,7 @@ function openModal(id, defaultDay, defaultRoom){
   if(editingId){
     const cur = bookings.find(b => b.id === editingId);
     const siblings = cur ? bookings.filter(b =>
-      b.id !== editingId && b.title === cur.title && b.teacher === cur.teacher
+      b.id !== editingId && b.title === cur.title && b.teacher === cur.teacher && b.group === cur.group
     ).sort((a,x) => DAYS.indexOf(a.day)-DAYS.indexOf(x.day)) : [];
     const row = document.getElementById('applyAllRow');
     if(siblings.length > 0){
@@ -3528,8 +3534,8 @@ function saveBooking(){
     teacher:document.getElementById('fieldTeacher').value.trim()||'Unknown',
     day:document.getElementById('fieldDay').value,
     room:document.getElementById('fieldRoom').value,
-    start:document.getElementById('fieldStart').value,
-    end:document.getElementById('fieldEnd').value,
+    start:(()=>{return document.getElementById('fieldStart').value||'09:00';})(),
+    end:(()=>{const s=document.getElementById('fieldStart').value||'09:00';let e=document.getElementById('fieldEnd').value;if(!e||e<=s){const[h,m]=s.split(':').map(Number);e=`${String(h+1).padStart(2,'0')}:${String(m).padStart(2,'0')}`;}return e;})(),
     pax:parseInt(document.getElementById('fieldPax').value)||0,
     notes:document.getElementById('fieldNotes').value.trim(),
     status:document.getElementById('fieldStatus').value,
@@ -3548,10 +3554,11 @@ function saveBooking(){
     bookings[i] = {...bookings[i], ...baseData, group: selectedGroupIds[0]};
     // Apply room to all matching days if checkbox is checked
     const applyAll = document.getElementById('applyAllDays');
-    if(applyAll && applyAll.checked && baseData.room){
+    if(applyAll && applyAll.checked){
+      const curGroup = bookings[bookings.findIndex(b=>b.id===editingId)]?.group;
       bookings.forEach(b => {
-        if(b.id !== editingId && b.title === baseData.title && b.teacher === baseData.teacher){
-          b.room = baseData.room;
+        if(b.id !== editingId && b.title === baseData.title && b.teacher === baseData.teacher && b.group === curGroup){
+          if(baseData.room) b.room = baseData.room;
           b.lastEditedBy = stamp.lastEditedBy;
           b.lastEditedAt = stamp.lastEditedAt;
         }
