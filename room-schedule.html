@@ -3576,12 +3576,29 @@ function saveBooking(){
   }
   closeModal(); render(); scheduleCloudSave();
 }
+let _lastDeleted = null;
 function deleteBooking(){
   if(!editingId) return;
   if(confirm('Delete this booking?')){
+    _lastDeleted = bookings.find(b=>b.id===editingId) || null;
     bookings=bookings.filter(b=>b.id!==editingId);
     closeModal(); render(); scheduleCloudSave();
+    if(_lastDeleted){
+      const toast = document.createElement('div');
+      toast.id='undo-toast';
+      toast.style.cssText='position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:600;z-index:9999;display:flex;align-items:center;gap:12px;box-shadow:0 4px 16px rgba(0,0,0,0.3)';
+      toast.innerHTML=`Deleted "${_lastDeleted.title}" <button onclick="undoDelete()" style="background:#e8703a;color:#fff;border:none;border-radius:5px;padding:3px 10px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">Undo</button>`;
+      document.body.appendChild(toast);
+      setTimeout(()=>{ const t=document.getElementById('undo-toast'); if(t) t.remove(); }, 8000);
+    }
   }
+}
+function undoDelete(){
+  if(!_lastDeleted) return;
+  bookings.push(_lastDeleted);
+  _lastDeleted=null;
+  const t=document.getElementById('undo-toast'); if(t) t.remove();
+  render(); scheduleCloudSave();
 }
 
 // ── CONTROLS ─────────────────────────────────────────────────────────────
