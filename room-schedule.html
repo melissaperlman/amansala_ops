@@ -3444,7 +3444,7 @@ function openModal(id, defaultDay, defaultRoom){
   if(editingId){
     const cur = bookings.find(b => b.id === editingId);
     const siblings = cur ? bookings.filter(b =>
-      b.id !== editingId && b.title === cur.title && b.teacher === cur.teacher && b.group === cur.group
+      b.id !== editingId && b.title === cur.title && b.group === cur.group
     ).sort((a,x) => DAYS.indexOf(a.day)-DAYS.indexOf(x.day)) : [];
     const row = document.getElementById('applyAllRow');
     if(siblings.length > 0){
@@ -3557,7 +3557,7 @@ function saveBooking(){
     if(applyAll && applyAll.checked){
       const curGroup = bookings[bookings.findIndex(b=>b.id===editingId)]?.group;
       bookings.forEach(b => {
-        if(b.id !== editingId && b.title === baseData.title && b.teacher === baseData.teacher && b.group === curGroup){
+        if(b.id !== editingId && b.title === baseData.title && b.group === curGroup){
           if(baseData.room) b.room = baseData.room;
           b.lastEditedBy = stamp.lastEditedBy;
           b.lastEditedAt = stamp.lastEditedAt;
