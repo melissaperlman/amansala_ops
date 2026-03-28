@@ -4898,20 +4898,24 @@ function renderMealsCalendar(){
         const color = MEAL_COLORS[type];
         const loc = b.location || [...new Set((b._merged||[b]).map(x=>x.location).filter(Boolean))].join(', ');
 
-        // Group tags with names
+        // Group + pax chips — show real groups with counts, never "Shared" fallback
         const entries = b._merged || [b];
-        const groupIds = [...new Set(entries.map(x=>x.group).filter(x=>x!=='all'))];
-        const groupTags = groupIds.map(gid => {
-          const g = groupMeta(gid);
-          return `<span style="display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:600;color:#333;background:${g.color}22;border:1px solid ${g.color}44;border-radius:4px;padding:1px 5px">
-            <span style="width:6px;height:6px;border-radius:50%;background:${g.color};display:inline-block"></span>${g.short}</span>`;
-        }).join('');
+        const activeGroupsList = GROUPS.filter(g => g.id !== 'all' && !g.removed);
+        const knownIds = new Set(activeGroupsList.map(g=>g.id));
+        const specificGroupIds = [...new Set(entries.map(x=>x.group).filter(x=>x && x!=='all' && knownIds.has(x)))];
+        const groupsToShow = specificGroupIds.length > 0
+          ? activeGroupsList.filter(g => specificGroupIds.includes(g.id))
+          : activeGroupsList; // 'all' booking → show every active group
+        const groupChips = groupsToShow.map(g =>
+          `<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;color:#333;background:${g.color}18;border:1px solid ${g.color}55;border-radius:5px;padding:2px 7px">
+            <span style="width:7px;height:7px;border-radius:50%;background:${g.color};flex-shrink:0"></span>${g.short}${g.pax?` · ${g.pax}`:''}</span>`
+        ).join('');
 
         html += `<div style="background:#fff;border:1px solid var(--border);border-left:3px solid ${color};border-radius:6px;padding:8px 8px;margin-bottom:6px;cursor:pointer" onclick="openModal(${b.id})">
           <div style="font-size:12px;font-weight:600;margin-bottom:3px">${b.title}</div>
           <div style="font-size:11px;color:var(--muted)">${fmt12(b.start)}${b.end&&b.end!==b.start?' – '+fmt12(b.end):''}</div>
           <div style="font-size:10px;font-weight:600;color:#6d4c41;margin-top:3px">📍 Restaurant${loc?' · '+loc:''}</div>
-          ${groupTags?`<div style="display:flex;gap:3px;flex-wrap:wrap;margin-top:4px">${groupTags}</div>`:''}
+          ${groupChips?`<div style="display:flex;gap:3px;flex-wrap:wrap;margin-top:5px">${groupChips}</div>`:''}
         </div>`;
       });
     }
