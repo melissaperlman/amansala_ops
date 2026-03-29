@@ -4512,39 +4512,36 @@ function renderRetreatView(){
   if(allGroupsB.length === 0){
     html += `<div class="empty-state">No bookings scheduled yet.</div>`;
   } else {
-    DAYS.forEach(day => {
+    // Only show days that have at least one booking
+    const daysWithBookings = DAYS.filter(day => allGroupsB.some(b => b.day === day));
+    daysWithBookings.forEach(day => {
       const dayB = allGroupsB.filter(b => b.day === day);
       const label = DAY_LABELS[day] || day;
-      html += `<div style="margin-bottom:20px">
-        <div style="font-size:13px;font-weight:700;color:#333;padding:6px 0;border-bottom:2px solid var(--border);margin-bottom:6px">${label}</div>`;
-      if(dayB.length === 0){
-        html += `<div style="font-size:12px;color:var(--muted);padding:6px 2px;font-style:italic">No bookings</div>`;
-      } else {
-        const dayTours = mergeTours(dayB.filter(b2=>b2.category==='tours'));
-        const dayOther = dayB.filter(b2=>b2.category!=='tours');
-        dayTours.forEach(t => { html += mergedTourRow(t); });
-        dayOther.forEach(b => {
-          const gm = groupMeta(b.group);
-          const catIcon = b.category==='classes'?'🧘':b.category==='meals'?'🍽':b.category==='soul'?'✨':'📌';
-          const catColor = b.category==='classes'?'#5b7fa6':b.category==='meals'?'#b07340':b.category==='soul'?'#8a5ba6':'#999';
-          const ROOM_BG = {Heaven:'#bde0f5',Chica:'#f5b8c8',BF:'#f5c842',Grande:'#a8d8a8',Sky:'#c5b8d4'};
-          const ROOM_COLOR = {Heaven:'#0c3a5a',Chica:'#8a1a30',BF:'#6b4a00',Grande:'#1a4a28',Sky:'#3a2a6a'};
-          const roomBg = b.room && ROOM_BG[b.room] ? `background:${ROOM_BG[b.room]};color:${ROOM_COLOR[b.room]};border-color:${ROOM_BG[b.room]}` : '';
-          const unassignedStyle = !b.room && b.category!=='meals' ? 'color:#999;font-style:italic;border:1.5px dashed #ccc;background:#f5f5f5' : '';
-          const roomOpts = ROOMS.map(r=>`<option value="${r}"${r===b.room?' selected':''}>${r}</option>`).join('');
-          const roomPicker = b.category!=='meals' ? `<select onchange="quickChangeRoom(${b.id},this.value,${JSON.stringify(b.title)},${JSON.stringify(b.teacher)})" style="font-size:11px;padding:2px 6px;border-radius:6px;border:1px solid var(--border);cursor:pointer;font-family:inherit;font-weight:600;${roomBg||unassignedStyle}">${b.room?'':'<option value="">⚠ Unassigned</option>'}${roomOpts}</select>` : (b.location?`<span style="font-size:11px;background:#efebe9;border:1px solid #d7ccc8;border-radius:4px;padding:1px 6px;color:#6d4c41">📍 ${b.location}</span>`:'');
-          const groupDot = `<span style="display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:600;color:${gm.color};background:${gm.color}18;border:1px solid ${gm.color}44;border-radius:4px;padding:1px 6px"><span style="width:6px;height:6px;border-radius:50%;background:${gm.color};display:inline-block"></span>${gm.short}</span>`;
-          html += `<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:#fff;border:1px solid #eee;border-left:3px solid ${catColor};border-radius:6px;margin-bottom:4px;flex-wrap:wrap;font-size:12px">
-            <span style="font-weight:600;min-width:130px">${catIcon} ${fmt12(b.start)}${b.end&&b.end!==b.start?' – '+fmt12(b.end):''}</span>
-            <span style="font-weight:600;flex:1;min-width:120px">${b.title}${b.subtitle?` <span style="color:var(--muted);font-weight:400">${b.subtitle}</span>`:''}</span>
-            ${groupDot}
-            ${roomPicker}
-            ${b.teacher?`<span style="font-size:11px;background:#e8f5e9;border:1px solid #c8e6c9;border-radius:4px;padding:1px 6px;color:#2e7d32">${b.teacher}</span>`:''}
-            ${b.pax?`<span style="font-size:11px;color:var(--muted)">${b.pax} pax</span>`:''}
-            <button class="edit-btn" onclick="openModal(${b.id})" style="font-size:11px;padding:2px 8px">✏</button>
-          </div>`;
-        });
-      }
+      html += `<div style="margin-bottom:24px">
+        <div style="font-size:14px;font-weight:700;color:#333;padding:8px 0;border-bottom:2px solid var(--border);margin-bottom:8px">${label}</div>`;
+      const dayTours = mergeTours(dayB.filter(b2=>b2.category==='tours'));
+      const dayOther = dayB.filter(b2=>b2.category!=='tours');
+      dayTours.forEach(t => { html += mergedTourRow(t); });
+      dayOther.forEach(b => {
+        const gm = groupMeta(b.group);
+        const catIcon = b.category==='classes'?'🧘':b.category==='meals'?'🍽':b.category==='soul'?'✨':'📌';
+        const ROOM_BG = {Heaven:'#bde0f5',Chica:'#f5b8c8',BF:'#f5c842',Grande:'#a8d8a8',Sky:'#c5b8d4'};
+        const ROOM_COLOR = {Heaven:'#0c3a5a',Chica:'#8a1a30',BF:'#6b4a00',Grande:'#1a4a28',Sky:'#3a2a6a'};
+        const roomBg = b.room && ROOM_BG[b.room] ? `background:${ROOM_BG[b.room]};color:${ROOM_COLOR[b.room]};border-color:${ROOM_BG[b.room]}` : '';
+        const unassignedStyle = !b.room && b.category!=='meals' ? 'color:#999;font-style:italic;border:1.5px dashed #ccc;background:#f5f5f5' : '';
+        const roomOpts = ROOMS.map(r=>`<option value="${r}"${r===b.room?' selected':''}>${r}</option>`).join('');
+        const roomPicker = b.category!=='meals' ? `<select onchange="quickChangeRoom(${b.id},this.value,${JSON.stringify(b.title)},${JSON.stringify(b.teacher)})" style="font-size:11px;padding:2px 6px;border-radius:6px;border:1px solid var(--border);cursor:pointer;font-family:inherit;font-weight:600;${roomBg||unassignedStyle}">${b.room?'':'<option value="">⚠ Unassigned</option>'}${roomOpts}</select>` : (b.location?`<span style="font-size:11px;background:#efebe9;border:1px solid #d7ccc8;border-radius:4px;padding:1px 6px;color:#6d4c41">📍 ${b.location}</span>`:'');
+        const groupLabel = `<span style="display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:700;color:${gm.color};min-width:110px"><span style="width:8px;height:8px;border-radius:50%;background:${gm.color};display:inline-block;flex-shrink:0"></span>${gm.label}</span>`;
+        html += `<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:#fff;border:1px solid #eee;border-left:4px solid ${gm.color};border-radius:6px;margin-bottom:4px;flex-wrap:wrap;font-size:12px">
+          ${groupLabel}
+          <span style="font-weight:600;min-width:120px">${catIcon} ${fmt12(b.start)}${b.end&&b.end!==b.start?' – '+fmt12(b.end):''}</span>
+          <span style="font-weight:600;flex:1;min-width:120px">${b.title}${b.subtitle?` <span style="color:var(--muted);font-weight:400">${b.subtitle}</span>`:''}</span>
+          ${roomPicker}
+          ${b.teacher?`<span style="font-size:11px;background:#e8f5e9;border:1px solid #c8e6c9;border-radius:4px;padding:1px 6px;color:#2e7d32">${b.teacher}</span>`:''}
+          ${b.pax?`<span style="font-size:11px;color:var(--muted)">${b.pax} pax</span>`:''}
+          <button class="edit-btn" onclick="openModal(${b.id})" style="font-size:11px;padding:2px 8px">✏</button>
+        </div>`;
+      });
       html += `</div>`;
     });
   }
