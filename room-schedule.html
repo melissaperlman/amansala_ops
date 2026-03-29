@@ -1361,9 +1361,8 @@ function editGroupPax(gid){
 function removeGroup(gid){
   const idx = GROUPS.findIndex(x=>x.id===gid);
   const label = idx>=0 ? GROUPS[idx].label : gid;
-  if(!confirm(`Remove "${label}" and DELETE all their bookings? This cannot be undone.`)) return;
-  if(idx>=0) GROUPS.splice(idx,1); // fully remove from array
-  bookings = bookings.filter(b => b.group !== gid);
+  if(!confirm(`Hide "${label}"? Their bookings will be kept — you can restore the group later.`)) return;
+  if(idx>=0) GROUPS[idx].removed = true; // archive, don't delete
   if(activeGroup===gid) activeGroup='all';
   render();
   saveToCloud();
