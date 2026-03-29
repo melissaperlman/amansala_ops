@@ -4512,8 +4512,8 @@ function renderRetreatView(){
   if(allGroupsB.length === 0){
     html += `<div class="empty-state">No bookings scheduled yet.</div>`;
   } else {
-    // Only show days that have at least one booking
-    const daysWithBookings = DAYS.filter(day => allGroupsB.some(b => b.day === day));
+    // Only show today + next 10 days that have at least one booking
+    const daysWithBookings = futureDays().slice(0, 10).filter(day => allGroupsB.some(b => b.day === day));
     daysWithBookings.forEach(day => {
       const dayB = allGroupsB.filter(b => b.day === day);
       const label = DAY_LABELS[day] || day;
