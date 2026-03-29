@@ -5805,7 +5805,7 @@ function showSyncStatus(msg, color){
 async function loadFromCloud(){
   try {
     showSyncStatus('Loading from cloud...', '#5b7fa6');
-    const resp = await fetch(API_URL + '?action=roomSchedule');
+    const resp = await fetch(API_URL + '?action=roomSchedule&_t=' + Date.now());
     const json = await resp.json();
     if(!json.success) throw new Error(json.error || 'Load failed');
 
@@ -5946,8 +5946,8 @@ async function loadFromCloud(){
     autoArchiveDeparted();
     // Start background auto-poll after successful cloud load
     setTimeout(() => {
-      setInterval(silentCloudRefresh, 3 * 60 * 1000);
-    }, 30000); // first poll 30s after load
+      setInterval(silentCloudRefresh, 60 * 1000);
+    }, 15000); // first poll 15s after load
   } catch(err) {
     console.warn('Cloud load failed, using local data:', err);
     showSyncStatus('Using local data (cloud unavailable)', '#c47d3e');
@@ -6070,7 +6070,7 @@ async function silentCloudRefresh(){
   // Don't overwrite local changes that haven't been saved yet
   if(saveTimer || _saveInFlight) return;
   try {
-    const resp = await fetch(API_URL + '?action=roomSchedule');
+    const resp = await fetch(API_URL + '?action=roomSchedule&_t=' + Date.now());
     const json = await resp.json();
     if(!json.success) return;
     const data = json.data;
