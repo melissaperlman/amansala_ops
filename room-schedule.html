@@ -5957,6 +5957,7 @@ async function loadFromCloud(){
 // Save all data to Google Sheets
 async function saveToCloud(){
   if(!cloudMode) return;
+  saveTimer = null; // clear so silentCloudRefresh can run after save completes
   _saveInFlight = true;
   try {
     showSyncStatus('Saving to cloud...', '#5b7fa6');
