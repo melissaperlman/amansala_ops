@@ -3125,28 +3125,29 @@ function renderByRoom(){
         <span class="room-section-meta">${rb.length} booking${rb.length!==1?'s':''}</span>
       </div>`;
 
-    if(rb.length===0){
-      html+=`<div class="empty-state" style="padding:20px 0">No bookings for this room.</div>`;
-    } else {
-      let lastDay = null;
-      rb.forEach(b=>{
-        if(b.day !== lastDay){
-          lastDay = b.day;
-          const fullLabel = DAY_LABELS[b.day] || b.day;
-          html+=`<div style="font-size:11px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--muted);padding:10px 0 4px 2px;border-top:1px solid var(--border);margin-top:4px">${fullLabel}</div>`;
-        }
-        const gm = groupMeta(b.group);
-        const groupTag = b.group && b.group!=='all' ? `<span style="display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:600;color:#333;background:${gm.color}22;border:1px solid ${gm.color}44;border-radius:4px;padding:1px 6px"><span style="width:6px;height:6px;border-radius:50%;background:${gm.color};display:inline-block"></span>${gm.short}</span>` : '';
-        html+=`<div class="teacher-booking-row">
-          <span class="trow-time">${fmt12(b.start)}–${fmt12(b.end)}</span>
-          <span class="trow-title"><strong>${b.title}</strong>${b.subtitle?` <span style="color:var(--muted)">${b.subtitle}</span>`:''}</span>
-          ${groupTag}
-          ${b.teacher?`<span class="teacher-chip ${tChip(b.teacher)}" style="font-size:12px">${b.teacher}</span>`:''}
-          <span class="trow-pax">${b.pax} pax</span>
-          <button class="edit-btn" onclick="openModal(${b.id})">✏ Edit</button>
-        </div>`;
-      });
-    }
+    const byDay = {};
+    rb.forEach(b=>{ if(!byDay[b.day]) byDay[b.day]=[]; byDay[b.day].push(b); });
+    DAYS.forEach(day=>{
+      const fullLabel = DAY_LABELS[day] || day;
+      html+=`<div style="font-size:11px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--muted);padding:10px 0 4px 2px;border-top:1px solid var(--border);margin-top:4px">${fullLabel}</div>`;
+      const dayBookings = byDay[day] || [];
+      if(dayBookings.length===0){
+        html+=`<div style="font-size:12px;color:var(--muted);padding:6px 2px 4px;font-style:italic">No bookings</div>`;
+      } else {
+        dayBookings.forEach(b=>{
+          const gm = groupMeta(b.group);
+          const groupTag = b.group && b.group!=='all' ? `<span style="display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:600;color:#333;background:${gm.color}22;border:1px solid ${gm.color}44;border-radius:4px;padding:1px 6px"><span style="width:6px;height:6px;border-radius:50%;background:${gm.color};display:inline-block"></span>${gm.short}</span>` : '';
+          html+=`<div class="teacher-booking-row">
+            <span class="trow-time">${fmt12(b.start)}–${fmt12(b.end)}</span>
+            <span class="trow-title"><strong>${b.title}</strong>${b.subtitle?` <span style="color:var(--muted)">${b.subtitle}</span>`:''}</span>
+            ${groupTag}
+            ${b.teacher?`<span class="teacher-chip ${tChip(b.teacher)}" style="font-size:12px">${b.teacher}</span>`:''}
+            <span class="trow-pax">${b.pax} pax</span>
+            <button class="edit-btn" onclick="openModal(${b.id})">✏ Edit</button>
+          </div>`;
+        });
+      }
+    });
     html+=`<button class="add-btn" onclick="openModal(null,null,'${room}')">+ Add to ${room}</button>`;
     html+=`</div>`;
   });
@@ -4499,141 +4500,54 @@ function renderRetreatView(){
     return;
   }
 
-  content.style.maxWidth = '1200px';
-  content.style.padding = '0';
+  // All-groups list view: day by day, all groups
+  content.style.maxWidth = '900px';
+  content.style.padding = '28px 24px';
 
-  const YOGA_ROOMS = ['Heaven','Chica','BF','Grande','Sky'];
-  const ROOM_COLORS_MAP = { Heaven:'var(--heaven)', Chica:'var(--chica)', BF:'var(--bf)', Grande:'var(--grande)', Sky:'var(--sky)' };
-  const START_H = 5, END_H = 22;
+  const allGroupsB = bookings.filter(b => b.group !== 'all')
+    .sort((a,b) => (DAYS.indexOf(a.day)-DAYS.indexOf(b.day))||cmpTime(a.start,b.start));
 
-  // Active (non-removed, non-all) groups
-  const groups = GROUPS.filter(g => g.id !== 'all' && !g.removed);
+  let html = `<div style="font-family:Playfair Display,serif;font-size:20px;font-weight:600;margin-bottom:20px">Full Schedule — All Retreats</div>`;
 
-  // Get bookings for selected day, only classes/soul with rooms
-  const dayBk = bookings.filter(b =>
-    b.day === retreatViewDay &&
-    b.room && YOGA_ROOMS.includes(b.room) &&
-    (b.category === 'classes' || b.category === 'soul') &&
-    b.group !== 'all'
-  );
-
-  // Detect conflicts for this day
-  const conflicts = [];
-  const byRoom = {};
-  YOGA_ROOMS.forEach(r => byRoom[r] = []);
-  dayBk.forEach(b => { if(byRoom[b.room]) byRoom[b.room].push(b); });
-  const conflictIds = new Set();
-  YOGA_ROOMS.forEach(room => {
-    const rb = byRoom[room];
-    for(let i=0;i<rb.length;i++){
-      for(let j=i+1;j<rb.length;j++){
-        if(rb[i].start < rb[j].end && rb[j].start < rb[i].end){
-          conflictIds.add(rb[i].id); conflictIds.add(rb[j].id);
-          conflicts.push({ room, a:rb[i], b:rb[j] });
-        }
+  if(allGroupsB.length === 0){
+    html += `<div class="empty-state">No bookings scheduled yet.</div>`;
+  } else {
+    DAYS.forEach(day => {
+      const dayB = allGroupsB.filter(b => b.day === day);
+      const label = DAY_LABELS[day] || day;
+      html += `<div style="margin-bottom:20px">
+        <div style="font-size:13px;font-weight:700;color:#333;padding:6px 0;border-bottom:2px solid var(--border);margin-bottom:6px">${label}</div>`;
+      if(dayB.length === 0){
+        html += `<div style="font-size:12px;color:var(--muted);padding:6px 2px;font-style:italic">No bookings</div>`;
+      } else {
+        const dayTours = mergeTours(dayB.filter(b2=>b2.category==='tours'));
+        const dayOther = dayB.filter(b2=>b2.category!=='tours');
+        dayTours.forEach(t => { html += mergedTourRow(t); });
+        dayOther.forEach(b => {
+          const gm = groupMeta(b.group);
+          const catIcon = b.category==='classes'?'🧘':b.category==='meals'?'🍽':b.category==='soul'?'✨':'📌';
+          const catColor = b.category==='classes'?'#5b7fa6':b.category==='meals'?'#b07340':b.category==='soul'?'#8a5ba6':'#999';
+          const ROOM_BG = {Heaven:'#bde0f5',Chica:'#f5b8c8',BF:'#f5c842',Grande:'#a8d8a8',Sky:'#c5b8d4'};
+          const ROOM_COLOR = {Heaven:'#0c3a5a',Chica:'#8a1a30',BF:'#6b4a00',Grande:'#1a4a28',Sky:'#3a2a6a'};
+          const roomBg = b.room && ROOM_BG[b.room] ? `background:${ROOM_BG[b.room]};color:${ROOM_COLOR[b.room]};border-color:${ROOM_BG[b.room]}` : '';
+          const unassignedStyle = !b.room && b.category!=='meals' ? 'color:#999;font-style:italic;border:1.5px dashed #ccc;background:#f5f5f5' : '';
+          const roomOpts = ROOMS.map(r=>`<option value="${r}"${r===b.room?' selected':''}>${r}</option>`).join('');
+          const roomPicker = b.category!=='meals' ? `<select onchange="quickChangeRoom(${b.id},this.value,${JSON.stringify(b.title)},${JSON.stringify(b.teacher)})" style="font-size:11px;padding:2px 6px;border-radius:6px;border:1px solid var(--border);cursor:pointer;font-family:inherit;font-weight:600;${roomBg||unassignedStyle}">${b.room?'':'<option value="">⚠ Unassigned</option>'}${roomOpts}</select>` : (b.location?`<span style="font-size:11px;background:#efebe9;border:1px solid #d7ccc8;border-radius:4px;padding:1px 6px;color:#6d4c41">📍 ${b.location}</span>`:'');
+          const groupDot = `<span style="display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:600;color:${gm.color};background:${gm.color}18;border:1px solid ${gm.color}44;border-radius:4px;padding:1px 6px"><span style="width:6px;height:6px;border-radius:50%;background:${gm.color};display:inline-block"></span>${gm.short}</span>`;
+          html += `<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:#fff;border:1px solid #eee;border-left:3px solid ${catColor};border-radius:6px;margin-bottom:4px;flex-wrap:wrap;font-size:12px">
+            <span style="font-weight:600;min-width:130px">${catIcon} ${fmt12(b.start)}${b.end&&b.end!==b.start?' – '+fmt12(b.end):''}</span>
+            <span style="font-weight:600;flex:1;min-width:120px">${b.title}${b.subtitle?` <span style="color:var(--muted);font-weight:400">${b.subtitle}</span>`:''}</span>
+            ${groupDot}
+            ${roomPicker}
+            ${b.teacher?`<span style="font-size:11px;background:#e8f5e9;border:1px solid #c8e6c9;border-radius:4px;padding:1px 6px;color:#2e7d32">${b.teacher}</span>`:''}
+            ${b.pax?`<span style="font-size:11px;color:var(--muted)">${b.pax} pax</span>`:''}
+            <button class="edit-btn" onclick="openModal(${b.id})" style="font-size:11px;padding:2px 8px">✏</button>
+          </div>`;
+        });
       }
-    }
-  });
-
-  function timeToPercent(t){
-    const [h,m] = t.split(':').map(Number);
-    return ((h*60+m) - START_H*60) / ((END_H-START_H)*60) * 100;
+      html += `</div>`;
+    });
   }
-
-  // Day nav
-  let html = '<div class="retreat-wrap">';
-  html += '<div class="retreat-day-nav">';
-  futureDays().forEach(d => {
-    // Count conflicts for this day
-    const dayConf = bookings.filter(b => b.day===d && b.room && YOGA_ROOMS.includes(b.room) && (b.category==='classes'||b.category==='soul') && b.group!=='all');
-    const dByRoom = {};
-    YOGA_ROOMS.forEach(r => dByRoom[r] = []);
-    dayConf.forEach(b => { if(dByRoom[b.room]) dByRoom[b.room].push(b); });
-    let dConflicts = 0;
-    YOGA_ROOMS.forEach(room => {
-      const rb = dByRoom[room];
-      for(let i=0;i<rb.length;i++){
-        for(let j=i+1;j<rb.length;j++){
-          if(rb[i].start < rb[j].end && rb[j].start < rb[i].end) dConflicts++;
-        }
-      }
-    });
-    const confDot = dConflicts > 0 ? `<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--conflict);margin-left:4px;vertical-align:middle"></span>` : '';
-    html += `<button class="retreat-day-btn ${d===retreatViewDay?'active':''}" onclick="retreatViewDay='${d}';renderRetreatView()">${d}${confDot}</button>`;
-  });
-  html += '</div>';
-
-  // Legend
-  html += '<div class="retreat-legend">';
-  groups.forEach(g => {
-    html += `<div class="retreat-legend-item"><div class="retreat-legend-dot" style="background:${g.color}"></div>${g.short}</div>`;
-  });
-  html += '</div>';
-
-  // Conflict summary
-  if(conflicts.length > 0){
-    html += `<div class="retreat-conflict-summary">`;
-    html += `<strong>⚠ ${conflicts.length} conflict${conflicts.length>1?'s':''} on ${retreatViewDay}</strong><br>`;
-    conflicts.forEach(c => {
-      const gA = groupMeta(c.a.group), gB = groupMeta(c.b.group);
-      html += `<span style="display:inline-flex;align-items:center;gap:3px;margin-top:4px">
-        <span style="width:8px;height:8px;border-radius:50%;background:${gA.color};display:inline-block"></span><strong>${gA.short}</strong>
-        ${fmt12(c.a.start)}–${fmt12(c.a.end)} "${c.a.title}"
-        <span style="color:#aaa;margin:0 4px">vs</span>
-        <span style="width:8px;height:8px;border-radius:50%;background:${gB.color};display:inline-block"></span><strong>${gB.short}</strong>
-        ${fmt12(c.b.start)}–${fmt12(c.b.end)} "${c.b.title}"
-        in <strong>${c.room}</strong>
-      </span><br>`;
-    });
-    html += '</div>';
-  }
-
-  // Room timelines
-  YOGA_ROOMS.forEach(room => {
-    const rb = byRoom[room];
-    const hasConflict = rb.some(b => conflictIds.has(b.id));
-
-    html += `<div class="retreat-room-section">`;
-    html += `<div class="retreat-room-header">
-      <span class="room-tag ${ROOM_CSS[room]}" style="font-size:12px">${room}</span>
-      <span style="font-size:12px;color:var(--muted)">${rb.length} session${rb.length!==1?'s':''}</span>
-      ${hasConflict?'<span style="font-size:11px;font-weight:700;color:var(--conflict)">⚠ CONFLICT</span>':''}
-    </div>`;
-
-    html += `<div class="retreat-timeline" style="height:${hasConflict?'64px':'48px'}">`;
-
-    // Hour markers
-    for(let h=START_H; h<=END_H; h++){
-      const pct = ((h-START_H)/(END_H-START_H))*100;
-      html += `<div class="retreat-hour-mark" style="left:${pct}%"></div>`;
-      if(h % 2 === 0 || h===START_H) html += `<div class="retreat-hour-label" style="left:calc(${pct}% + 2px)">${h===0?'12a':h<12?h+'a':h===12?'12p':(h-12)+'p'}</div>`;
-    }
-
-    // Booking blocks
-    rb.forEach(b => {
-      const left = timeToPercent(b.start);
-      const width = timeToPercent(b.end) - left;
-      const gm = groupMeta(b.group);
-      const isConflict = conflictIds.has(b.id);
-      const conflictCls = isConflict ? 'conflict-block' : '';
-      html += `<div class="retreat-block ${conflictCls}" style="left:${left}%;width:${Math.max(width,2)}%;background:${gm.color}22;border-color:${isConflict?'var(--conflict)':gm.color};color:${gm.color}" onclick="openModal(${b.id})" title="${gm.short}: ${fmt12(b.start)}–${fmt12(b.end)} ${b.title}${b.teacher?' · '+b.teacher:''}">
-        ${isConflict?'<span class="retreat-conflict-label">⚠</span>':''}
-        <span style="font-size:10px;opacity:.8">${gm.short}</span>
-        <span>${b.title}</span>
-        <span style="font-size:10px;opacity:.7">${fmt12(b.start)}–${fmt12(b.end)}</span>
-      </div>`;
-    });
-
-    // Empty state
-    if(rb.length===0){
-      html += `<div style="display:flex;align-items:center;justify-content:center;width:100%;font-size:12px;color:var(--muted);font-style:italic">No sessions</div>`;
-    }
-
-    html += '</div>'; // timeline
-    html += '</div>'; // room section
-  });
-
-  html += '</div>'; // retreat-wrap
   content.innerHTML = html;
 }
 
