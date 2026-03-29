@@ -1425,7 +1425,8 @@ function dur(s,e) {
 }
 function tColor(name){ return TEACHER_COLORS[name]||'#c5b8d4'; }
 function tChip(name){ if(name==='Sam Applebee') return 'green'; if(name==='Meghan Kinsey') return 'brown'; return ''; }
-function allTeachers(){ return [...new Set(visibleBookings().map(b=>b.teacher))].filter(Boolean).sort(); }
+const CORE_TEACHERS = ['Yolanda','Kun','Sergio','Fernando'];
+function allTeachers(){ return [...new Set([...CORE_TEACHERS, ...visibleBookings().map(b=>b.teacher)])].filter(Boolean).sort(); }
 function updateTeacherDatalist(){
   const dl=document.getElementById('teacherList');
   dl.innerHTML = allTeachers().map(t=>`<option value="${t}">`).join('');
@@ -1992,7 +1993,11 @@ function mergedTourRow(b){
           <div style="font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted)">Logistics</div>
           <div class="tour-field">
             <span class="tour-label">👤 Guide</span>
-            <input class="tour-input" type="text" value="${ts.guide||''}" id="tguide-${slotKey}" placeholder="Guide name…">
+            <select class="tour-input" id="tguide-${slotKey}">
+              <option value="">— Select guide —</option>
+              ${['Yolanda','Sergio','Marco','Gerardo'].map(g=>`<option value="${g}" ${ts.guide===g?'selected':''}>${g}</option>`).join('')}
+              ${ts.guide && !['Yolanda','Sergio','Marco','Gerardo'].includes(ts.guide) ? `<option value="${ts.guide}" selected>${ts.guide}</option>` : ''}
+            </select>
           </div>
           <div class="tour-field">
             <span class="tour-label">🚐 Transport</span>
