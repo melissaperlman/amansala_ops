@@ -495,10 +495,16 @@ function doGet(e) {
 
       // ── ROOM SCHEDULE ──────────────────────────────────────────
       case 'roomSchedule': {
+        var savedTourState = {};
+        try {
+          var raw = PropertiesService.getScriptProperties().getProperty('tourState');
+          if(raw) savedTourState = JSON.parse(raw);
+        } catch(e2) {}
         return respondOk({
           groups: tabToJSON('rs_groups'),
           bookings: tabToJSON('rs_bookings'),
-          transport: tabToJSON('rs_transport')
+          transport: tabToJSON('rs_transport'),
+          tourState: savedTourState
         });
       }
 
@@ -1364,10 +1370,16 @@ function doPost(e) {
         rsGroups.forEach(function(g)  { if(!g.id) g.id=String(Date.now()); if(!g.created_at) g.created_at=ts; });
         rsBookings.forEach(function(b){ if(!b.id) b.id=String(Date.now()); if(!b.created_at) b.created_at=ts; b.updated_at=ts; });
         rsTransport.forEach(function(t){ if(!t.id) t.id=String(Date.now()); if(!t.created_at) t.created_at=ts; });
-        ensureColumns('rs_bookings', ['costPP','pricePP','location']);
+        ensureColumns('rs_bookings', ['costPP','pricePP','location','lastEditedBy','lastEditedAt']);
         batchWriteTab('rs_groups',    rsGroups,    []);
         batchWriteTab('rs_bookings',  rsBookings,  ['start','end']);
         batchWriteTab('rs_transport', rsTransport, ['time']);
+        // Save tourState (sign-ups, guides, drivers) to script properties
+        if(payload.tourState && typeof payload.tourState === 'object'){
+          try {
+            PropertiesService.getScriptProperties().setProperty('tourState', JSON.stringify(payload.tourState));
+          } catch(e2) {}
+        }
         return respondOk({ groups: rsGroups.length, bookings: rsBookings.length, transport: rsTransport.length });
       }
 

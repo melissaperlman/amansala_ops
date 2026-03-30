@@ -5777,7 +5777,9 @@ async function loadFromCloud(){
         price: b.price || '',
         location: b.location || '',
         costPP: Number(b.costPP) || 0,
-        pricePP: Number(b.pricePP) || 0
+        pricePP: Number(b.pricePP) || 0,
+        lastEditedBy: b.lastEditedBy || '',
+        lastEditedAt: b.lastEditedAt || ''
       })).filter(b => {
         if(dedupSet.has(b.id)) return false;
         dedupSet.add(b.id);
@@ -5917,7 +5919,9 @@ async function saveToCloud(){
       price: b.price || '',
       location: b.location || '',
       costPP: b.costPP || 0,
-      pricePP: b.pricePP || 0
+      pricePP: b.pricePP || 0,
+      lastEditedBy: b.lastEditedBy || '',
+      lastEditedAt: b.lastEditedAt || ''
     }));
 
     // Prepare transport (deduplicate)
