@@ -174,7 +174,7 @@ const SCHEMAS = {
   soul_services: ['id','retreat_id','service_type','name','facilitator','price_per_person','available_days','max_groups','notes','active'],
   form_submissions: ['id','group_id','token','status','submitted_at','form_data_json','vegans','vegetarians','gluten_free','allergies','needs_speaker','needs_mats','equipment_notes','general_notes','ip_address','created_at'],
   rs_groups: ['id','label','color','short','pax','lastDay','removed','created_at'],
-  rs_bookings: ['id','group_id','day','start','end','title','subtitle','teacher','room','pax','notes','status','category','optional','price','location','costPP','pricePP','created_at','updated_at'],
+  rs_bookings: ['id','group_id','day','start','end','title','subtitle','teacher','room','pax','notes','status','category','optional','price','location','costPP','pricePP','tourGuide','tourTransport','tourVehicle','tourDriver','tourNotes','tourSignups','created_at','updated_at'],
   rs_transport: ['id','group_id','room','fname','lname','flight','date','time','airport','coordinator','driver','rate','note','created_at']
 };
 
@@ -1370,7 +1370,7 @@ function doPost(e) {
         rsGroups.forEach(function(g)  { if(!g.id) g.id=String(Date.now()); if(!g.created_at) g.created_at=ts; });
         rsBookings.forEach(function(b){ if(!b.id) b.id=String(Date.now()); if(!b.created_at) b.created_at=ts; b.updated_at=ts; });
         rsTransport.forEach(function(t){ if(!t.id) t.id=String(Date.now()); if(!t.created_at) t.created_at=ts; });
-        ensureColumns('rs_bookings', ['costPP','pricePP','location','lastEditedBy','lastEditedAt']);
+        ensureColumns('rs_bookings', ['costPP','pricePP','location','lastEditedBy','lastEditedAt','tourGuide','tourTransport','tourVehicle','tourDriver','tourNotes','tourSignups']);
         batchWriteTab('rs_groups',    rsGroups,    []);
         batchWriteTab('rs_bookings',  rsBookings,  ['start','end']);
         batchWriteTab('rs_transport', rsTransport, ['time']);

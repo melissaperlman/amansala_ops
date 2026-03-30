@@ -1843,6 +1843,29 @@ function mergedTourRow(b){
     if(!tourState[gKey(g.id)]) tourState[gKey(g.id)] = { signups:0 };
   });
 
+  // Seed tourState from booking objects when data was saved via booking fields
+  {
+    const slotBks = bookings.filter(b2 => {
+      if(b2.category !== 'tours') return false;
+      const k = 'tour-' + b2.start + '-' + b2.title.toLowerCase().replace(/optional\s*/i,'').replace(/[^a-z0-9]/g,'-').slice(0,24);
+      return k === slotKey;
+    });
+    const src = slotBks.find(b2 => b2.tourGuide || b2.tourDriver || b2.tourTransport);
+    if(src && !ts.guide && !ts.driver) {
+      ts.guide = src.tourGuide || '';
+      if(src.tourTransport) ts.transport = src.tourTransport;
+      ts.vehicle = src.tourVehicle || '';
+      ts.driver = src.tourDriver || '';
+      ts.extraNotes = src.tourNotes || '';
+    }
+    slotBks.forEach(b2 => {
+      if(b2.tourSignups > 0 && b2.group && b2.group !== 'all') {
+        if(!tourState[gKey(b2.group)]) tourState[gKey(b2.group)] = { signups:0 };
+        if(tourState[gKey(b2.group)].signups === 0) tourState[gKey(b2.group)].signups = b2.tourSignups;
+      }
+    });
+  }
+
   // Total signups
   const totalSignups = activeGroups.reduce((s,g) => s + (tourState[gKey(g.id)].signups||0), 0);
 
@@ -2122,10 +2145,27 @@ function saveTourSlot(slotKey){
     if(!tourState[gKey(g.id)]) tourState[gKey(g.id)] = {};
     tourState[gKey(g.id)].signups = el ? (parseInt(el.value)||0) : 0;
   });
+
+  // Write directly onto booking objects so data persists through normal booking save
+  const slotBookings = bookings.filter(b2 => {
+    if(b2.category !== 'tours') return false;
+    const k = 'tour-' + b2.start + '-' + b2.title.toLowerCase().replace(/optional\s*/i,'').replace(/[^a-z0-9]/g,'-').slice(0,24);
+    return k === slotKey;
+  });
+  slotBookings.forEach(b2 => {
+    b2.tourGuide = guide;
+    b2.tourTransport = transport;
+    b2.tourVehicle = vehicle;
+    b2.tourDriver = driver;
+    b2.tourNotes = notes;
+    const gEl = document.getElementById(`gs-${slotKey}-${b2.group}`);
+    if(gEl !== null) b2.tourSignups = parseInt(gEl.value)||0;
+  });
+
   const s = document.getElementById('tsaved-'+slotKey);
   s.style.display='inline';
-  setTimeout(()=>{ s.style.display='none'; render(); }, 900);
-  scheduleCloudSave();
+  setTimeout(()=>{ s.style.display='none'; }, 900);
+  saveToCloud(); // immediate — no delay
 }
 
 function tourRow(b){ return mergedTourRow(b); }
@@ -5779,7 +5819,13 @@ async function loadFromCloud(){
         costPP: Number(b.costPP) || 0,
         pricePP: Number(b.pricePP) || 0,
         lastEditedBy: b.lastEditedBy || '',
-        lastEditedAt: b.lastEditedAt || ''
+        lastEditedAt: b.lastEditedAt || '',
+        tourGuide: b.tourGuide || '',
+        tourTransport: b.tourTransport || '',
+        tourVehicle: b.tourVehicle || '',
+        tourDriver: b.tourDriver || '',
+        tourNotes: b.tourNotes || '',
+        tourSignups: Number(b.tourSignups) || 0
       })).filter(b => {
         if(dedupSet.has(b.id)) return false;
         dedupSet.add(b.id);
@@ -5921,7 +5967,13 @@ async function saveToCloud(){
       costPP: b.costPP || 0,
       pricePP: b.pricePP || 0,
       lastEditedBy: b.lastEditedBy || '',
-      lastEditedAt: b.lastEditedAt || ''
+      lastEditedAt: b.lastEditedAt || '',
+      tourGuide: b.tourGuide || '',
+      tourTransport: b.tourTransport || '',
+      tourVehicle: b.tourVehicle || '',
+      tourDriver: b.tourDriver || '',
+      tourNotes: b.tourNotes || '',
+      tourSignups: b.tourSignups || 0
     }));
 
     // Prepare transport (deduplicate)
@@ -6030,7 +6082,10 @@ async function silentCloudRefresh(){
         pax: b.pax || 0, notes: b.notes || '', status: b.status || 'confirmed',
         category: b.category || 'classes', optional: b.optional === true || b.optional === 'true',
         price: b.price || '', location: b.location || '',
-        costPP: Number(b.costPP) || 0, pricePP: Number(b.pricePP) || 0
+        costPP: Number(b.costPP) || 0, pricePP: Number(b.pricePP) || 0,
+        tourGuide: b.tourGuide || '', tourTransport: b.tourTransport || '',
+        tourVehicle: b.tourVehicle || '', tourDriver: b.tourDriver || '',
+        tourNotes: b.tourNotes || '', tourSignups: Number(b.tourSignups) || 0
       })).filter(b => {
         if(dedupSet.has(b.id)) return false;
         dedupSet.add(b.id); return true;
