@@ -4469,13 +4469,18 @@ function renderRetreatView(){
         const label = DAY_LABELS[day] || day;
         html += `<div style="margin-bottom:18px">
           <div style="font-size:13px;font-weight:700;color:#333;padding:6px 0;border-bottom:2px solid ${g.color}44;margin-bottom:6px">${label}</div>`;
-        // Group bookings by category for this day
+        // Merge tours then sort everything together by time
         const dayTours = mergeTours(dayB.filter(b2=>b2.category==='tours'));
         const dayOther = dayB.filter(b2=>b2.category!=='tours');
-        // Render tours with full sign-up panel
-        dayTours.forEach(t => { html += mergedTourRow(t); });
+        const allItems = [
+          ...dayTours.map(t=>({item:t, isTour:true})),
+          ...dayOther.map(b=>({item:b, isTour:false}))
+        ].sort((a,z)=>cmpTime(a.item.start, z.item.start));
+        allItems.forEach(({item, isTour}) => {
+          if(isTour){ html += mergedTourRow(item); return; }
+          const b = item;
         // Render everything else as compact rows
-        dayOther.forEach(b => {
+        {
           const catIcon = b.category==='classes'?'🧘':b.category==='meals'?'🍽':b.category==='soul'?'✨':'📌';
           const catColor = b.category==='classes'?'#5b7fa6':b.category==='meals'?'#b07340':b.category==='soul'?'#8a5ba6':'#999';
           const roomOpts = ROOMS.map(r=>`<option value="${r}"${r===b.room?' selected':''}>${r}</option>`).join('');
@@ -4492,7 +4497,7 @@ function renderRetreatView(){
             ${b.pax?`<span style="font-size:11px;color:var(--muted)">${b.pax} pax</span>`:''}
             <button class="edit-btn" onclick="openModal(${b.id})" style="font-size:11px;padding:2px 8px">✏</button>
           </div>`;
-        });
+        }});
         html += `</div>`;
       });
     }
