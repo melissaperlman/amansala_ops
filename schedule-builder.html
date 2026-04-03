@@ -412,7 +412,6 @@ function renderRow(di,ai,a){
   } else {
     // class
     main=`<input class="name-in" id="${id}_n" value="${escA(a.name)}" placeholder="Class name, teacher…" onchange="nameChg(${di},${ai},this.value)">
-      ${roomSel(id+'_r',a.room)}
       <span class="pax-label">pax:</span>${paxIn(id+'_pax',a.pax)}`;
   }
 
@@ -543,11 +542,9 @@ function buildExportText(){
       if(a.category==='soul')       name=a.soulType||'Soul Service';
       else if(a.category==='tours') name=a.tourType||'Tour';
       else                          name=a.name||( a.category==='meals'?'Meal':'Class' );
-      const rawRoom=(a.room||'').replace(/Beachfront/i,'BF').trim();
-      // TBD rooms get a clear tag; requested rooms get [Requested] marker
-      const roomDisplay = rawRoom==='TBD' ? 'TBD' : rawRoom;
-      const roomPart = roomDisplay ? ` | ${roomDisplay}` : '';
-      const roomReqPart = (rawRoom && rawRoom!=='TBD') ? ' [Room Requested]' : (rawRoom==='TBD' ? ' [Room TBD]' : '');
+      // Room is assigned internally — not exposed to teacher
+      const roomPart = '';
+      const roomReqPart = '';
       let statusPart='';
       if(a.category==='soul'||a.category==='tours'){
         statusPart=a.status==='prepaid'?' | Included':' | Optional';
