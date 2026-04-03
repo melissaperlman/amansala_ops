@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Amansala · Schedule Builder</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --sand:#f7efe3;--warm:#ead9c4;--clay:#c4855a;--earth:#8b5e3c;--deep:#2e1f14;
+  --teal:#3d7a7c;--sage:#6b9470;--cream:#fdf9f4;--white:#fff;
+  --meal:#fff8ef;--meal-border:#f0d0a8;--meal-text:#7a5020;
+  --class-bg:#f0f6f6;--class-border:#b0d0d1;
+  --soul-bg:#f8f0ff;--soul-border:#d4b0e8;
+  --tour-bg:#f0f8f0;--tour-border:#a8d0b0;
+  --muted:#a08060;--red:#c0392b;--red-bg:#fdf0ef;
+  --shadow:rgba(46,31,20,.09);
+  --radius:10px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--deep);font-size:15px;min-height:100vh;}
+
+/* ── HEADER ── */
+.header{background:var(--deep);color:var(--sand);padding:18px 28px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:100;}
+.header-logo{font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:300;letter-spacing:.14em;}
+.header-sub{font-size:.6rem;letter-spacing:.28em;text-transform:uppercase;color:rgba(247,239,227,.55);margin-top:2px;}
+.header-actions{margin-left:auto;display:flex;gap:10px;}
+.btn-copy{padding:9px 22px;background:var(--teal);color:#fff;border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;font-weight:600;cursor:pointer;transition:background .2s;}
+.btn-copy:hover{background:#2e6264;}
+.btn-copy:disabled{background:#5a8a8c;cursor:not-allowed;}
+
+/* ── SETUP PANEL ── */
+.setup-panel{max-width:700px;margin:32px auto 0;padding:0 24px;}
+.setup-card{background:var(--white);border:1.5px solid var(--warm);border-radius:var(--radius);padding:28px 32px;box-shadow:0 2px 16px var(--shadow);}
+.setup-title{font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:500;margin-bottom:4px;letter-spacing:.04em;}
+.setup-desc{font-size:.82rem;color:var(--muted);margin-bottom:24px;line-height:1.5;}
+.setup-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 20px;}
+.setup-grid.triple{grid-template-columns:1fr 1fr 1fr;}
+.field{display:flex;flex-direction:column;gap:5px;}
+.field.full{grid-column:1/-1;}
+.field label{font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:var(--earth);font-weight:600;}
+.field input,.field select{padding:10px 12px;border:1.5px solid var(--warm);border-radius:7px;font-family:'DM Sans',sans-serif;font-size:.88rem;color:var(--deep);background:var(--cream);outline:none;transition:border-color .18s;width:100%;}
+.field input:focus,.field select:focus{border-color:var(--teal);}
+.btn-generate{width:100%;margin-top:20px;padding:14px;background:var(--deep);color:var(--sand);border:none;border-radius:9px;font-family:'DM Sans',sans-serif;font-size:.7rem;letter-spacing:.28em;text-transform:uppercase;font-weight:600;cursor:pointer;transition:background .2s;}
+.btn-generate:hover{background:var(--earth);}
+
+/* ── BUILDER ── */
+.builder{max-width:760px;margin:28px auto 60px;padding:0 24px;}
+
+.day-card{background:var(--white);border:1.5px solid var(--warm);border-radius:var(--radius);margin-bottom:20px;box-shadow:0 2px 12px var(--shadow);overflow:hidden;}
+.day-head{background:var(--deep);color:var(--sand);padding:12px 20px;display:flex;align-items:center;gap:10px;}
+.day-name{font-family:'Cormorant Garamond',serif;font-size:1.15rem;font-weight:400;letter-spacing:.06em;}
+.day-badge{font-size:.58rem;letter-spacing:.2em;text-transform:uppercase;background:rgba(247,239,227,.15);padding:3px 10px;border-radius:12px;color:var(--warm);}
+.day-body{padding:0;}
+
+/* ── ACTIVITY ROW ── */
+.act-row{display:flex;align-items:center;gap:0;border-bottom:1px solid #f0e8de;transition:background .15s;position:relative;}
+.act-row:last-child{border-bottom:none;}
+.act-row:hover{background:#fdfaf6;}
+
+.act-row.meal   {background:var(--meal);border-left:3px solid var(--meal-border);}
+.act-row.class  {background:var(--class-bg);border-left:3px solid var(--class-border);}
+.act-row.soul   {background:var(--soul-bg);border-left:3px solid var(--soul-border);}
+.act-row.tour   {background:var(--tour-bg);border-left:3px solid var(--tour-border);}
+.act-row.meal:hover  {background:#fff3e4;}
+.act-row.class:hover {background:#eaf4f4;}
+
+.act-icon{width:36px;text-align:center;font-size:14px;flex-shrink:0;padding:12px 0 12px 12px;}
+.act-times{display:flex;align-items:center;gap:4px;padding:10px 10px 10px 6px;flex-shrink:0;min-width:190px;}
+.act-sep{color:var(--muted);font-size:.8rem;padding:0 2px;}
+.act-main{flex:1;padding:10px 8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.act-actions{padding:8px 12px 8px 4px;flex-shrink:0;}
+
+/* ── INLINE INPUTS ── */
+select.t-sel{border:none;border-bottom:1.5px dashed rgba(61,122,124,.4);background:transparent;font-family:'DM Sans',sans-serif;font-size:.82rem;color:var(--teal);font-weight:600;padding:2px 18px 2px 2px;outline:none;cursor:pointer;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%233d7a7c'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 1px center;}
+select.t-sel:focus{border-bottom-style:solid;}
+select.t-sel.meal-time{color:var(--meal-text);}
+
+input.name-in{border:none;background:transparent;font-family:'DM Sans',sans-serif;font-size:.88rem;color:var(--deep);font-weight:500;padding:2px 4px;outline:none;min-width:140px;flex:1;border-bottom:1.5px dashed rgba(139,94,60,.35);}
+input.name-in:focus{border-bottom-style:solid;border-bottom-color:var(--teal);}
+input.name-in::placeholder{color:rgba(139,94,60,.35);font-style:italic;font-weight:400;}
+input.name-in[readonly]{color:var(--meal-text);font-weight:500;cursor:default;border-bottom-color:transparent;}
+
+select.room-sel{border:none;border-bottom:1.5px dashed rgba(61,122,124,.35);background:transparent;font-family:'DM Sans',sans-serif;font-size:.78rem;color:var(--earth);font-weight:500;padding:2px 18px 2px 2px;outline:none;cursor:pointer;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%238b5e3c'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 1px center;}
+select.room-sel:focus{border-bottom-style:solid;border-bottom-color:var(--teal);}
+
+.cat-sel{border:1.5px solid var(--warm);border-radius:5px;background:var(--cream);font-family:'DM Sans',sans-serif;font-size:.7rem;color:var(--earth);font-weight:600;padding:3px 8px;outline:none;cursor:pointer;}
+.cat-sel:focus{border-color:var(--teal);}
+
+.del-btn{background:none;border:none;color:#ccc;font-size:16px;cursor:pointer;padding:4px 6px;border-radius:5px;line-height:1;transition:color .15s,background .15s;}
+.del-btn:hover{color:var(--red);background:var(--red-bg);}
+
+/* ── ADD ROW ── */
+.add-row{padding:10px 14px;display:flex;gap:8px;flex-wrap:wrap;border-top:1px dashed var(--warm);background:#fdfaf7;}
+.add-btn{background:none;border:1.5px dashed var(--warm);color:var(--earth);font-family:'DM Sans',sans-serif;font-size:.72rem;font-weight:600;letter-spacing:.08em;padding:6px 14px;border-radius:20px;cursor:pointer;transition:all .18s;}
+.add-btn:hover{border-color:var(--teal);color:var(--teal);background:var(--class-bg);}
+
+/* ── EXPORT SECTION ── */
+.export-wrap{max-width:760px;margin:0 auto 60px;padding:0 24px;}
+.export-card{background:var(--white);border:1.5px solid var(--warm);border-radius:var(--radius);padding:24px;box-shadow:0 2px 12px var(--shadow);}
+.export-title{font-size:.62rem;letter-spacing:.24em;text-transform:uppercase;color:var(--clay);font-weight:600;margin-bottom:14px;}
+.export-btns{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;}
+.btn-primary{padding:11px 26px;background:var(--teal);color:#fff;border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.72rem;letter-spacing:.18em;text-transform:uppercase;font-weight:600;cursor:pointer;transition:background .2s;}
+.btn-primary:hover{background:#2e6264;}
+.btn-secondary{padding:11px 20px;background:var(--cream);color:var(--earth);border:1.5px solid var(--warm);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;font-weight:600;cursor:pointer;transition:all .2s;}
+.btn-secondary:hover{border-color:var(--teal);color:var(--teal);}
+.export-ta{width:100%;min-height:220px;padding:14px;border:1.5px solid var(--warm);border-radius:8px;font-family:monospace;font-size:.78rem;color:var(--deep);background:#fdfaf4;outline:none;resize:vertical;line-height:1.7;}
+.export-ta:focus{border-color:var(--teal);}
+.copy-flash{font-size:.75rem;color:var(--sage);font-weight:600;display:none;margin-left:8px;}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--deep);color:var(--sand);padding:10px 24px;border-radius:24px;font-size:.78rem;font-weight:500;opacity:0;transition:all .3s;pointer-events:none;z-index:200;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+@media(max-width:600px){
+  .setup-grid,.setup-grid.triple{grid-template-columns:1fr;}
+  .act-times{min-width:150px;}
+  .builder,.setup-panel,.export-wrap{padding:0 14px;}
+  .header{padding:14px 16px;}
+  .header-actions .btn-copy span{display:none;}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="header-logo">Amansala</div>
+    <div class="header-sub">Schedule Builder</div>
+  </div>
+  <div class="header-actions">
+    <button class="btn-copy" id="topCopyBtn" onclick="copySchedule()" style="display:none">
+      <span>Copy Schedule</span> ↗
+    </button>
+  </div>
+</div>
+
+<!-- SETUP -->
+<div class="setup-panel" id="setupPanel">
+  <div class="setup-card">
+    <div class="setup-title">Build Your Retreat Schedule</div>
+    <div class="setup-desc">Fill in your retreat details and we'll generate a suggested schedule. Adjust times, add or remove activities, then copy the finished schedule to send to Amansala.</div>
+    <div class="setup-grid">
+      <div class="field"><label>Teacher / Leader Name</label><input id="sTeacher" placeholder="e.g. Emily Chen" autocomplete="off"></div>
+      <div class="field"><label>Group Name</label><input id="sGroup" placeholder="e.g. Hot Mamas, Soul Sisters" autocomplete="off"></div>
+      <div class="field"><label>Arrival Date</label><input id="sArrival" type="date"></div>
+      <div class="field"><label>Departure Date</label><input id="sDeparture" type="date"></div>
+      <div class="field"><label>Number of Guests</label><input id="sPax" type="number" min="1" max="50" placeholder="12"></div>
+      <div class="field"><label>Morning Class Default Time</label>
+        <select id="sDefaultMorning">
+          <option value="08:30">8:30 AM</option>
+          <option value="08:45">8:45 AM</option>
+          <option value="09:00">9:00 AM</option>
+          <option value="09:15" selected>9:15 AM</option>
+          <option value="09:30">9:30 AM</option>
+          <option value="09:45">9:45 AM</option>
+          <option value="10:00">10:00 AM</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn-generate" onclick="generateSchedule()">Generate Schedule →</button>
+  </div>
+</div>
+
+<!-- BUILDER -->
+<div class="builder" id="builderSection" style="display:none"></div>
+
+<!-- EXPORT -->
+<div class="export-wrap" id="exportSection" style="display:none">
+  <div class="export-card">
+    <div class="export-title">Export Schedule</div>
+    <div class="export-btns">
+      <button class="btn-primary" onclick="copySchedule()">Copy to Clipboard</button>
+      <button class="btn-secondary" onclick="refreshExport()">Refresh Preview</button>
+      <span class="copy-flash" id="copyFlash">✓ Copied!</span>
+    </div>
+    <textarea class="export-ta" id="exportTa" readonly placeholder="Your schedule will appear here…"></textarea>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── CONSTANTS ────────────────────────────────────────────────────────────
+const ROOMS   = ['Heaven','Grande','Chica','Beachfront','Sky'];
+const ROOM_LABELS = {Heaven:'Heaven',Grande:'Grande',Chica:'Chica',Beachfront:'Beachfront (BF)',Sky:'Sky'};
+const DAYS_OF_WEEK = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+// Category metadata
+const CAT = {
+  meals: { icon:'🍽', label:'Meal', cls:'meal' },
+  classes:{ icon:'🧘', label:'Class', cls:'class' },
+  soul:   { icon:'✨', label:'Soul',  cls:'soul' },
+  tours:  { icon:'🗺', label:'Tour',  cls:'tour' },
+};
+
+// Default room per category
+const DEFAULT_ROOM = { classes:'Heaven', soul:'Heaven', tours:'', meals:'' };
+
+// ── STATE ────────────────────────────────────────────────────────────────
+// schedule[dayIndex] = [ {id, category, startTime, endTime, name, room} ]
+let schedule = [];
+let days = []; // [{date: Date, label: "Monday, April 6", type: 'arrival'|'full'|'departure'}]
+let nextId = 1;
+
+// ── TIME UTILITIES ───────────────────────────────────────────────────────
+function timeOptions(from, to) {
+  // Returns array of {val:"09:15", lbl:"9:15 AM"}
+  const opts = [];
+  for(let h = from; h <= to; h++){
+    for(let m = 0; m < 60; m += 15){
+      const val = String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
+      const lbl = fmt12(val);
+      opts.push({val, lbl});
+    }
+  }
+  return opts;
+}
+
+function fmt12(t){
+  if(!t) return '';
+  const [h,m] = t.split(':').map(Number);
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const hh = h % 12 || 12;
+  return hh + ':' + String(m).padStart(2,'0') + ' ' + ampm;
+}
+
+function addMinutes(t, mins){
+  const [h,m] = t.split(':').map(Number);
+  const total = h*60 + m + mins;
+  return String(Math.floor(total/60)).padStart(2,'0') + ':' + String(total%60).padStart(2,'0');
+}
+
+function timeSel(id, val, fromH, toH, extraClass){
+  const opts = timeOptions(fromH || 6, toH || 22);
+  let html = `<select class="t-sel${extraClass?' '+extraClass:''}" id="${id}" onchange="rowChanged()">`;
+  html += `<option value="">—</option>`;
+  opts.forEach(o => {
+    html += `<option value="${o.val}"${o.val===val?' selected':''}>${o.lbl}</option>`;
+  });
+  return html + '</select>';
+}
+
+function roomSel(id, val){
+  let html = `<select class="room-sel" id="${id}" onchange="rowChanged()">`;
+  html += `<option value="">— Room —</option>`;
+  ROOMS.forEach(r => {
+    html += `<option value="${r}"${r===val?' selected':''}>${ROOM_LABELS[r]||r}</option>`;
+  });
+  return html + '</select>';
+}
+
+function catSel(id, val){
+  let html = `<select class="cat-sel" id="${id}" onchange="catChanged(this)">`;
+  Object.entries(CAT).forEach(([k,v]) => {
+    html += `<option value="${k}"${k===val?' selected':''}>${v.icon} ${v.label}</option>`;
+  });
+  return html + '</select>';
+}
+
+// ── BUILD DEFAULT SCHEDULE ───────────────────────────────────────────────
+function defaultDayActivities(dayType, morningDefault){
+  const items = [];
+
+  if(dayType === 'arrival'){
+    items.push(item('meals',  '15:00', '15:30', 'Welcome Snack',               ''));
+    items.push(item('soul',   '17:00', '18:00', 'Opening Circle w Amansala',   'Beachfront'));
+    items.push(item('meals',  '19:30', '20:15', 'Welcome Dinner',              ''));
+  } else if(dayType === 'departure'){
+    items.push(item('meals',  '07:00', '07:30', 'Coffee, Tea & Fresh Fruit',   ''));
+    items.push(item('meals',  '08:00', '08:45', 'Breakfast',                   ''));
+    items.push(item('classes', morningDefault, addMinutes(morningDefault, 60), '', 'Heaven'));
+    items.push(item('meals',  '10:30', '11:15', 'Brunch',                      ''));
+  } else {
+    // Full day
+    items.push(item('meals',  '07:00', '07:30', 'Coffee, Tea & Fresh Fruit',   ''));
+    items.push(item('meals',  '08:00', '08:45', 'Breakfast',                   ''));
+    items.push(item('classes', morningDefault, addMinutes(morningDefault, 60), '', 'Heaven'));
+    items.push(item('meals',  '10:30', '11:15', 'Brunch',                      ''));
+    items.push(item('meals',  '14:30', '15:00', 'Afternoon Snack',             ''));
+    items.push(item('classes', '17:00', '18:00', '',                           'Grande'));
+    items.push(item('meals',  '19:30', '20:15', 'Dinner',                      ''));
+  }
+  return items;
+}
+
+function item(category, startTime, endTime, name, room){
+  return { id: nextId++, category, startTime, endTime, name, room };
+}
+
+// ── GENERATE ────────────────────────────────────────────────────────────
+function generateSchedule(){
+  const arrivalStr  = document.getElementById('sArrival').value;
+  const departureStr = document.getElementById('sDeparture').value;
+  if(!arrivalStr || !departureStr){ toast('Please set both arrival and departure dates.'); return; }
+
+  const arrival   = new Date(arrivalStr + 'T12:00:00');
+  const departure = new Date(departureStr + 'T12:00:00');
+  if(departure <= arrival){ toast('Departure must be after arrival.'); return; }
+
+  const morningDefault = document.getElementById('sDefaultMorning').value || '09:15';
+
+  // Build days array
+  days = [];
+  schedule = [];
+  let cur = new Date(arrival);
+  while(cur <= departure){
+    const dayOfWeek = DAYS_OF_WEEK[cur.getDay()];
+    const month = MONTHS[cur.getMonth()];
+    const dayNum = cur.getDate();
+    const label = `${dayOfWeek}, ${month} ${dayNum}`;
+    const isFirst = cur.getTime() === arrival.getTime();
+    const isLast  = cur.getTime() === departure.getTime();
+    const type = isFirst ? 'arrival' : isLast ? 'departure' : 'full';
+    days.push({ date: new Date(cur), label, type });
+    schedule.push(defaultDayActivities(type, morningDefault));
+    cur.setDate(cur.getDate() + 1);
+  }
+
+  renderBuilder();
+  document.getElementById('setupPanel').style.display = 'none';
+  document.getElementById('builderSection').style.display = '';
+  document.getElementById('exportSection').style.display = '';
+  document.getElementById('topCopyBtn').style.display = '';
+  refreshExport();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+// ── RENDER BUILDER ───────────────────────────────────────────────────────
+function renderBuilder(){
+  const sec = document.getElementById('builderSection');
+  let html = '';
+
+  // "Edit setup" link
+  html += `<div style="margin-bottom:16px;display:flex;align-items:center;justify-content:space-between">
+    <div>
+      <span style="font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-weight:500">${escH(document.getElementById('sTeacher').value||'Your Schedule')}</span>
+      <span style="color:var(--muted);font-size:.8rem;margin-left:10px">${escH(document.getElementById('sGroup').value||'')} · ${document.getElementById('sPax').value||''} guests</span>
+    </div>
+    <button onclick="editSetup()" style="background:none;border:1.5px solid var(--warm);color:var(--earth);font-family:'DM Sans',sans-serif;font-size:.7rem;padding:6px 14px;border-radius:7px;cursor:pointer;letter-spacing:.08em">← Edit Info</button>
+  </div>`;
+
+  days.forEach((day, di) => {
+    html += renderDayCard(day, di);
+  });
+
+  sec.innerHTML = html;
+}
+
+function renderDayCard(day, di){
+  const badgeMap = {arrival:'Arrival Day', full:'Full Day', departure:'Departure Day'};
+  let html = `<div class="day-card" id="day-${di}">
+    <div class="day-head">
+      <div class="day-name">${day.label}</div>
+      <div class="day-badge">${badgeMap[day.type]||''}</div>
+    </div>
+    <div class="day-body" id="day-body-${di}">`;
+
+  html += renderDayRows(di);
+  html += `</div>`;
+
+  // Add buttons
+  html += `<div class="add-row">
+    <button class="add-btn" onclick="addActivity(${di},'classes')">+ Class</button>
+    <button class="add-btn" onclick="addActivity(${di},'meals')">+ Meal</button>
+    <button class="add-btn" onclick="addActivity(${di},'soul')">+ Soul / Ceremony</button>
+    <button class="add-btn" onclick="addActivity(${di},'tours')">+ Tour / Experience</button>
+  </div>`;
+
+  html += `</div>`;
+  return html;
+}
+
+function renderDayRows(di){
+  let html = '';
+  (schedule[di] || []).forEach((act, ai) => {
+    html += renderRow(di, ai, act);
+  });
+  return html;
+}
+
+function renderRow(di, ai, act){
+  const cat = CAT[act.category] || CAT.classes;
+  const isMeal = act.category === 'meals';
+  const rowId = `r-${di}-${ai}`;
+
+  // Time range
+  const timePart = `
+    <div class="act-times">
+      ${timeSel(rowId+'_s', act.startTime, 6, 22, isMeal?'meal-time':'')}
+      ${act.endTime ? `<span class="act-sep">–</span>${timeSel(rowId+'_e', act.endTime, 6, 22, isMeal?'meal-time':'')}` : ''}
+    </div>`;
+
+  // Name field
+  const namePart = isMeal
+    ? `<input class="name-in" id="${rowId}_n" value="${escAttr(act.name)}" placeholder="Meal name…" onchange="nameChanged(${di},${ai},this.value)">`
+    : `<input class="name-in" id="${rowId}_n" value="${escAttr(act.name)}" placeholder="${act.category==='soul'?'Ceremony / meditation name…':act.category==='tours'?'Tour name…':'Class name, teacher…'}" onchange="nameChanged(${di},${ai},this.value)">`;
+
+  // Room (only for non-meals)
+  const roomPart = !isMeal
+    ? roomSel(rowId+'_r', act.room)
+    : '';
+
+  return `<div class="act-row ${cat.cls}" id="${rowId}" data-di="${di}" data-ai="${ai}">
+    <div class="act-icon">${cat.icon}</div>
+    ${timePart}
+    <div class="act-main">
+      ${namePart}
+      ${roomPart}
+    </div>
+    <div class="act-actions">
+      <button class="del-btn" onclick="deleteActivity(${di},${ai})" title="Remove">×</button>
+    </div>
+  </div>`;
+}
+
+// ── MUTATIONS ────────────────────────────────────────────────────────────
+function nameChanged(di, ai, val){
+  if(schedule[di] && schedule[di][ai]) schedule[di][ai].name = val;
+  refreshExport();
+}
+
+function rowChanged(){
+  // Read all values from DOM back to schedule
+  days.forEach((_, di) => {
+    (schedule[di] || []).forEach((act, ai) => {
+      const rowId = `r-${di}-${ai}`;
+      const sEl = document.getElementById(rowId+'_s');
+      const eEl = document.getElementById(rowId+'_e');
+      const rEl = document.getElementById(rowId+'_r');
+      if(sEl) act.startTime = sEl.value;
+      if(eEl) act.endTime = eEl.value;
+      if(rEl) act.room = rEl.value;
+    });
+  });
+  refreshExport();
+}
+
+function catChanged(sel){
+  // Re-render the row with the new category
+  rowChanged();
+}
+
+function addActivity(di, category){
+  // Guess a sensible default time based on what's already in the day
+  const dayActs = schedule[di] || [];
+  let startTime = '12:00', endTime = '13:00';
+  if(category === 'classes'){
+    // Find a gap
+    const classTimes = dayActs.filter(a=>a.category==='classes').map(a=>a.startTime).sort();
+    startTime = classTimes.length === 0 ? '09:15' : classTimes[classTimes.length-1] >= '14:00' ? '16:00' : '11:30';
+    endTime = addMinutes(startTime, 60);
+  } else if(category === 'meals'){
+    startTime = '13:00'; endTime = '13:45';
+  } else if(category === 'soul'){
+    startTime = '19:00'; endTime = '20:00';
+  } else if(category === 'tours'){
+    startTime = '11:30'; endTime = '14:00';
+  }
+
+  const newItem = item(category, startTime, endTime, '', DEFAULT_ROOM[category]||'');
+  schedule[di].push(newItem);
+
+  // Re-render just this day's rows
+  const body = document.getElementById(`day-body-${di}`);
+  if(body) body.innerHTML = renderDayRows(di);
+  refreshExport();
+}
+
+function deleteActivity(di, ai){
+  if(!schedule[di]) return;
+  schedule[di].splice(ai, 1);
+  // Re-render just this day's rows (indices shift)
+  const body = document.getElementById(`day-body-${di}`);
+  if(body) body.innerHTML = renderDayRows(di);
+  refreshExport();
+}
+
+// ── EXPORT ───────────────────────────────────────────────────────────────
+function buildExportText(){
+  // First sync DOM → state
+  rowChanged();
+
+  const teacher = document.getElementById('sTeacher').value.trim();
+  const group   = document.getElementById('sGroup').value.trim();
+  const pax     = document.getElementById('sPax').value.trim();
+
+  let out = '';
+
+  days.forEach((day, di) => {
+    if(di > 0) out += '\n';
+    out += day.label + '\n';
+
+    const acts = (schedule[di] || [])
+      .filter(a => a.startTime)
+      .sort((a,b) => a.startTime.localeCompare(b.startTime));
+
+    acts.forEach(act => {
+      const startFmt = fmt12(act.startTime);
+      const endFmt   = act.endTime ? fmt12(act.endTime) : '';
+      const timePart = endFmt ? `${startFmt} - ${endFmt}` : startFmt;
+      const namePart = act.name.trim() || (act.category === 'classes' ? 'Class' : act.category === 'soul' ? 'Ceremony' : act.category === 'tours' ? 'Tour' : 'Meal');
+      // Normalize Beachfront → BF for the ops tool
+      const room = (act.room || '').replace(/Beachfront/i,'BF').trim();
+      const roomPart = room ? ` | ${room}` : '';
+      out += `${timePart} | ${namePart}${roomPart}\n`;
+    });
+  });
+
+  return out.trim();
+}
+
+function refreshExport(){
+  const ta = document.getElementById('exportTa');
+  if(ta) ta.value = buildExportText();
+}
+
+function copySchedule(){
+  refreshExport();
+  const ta = document.getElementById('exportTa');
+  if(!ta || !ta.value){ toast('Nothing to copy yet.'); return; }
+  navigator.clipboard.writeText(ta.value).then(() => {
+    toast('✓ Schedule copied to clipboard!');
+    const flash = document.getElementById('copyFlash');
+    if(flash){ flash.style.display='inline'; setTimeout(()=>flash.style.display='none', 2500); }
+  }).catch(() => {
+    ta.select();
+    document.execCommand('copy');
+    toast('✓ Copied!');
+  });
+}
+
+// ── UTILS ────────────────────────────────────────────────────────────────
+function editSetup(){
+  document.getElementById('setupPanel').style.display = '';
+  document.getElementById('builderSection').style.display = 'none';
+  document.getElementById('exportSection').style.display = 'none';
+  document.getElementById('topCopyBtn').style.display = 'none';
+}
+
+function escH(s){ const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+function escAttr(s){ return (s||'').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
+function toast(msg){
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2800);
+}
+
+// ── INIT ─────────────────────────────────────────────────────────────────
+// Set default dates to next Saturday / following Friday
+(function(){
+  const today = new Date();
+  // Find next Saturday
+  const daysUntilSat = (6 - today.getDay() + 7) % 7 || 7;
+  const nextSat = new Date(today);
+  nextSat.setDate(today.getDate() + daysUntilSat);
+  const followingThu = new Date(nextSat);
+  followingThu.setDate(nextSat.getDate() + 5);
+
+  const fmt = d => d.toISOString().slice(0,10);
+  document.getElementById('sArrival').value = fmt(nextSat);
+  document.getElementById('sDeparture').value = fmt(followingThu);
+})();
+</script>
+</body>
+</html>
