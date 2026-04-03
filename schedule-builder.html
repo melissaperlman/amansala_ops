@@ -224,15 +224,12 @@ select.approval-sel.change   {background-color:#fff3e0;color:#e65100;border:1px 
 <!-- ── EXPORT ── -->
 <div class="export-wrap" id="exportSection" style="display:none">
   <div class="export-card">
-    <div class="export-label">Your Schedule — ready to copy &amp; send</div>
+    <div class="export-label">When you're done, submit your schedule to Amansala for review.</div>
     <div class="export-btns">
-      <button class="btn-email" id="submitBtn" onclick="submitToOps()">✓ Submit to Amansala</button>
-      <button class="btn-copy-main" onclick="copySchedule()">Copy to Clipboard</button>
-      <button class="btn-refresh" onclick="refreshExport()">Refresh</button>
-      <span class="copy-ok" id="copyOk">✓ Copied!</span>
+      <button class="btn-email" id="submitBtn" onclick="submitToOps()">✓ Submit Schedule to Amansala</button>
     </div>
-    <div id="submitStatus" style="font-size:.78rem;margin-top:6px;min-height:18px;color:#5a8060;"></div>
-    <textarea class="export-ta" id="exportTa" readonly></textarea>
+    <div id="submitStatus" style="font-size:.82rem;margin-top:8px;min-height:18px;color:#5a8060;line-height:1.5;"></div>
+    <textarea class="export-ta" id="exportTa" readonly style="display:none"></textarea>
   </div>
 </div>
 
@@ -411,6 +408,8 @@ function renderDayCard(di){
 }
 
 function renderRows(di){
+  // Sort by start time before rendering so display is always chronological
+  if(schedule[di]) schedule[di].sort((a,b)=>(a.startTime||'').localeCompare(b.startTime||''));
   return (schedule[di]||[]).map((a,ai)=>renderRow(di,ai,a)).join('');
 }
 
