@@ -565,6 +565,77 @@ function doGet(e) {
         }
       }
 
+      // ── CREATE TEACHER SCHEDULE TEMPLATE ─────────────────────
+      case 'createScheduleTemplate': {
+        const p = e.parameter;
+        const groupName    = p.groupName    || 'Retreat Group';
+        const teacherName  = p.teacherName  || '';
+        const arrivalDate  = p.arrivalDate  || '';   // 'YYYY-MM-DD'
+        const departureDate= p.departureDate|| '';
+        const pax          = p.pax          || '12';
+        const morningTime  = p.morningTime  || '9:15 AM';
+
+        try {
+          const url = _createScheduleTemplate(groupName, teacherName, arrivalDate, departureDate, pax, morningTime);
+          return respondOk({ url: url });
+        } catch(err) {
+          return respondError('Could not create template: ' + err.message);
+        }
+      }
+
+      // ── READ TEACHER SCHEDULE SHEET → importable text ─────────
+      case 'readScheduleSheet': {
+        const url = e.parameter.url;
+        if (!url) return respondError('Missing url parameter');
+        const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+        if (!match) return respondError('Could not find spreadsheet ID in URL');
+        try {
+          const text = _readScheduleSheetAsText(match[1]);
+          return respondOk({ text: text });
+        } catch(err) {
+          return respondError('Could not read schedule sheet: ' + err.message + '. Make sure it is shared with your Google account.');
+        }
+      }
+
+      // ── SUBMIT TEACHER SCHEDULE ────────────────────────────────
+      case 'submitSchedule': {
+        const p = e.parameter;
+        if (!p.scheduleText) return respondError('Missing scheduleText');
+        try {
+          const id = _submitSchedule(
+            p.teacher    || '',
+            p.group      || '',
+            p.arrival    || '',
+            p.departure  || '',
+            p.scheduleText
+          );
+          return respondOk({ id: id });
+        } catch(err) {
+          return respondError('Submit failed: ' + err.message);
+        }
+      }
+
+      // ── GET PENDING SUBMISSIONS ────────────────────────────────
+      case 'getSubmissions': {
+        try {
+          return respondOk({ submissions: _getSubmissions() });
+        } catch(err) {
+          return respondError('Could not load submissions: ' + err.message);
+        }
+      }
+
+      // ── MARK SUBMISSION IMPORTED ───────────────────────────────
+      case 'markImported': {
+        const subId = e.parameter.id;
+        if (!subId) return respondError('Missing id');
+        try {
+          _markSubmissionImported(subId);
+          return respondOk({ ok: true });
+        } catch(err) {
+          return respondError('Could not mark imported: ' + err.message);
+        }
+      }
+
       // ── IMPORT TRANSPORT FROM EXTERNAL SHEET ──────────────────
       case 'importTransport': {
         const sheetId = e.parameter.sheetId;
@@ -1918,4 +1989,420 @@ function seedInitialData() {
   }
 
   return 'Seed complete: 1 retreat, ' + teachers.length + ' teachers, ' + (groups.length + 1) + ' groups, ' + seedBookings.length + ' bookings, 3 templates, ' + soulServices.length + ' soul services';
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// TEACHER SCHEDULE TEMPLATE — create & read
+// ════════════════════════════════════════════════════════════════════════════
+
+// Column layout for the teacher schedule sheet
+const TEMPLATE_COLS = ['Day', 'Category', 'Start Time', 'End Time', 'Activity / Class Name', 'Room', 'Notes'];
+// Col indices (1-based): Day=1, Category=2, Start=3, End=4, Name=5, Room=6, Notes=7
+
+function _timeList() {
+  const times = [];
+  for (let h = 6; h <= 22; h++) {
+    for (let m = 0; m < 60; m += 15) {
+      const ampm = h >= 12 ? 'PM' : 'AM';
+      const hh   = h > 12 ? h - 12 : (h === 0 ? 12 : h);
+      times.push(hh + ':' + (m < 10 ? '0' : '') + m + ' ' + ampm);
+    }
+  }
+  return times;
+}
+
+function _addMinutes24(t24, mins) {
+  // t24 like "09:15", returns "10:15"
+  const parts = String(t24).split(':').map(Number);
+  const total = parts[0] * 60 + (parts[1] || 0) + mins;
+  const h = Math.floor(total / 60) % 24;
+  const m = total % 60;
+  return (h < 10 ? '0' : '') + h + ':' + (m < 10 ? '0' : '') + m;
+}
+
+function _fmt12(t24) {
+  // "09:15" → "9:15 AM"
+  if (!t24) return '';
+  const parts = String(t24).split(':').map(Number);
+  const h = parts[0], m = parts[1] || 0;
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const hh = h > 12 ? h - 12 : (h === 0 ? 12 : h);
+  return hh + ':' + (m < 10 ? '0' : '') + m + ' ' + ampm;
+}
+
+function _parse12to24(timeStr) {
+  // "9:15 AM" → "09:15"
+  if (!timeStr) return '';
+  const s = String(timeStr).trim();
+  const m = s.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+  if (!m) return '';
+  let h = parseInt(m[1]), min = parseInt(m[2]);
+  const ap = m[3].toUpperCase();
+  if (ap === 'PM' && h < 12) h += 12;
+  if (ap === 'AM' && h === 12) h = 0;
+  return (h < 10 ? '0' : '') + h + ':' + (min < 10 ? '0' : '') + min;
+}
+
+function _defaultActivities(dayType, morningTime24) {
+  // Returns array of {category, startTime (24h), endTime (24h), name, room}
+  const endMorning = _addMinutes24(morningTime24, 60);
+  if (dayType === 'arrival') {
+    return [
+      {category:'meal',  startTime:'15:00', endTime:'15:30', name:'Welcome Snack',             room:''},
+      {category:'soul',  startTime:'17:00', endTime:'18:00', name:'Opening Circle w Amansala', room:'Beachfront (BF)'},
+      {category:'meal',  startTime:'19:30', endTime:'20:15', name:'Welcome Dinner',             room:''},
+    ];
+  } else if (dayType === 'departure') {
+    return [
+      {category:'meal',  startTime:'07:00', endTime:'07:30', name:'Coffee, Tea & Fresh Fruit',  room:''},
+      {category:'meal',  startTime:'08:00', endTime:'08:45', name:'Breakfast',                  room:''},
+      {category:'class', startTime:morningTime24, endTime:endMorning, name:'',                  room:'Heaven'},
+      {category:'meal',  startTime:'10:30', endTime:'11:15', name:'Brunch',                     room:''},
+    ];
+  } else {
+    return [
+      {category:'meal',  startTime:'07:00', endTime:'07:30', name:'Coffee, Tea & Fresh Fruit',  room:''},
+      {category:'meal',  startTime:'08:00', endTime:'08:45', name:'Breakfast',                  room:''},
+      {category:'class', startTime:morningTime24, endTime:endMorning, name:'',                  room:'Heaven'},
+      {category:'meal',  startTime:'10:30', endTime:'11:15', name:'Brunch',                     room:''},
+      {category:'meal',  startTime:'14:30', endTime:'15:00', name:'Afternoon Snack',             room:''},
+      {category:'class', startTime:'17:00', endTime:'18:00', name:'',                           room:'Grande'},
+      {category:'meal',  startTime:'19:30', endTime:'20:15', name:'Dinner',                     room:''},
+    ];
+  }
+}
+
+function _createScheduleTemplate(groupName, teacherName, arrivalDateStr, departureDateStr, pax, morningTime) {
+  const DAY_NAMES   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const ROOMS       = ['Heaven', 'Grande', 'Chica', 'Beachfront (BF)', 'Sky'];
+  const CATEGORIES  = ['class', 'meal', 'soul', 'tour'];
+  const CAT_ICONS   = {class:'🧘 Class', meal:'🍽 Meal', soul:'✨ Soul', tour:'🗺 Tour'};
+  const CAT_COLORS  = {class:'#dff0f0', meal:'#fff3e0', soul:'#f3e8ff', tour:'#e8f5e9'};
+
+  // Convert morning default "9:15 AM" → "09:15" (24h)
+  const morning24 = _parse12to24(morningTime) || '09:15';
+
+  // Parse dates
+  const arrival   = new Date(arrivalDateStr   + 'T12:00:00');
+  const departure = new Date(departureDateStr + 'T12:00:00');
+
+  // Generate time dropdown list
+  const timeList = _timeList();
+  const timeValidation = SpreadsheetApp.newDataValidation()
+    .requireValueInList(timeList, true)
+    .setAllowInvalid(true)
+    .setHelpText('Select a time from the list or type manually')
+    .build();
+  const roomValidation = SpreadsheetApp.newDataValidation()
+    .requireValueInList(ROOMS, true)
+    .setAllowInvalid(true)
+    .setHelpText('Select a room or leave blank for meals')
+    .build();
+  const catValidation = SpreadsheetApp.newDataValidation()
+    .requireValueInList(CATEGORIES, true)
+    .setAllowInvalid(false)
+    .build();
+
+  // Create spreadsheet
+  const title = (groupName || 'Retreat') + ' — Schedule';
+  const newSS  = SpreadsheetApp.create(title);
+  const sheet  = newSS.getActiveSheet();
+  sheet.setName('Schedule');
+
+  // Column widths
+  sheet.setColumnWidth(1, 170); // Day
+  sheet.setColumnWidth(2, 100); // Category
+  sheet.setColumnWidth(3, 105); // Start Time
+  sheet.setColumnWidth(4, 105); // End Time
+  sheet.setColumnWidth(5, 300); // Activity Name
+  sheet.setColumnWidth(6, 140); // Room
+  sheet.setColumnWidth(7, 200); // Notes
+
+  // ── TITLE BLOCK ─────────────────────────────────────────────
+  let row = 1;
+  const titleRange = sheet.getRange(row, 1, 1, 7);
+  titleRange.merge()
+    .setValue('AMANSALA TULUM — RETREAT SCHEDULE')
+    .setBackground('#1a1208')
+    .setFontColor('#f7efe3')
+    .setFontFamily('Georgia')
+    .setFontSize(13)
+    .setFontWeight('bold')
+    .setHorizontalAlignment('center')
+    .setVerticalAlignment('middle');
+  sheet.setRowHeight(row, 36);
+  row++;
+
+  // Info row
+  const infoRange = sheet.getRange(row, 1, 1, 7);
+  infoRange.merge()
+    .setValue('Group: ' + groupName + '   ·   Teacher: ' + teacherName + '   ·   Guests: ' + pax + '   ·   Dates: ' + arrivalDateStr + ' – ' + departureDateStr)
+    .setBackground('#f7efe3')
+    .setFontColor('#8b5e3c')
+    .setFontSize(10)
+    .setHorizontalAlignment('center');
+  row++;
+
+  // Blank row
+  row++;
+
+  // ── COLUMN HEADERS ──────────────────────────────────────────
+  const headerRow = sheet.getRange(row, 1, 1, 7);
+  TEMPLATE_COLS.forEach((h, i) => {
+    sheet.getRange(row, i + 1)
+      .setValue(h)
+      .setBackground('#3d7a7c')
+      .setFontColor('#ffffff')
+      .setFontWeight('bold')
+      .setFontSize(10)
+      .setHorizontalAlignment('center');
+  });
+  sheet.setRowHeight(row, 28);
+  row++;
+
+  // Freeze top rows
+  sheet.setFrozenRows(row - 1);
+
+  // ── DAY SECTIONS ────────────────────────────────────────────
+  let cur = new Date(arrival);
+  while (cur <= departure) {
+    const dayName  = DAY_NAMES[cur.getDay()];
+    const month    = MONTH_NAMES[cur.getMonth()];
+    const dayNum   = cur.getDate();
+    const dayLabel = dayName + ', ' + month + ' ' + dayNum;
+
+    const isFirst = cur.getTime() === arrival.getTime();
+    const isLast  = cur.getTime() === departure.getTime();
+    const dayType = isFirst ? 'arrival' : isLast ? 'departure' : 'full';
+
+    // Day header row
+    sheet.getRange(row, 1, 1, 7).merge()
+      .setValue(dayLabel)
+      .setBackground('#2e1f14')
+      .setFontColor('#ead9c4')
+      .setFontFamily('Georgia')
+      .setFontWeight('bold')
+      .setFontSize(11)
+      .setHorizontalAlignment('left')
+      .setVerticalAlignment('middle');
+    sheet.getRange(row, 1, 1, 7).setBorder(false,false,true,false,false,false,'#c4855a',SpreadsheetApp.BorderStyle.SOLID_MEDIUM);
+    sheet.setRowHeight(row, 32);
+    row++;
+
+    // Activity rows
+    const activities = _defaultActivities(dayType, morning24);
+    activities.forEach(function(act) {
+      const bg = CAT_COLORS[act.category] || '#ffffff';
+      const catLabel = CAT_ICONS[act.category] || act.category;
+
+      sheet.getRange(row, 1).setValue(dayLabel);          // Day (hidden key)
+      sheet.getRange(row, 2).setValue(catLabel);          // Category
+      sheet.getRange(row, 3).setValue(_fmt12(act.startTime)); // Start Time
+      sheet.getRange(row, 4).setValue(act.endTime ? _fmt12(act.endTime) : ''); // End Time
+      sheet.getRange(row, 5).setValue(act.name);          // Name
+      sheet.getRange(row, 6).setValue(act.room);          // Room
+
+      // Background color for whole row
+      sheet.getRange(row, 1, 1, 7).setBackground(bg).setFontSize(10).setVerticalAlignment('middle');
+      sheet.setRowHeight(row, 26);
+
+      // Validations
+      sheet.getRange(row, 3).setDataValidation(timeValidation);
+      sheet.getRange(row, 4).setDataValidation(timeValidation);
+      if (act.category !== 'meal') {
+        sheet.getRange(row, 6).setDataValidation(roomValidation);
+      }
+
+      // Category column: light styling
+      sheet.getRange(row, 2).setFontColor('#5a5a5a').setFontStyle('italic');
+      // Name column: bold for non-meals (teacher fills in)
+      if (act.category !== 'meal') {
+        sheet.getRange(row, 5).setFontWeight('bold').setFontColor('#1a5c5e');
+        if (!act.name) {
+          // Leave placeholder note
+          sheet.getRange(row, 7).setValue('← Enter your class name here');
+          sheet.getRange(row, 7).setFontColor('#aaaaaa').setFontStyle('italic');
+        }
+      }
+
+      row++;
+    });
+
+    // Blank spacer
+    row++;
+    cur.setDate(cur.getDate() + 1);
+  }
+
+  // ── INSTRUCTIONS TAB ────────────────────────────────────────
+  const instrSheet = newSS.insertSheet('Instructions');
+  instrSheet.getRange('A1').setValue('HOW TO FILL OUT YOUR SCHEDULE').setFontWeight('bold').setFontSize(13);
+  instrSheet.getRange('A3').setValue('Column Guide:');
+  instrSheet.getRange('A4').setValue('• Day — do not edit (used for import)');
+  instrSheet.getRange('A5').setValue('• Category — 🧘 Class / 🍽 Meal / ✨ Soul / 🗺 Tour');
+  instrSheet.getRange('A6').setValue('• Start Time & End Time — click the dropdown to select (15-min steps, 6 AM–10 PM)');
+  instrSheet.getRange('A7').setValue('• Activity / Class Name — type your class name (e.g. "Vinyasa Flow", "Yin Yoga", "Cacao Ceremony")');
+  instrSheet.getRange('A8').setValue('• Room — select from dropdown: Heaven, Grande, Chica, Beachfront (BF), Sky');
+  instrSheet.getRange('A9').setValue('• Notes — optional: price ($75), instructions, noise level, etc.');
+  instrSheet.getRange('A11').setValue('Tips:').setFontWeight('bold');
+  instrSheet.getRange('A12').setValue('• Meals are pre-filled — adjust times if needed, leave room blank');
+  instrSheet.getRange('A13').setValue('• Add rows for extra classes, tours, or ceremonies');
+  instrSheet.getRange('A14').setValue('• Keep the "Day" column unchanged — it is used by the import system');
+  instrSheet.getRange('A15').setValue('• When done, share this sheet with Melissa and she will import it');
+  instrSheet.setColumnWidth(1, 600);
+  [4,5,6,7,8,9,12,13,14,15].forEach(r => instrSheet.getRange('A'+r).setFontSize(10).setFontColor('#555555'));
+
+  // Move Instructions to second tab
+  newSS.setActiveSheet(sheet);
+
+  // Share settings: anyone with link can view/edit
+  DriveApp.getFileById(newSS.getId()).setSharing(
+    DriveApp.Access.ANYONE_WITH_LINK,
+    DriveApp.Permission.EDIT
+  );
+
+  return newSS.getUrl();
+}
+
+function _readScheduleSheetAsText(sheetId) {
+  const ss     = SpreadsheetApp.openById(sheetId);
+  // Prefer a sheet named "Schedule", else first sheet
+  const sheet  = ss.getSheetByName('Schedule') || ss.getSheets()[0];
+  const values = sheet.getDataRange().getDisplayValues();
+
+  // Find the header row (contains "Day" and "Start Time")
+  let headerRowIdx = -1;
+  for (let i = 0; i < Math.min(values.length, 10); i++) {
+    if (values[i].some(c => String(c).toLowerCase().includes('start time'))) {
+      headerRowIdx = i;
+      break;
+    }
+  }
+  if (headerRowIdx < 0) throw new Error('Could not find header row in schedule sheet');
+
+  const headers = values[headerRowIdx].map(h => String(h).toLowerCase().trim());
+  const dayIdx   = headers.indexOf('day');
+  const startIdx = headers.findIndex(h => h.includes('start'));
+  const endIdx   = headers.findIndex(h => h.includes('end'));
+  const nameIdx  = headers.findIndex(h => h.includes('activity') || h.includes('name'));
+  const roomIdx  = headers.findIndex(h => h.includes('room'));
+
+  if (startIdx < 0 || nameIdx < 0) throw new Error('Sheet is missing required columns (Start Time, Activity Name)');
+
+  // Group rows by day
+  const dayGroups = {};
+  const dayOrder  = [];
+
+  for (let i = headerRowIdx + 1; i < values.length; i++) {
+    const row = values[i];
+    const day   = dayIdx >= 0 ? String(row[dayIdx] || '').trim() : '';
+    const start = startIdx >= 0 ? String(row[startIdx] || '').trim() : '';
+    const end   = endIdx >= 0 ? String(row[endIdx] || '').trim() : '';
+    const name  = nameIdx >= 0 ? String(row[nameIdx] || '').trim() : '';
+    const room  = roomIdx >= 0 ? String(row[roomIdx] || '').trim() : '';
+
+    if (!start || !name) continue; // skip empty/header rows
+    if (name.startsWith('←')) continue; // skip placeholder notes
+
+    // Normalize room: "Beachfront (BF)" → "BF"
+    const roomNorm = room.replace(/Beachfront\s*\(BF\)/i, 'BF').replace(/Beachfront/i, 'BF').trim();
+
+    if (day && !dayGroups[day]) {
+      dayGroups[day] = [];
+      dayOrder.push(day);
+    }
+    const targetDay = day || (dayOrder.length > 0 ? dayOrder[dayOrder.length - 1] : 'Day 1');
+    if (!dayGroups[targetDay]) { dayGroups[targetDay] = []; dayOrder.push(targetDay); }
+
+    dayGroups[targetDay].push({ start, end, name, room: roomNorm });
+  }
+
+  // Build text output
+  const lines = [];
+  dayOrder.forEach(function(day) {
+    lines.push(day);
+    (dayGroups[day] || []).forEach(function(act) {
+      const timePart = act.end ? act.start + ' - ' + act.end : act.start;
+      const roomPart = act.room ? ' | ' + act.room : '';
+      lines.push(timePart + ' | ' + act.name + roomPart);
+    });
+    lines.push('');
+  });
+
+  return lines.join('\n').trim();
+}
+
+// ── TEACHER SCHEDULE SUBMISSIONS ─────────────────────────────────────────────
+// Stores teacher-submitted schedules in a "Submissions" tab for ops to import.
+
+const SUBMISSIONS_TAB = 'Submissions';
+const SUB_HEADERS = ['id','submittedAt','teacher','group','arrival','departure','imported','scheduleText'];
+
+function _ensureSubmissionsSheet() {
+  let sheet = SS.getSheetByName(SUBMISSIONS_TAB);
+  if (!sheet) {
+    sheet = SS.insertSheet(SUBMISSIONS_TAB);
+    sheet.appendRow(SUB_HEADERS);
+    sheet.setFrozenRows(1);
+    sheet.getRange(1, 1, 1, SUB_HEADERS.length)
+      .setBackground('#3d7a7c').setFontColor('#ffffff').setFontWeight('bold');
+    // Wide column for schedule text
+    sheet.setColumnWidth(SUB_HEADERS.length, 600);
+  }
+  return sheet;
+}
+
+function _submitSchedule(teacher, group, arrival, departure, scheduleText) {
+  const sheet = _ensureSubmissionsSheet();
+  const id = 'sub_' + Date.now();
+  sheet.appendRow([
+    id,
+    new Date().toISOString(),
+    teacher,
+    group,
+    arrival,
+    departure,
+    false,
+    scheduleText
+  ]);
+  return id;
+}
+
+function _getSubmissions() {
+  const sheet = SS.getSheetByName(SUBMISSIONS_TAB);
+  if (!sheet) return [];
+  const rows = sheet.getDataRange().getValues();
+  if (rows.length <= 1) return [];
+  const hdr = rows[0];
+  const idxOf = k => hdr.indexOf(k);
+  return rows.slice(1)
+    .map((r, i) => ({
+      _row: i + 2,
+      id:           r[idxOf('id')],
+      submittedAt:  r[idxOf('submittedAt')] instanceof Date
+                      ? r[idxOf('submittedAt')].toISOString()
+                      : String(r[idxOf('submittedAt')]),
+      teacher:      r[idxOf('teacher')],
+      group:        r[idxOf('group')],
+      arrival:      r[idxOf('arrival')],
+      departure:    r[idxOf('departure')],
+      imported:     r[idxOf('imported')] === true || r[idxOf('imported')] === 'TRUE',
+      scheduleText: r[idxOf('scheduleText')],
+    }))
+    .filter(s => !s.imported && s.scheduleText);
+}
+
+function _markSubmissionImported(subId) {
+  const sheet = SS.getSheetByName(SUBMISSIONS_TAB);
+  if (!sheet) return;
+  const rows = sheet.getDataRange().getValues();
+  const hdr = rows[0];
+  const idCol = hdr.indexOf('id') + 1;
+  const importedCol = hdr.indexOf('imported') + 1;
+  for (let i = 1; i < rows.length; i++) {
+    if (String(rows[i][idCol - 1]) === String(subId)) {
+      sheet.getRange(i + 1, importedCol).setValue(true);
+      return;
+    }
+  }
 }

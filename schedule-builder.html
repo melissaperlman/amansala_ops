@@ -226,11 +226,12 @@ select.approval-sel.change   {background-color:#fff3e0;color:#e65100;border:1px 
   <div class="export-card">
     <div class="export-label">Your Schedule — ready to copy &amp; send</div>
     <div class="export-btns">
-      <button class="btn-email" onclick="emailSchedule()">✉ Send to Amansala</button>
+      <button class="btn-email" id="submitBtn" onclick="submitToOps()">✓ Submit to Amansala</button>
       <button class="btn-copy-main" onclick="copySchedule()">Copy to Clipboard</button>
       <button class="btn-refresh" onclick="refreshExport()">Refresh</button>
       <span class="copy-ok" id="copyOk">✓ Copied!</span>
     </div>
+    <div id="submitStatus" style="font-size:.78rem;margin-top:6px;min-height:18px;color:#5a8060;"></div>
     <textarea class="export-ta" id="exportTa" readonly></textarea>
   </div>
 </div>
@@ -240,7 +241,8 @@ select.approval-sel.change   {background-color:#fff3e0;color:#e65100;border:1px 
 
 <script>
 // ── CONSTANTS ─────────────────────────────────────────────────────────────
-const AMANSALA_EMAIL = 'retreats@amansala.com'; // ← update this address as needed
+// ← Paste your Apps Script web app URL here (same URL used in room-schedule.html)
+const AMANSALA_API = 'https://script.google.com/macros/s/AKfycbzxMcsr_-kwzRghF7iD2Dgi5AEpYSzs22hqEaG7LACUaThbKshLxVni5Ex2ExJhhc3V1Q/exec';
 const ROOMS = ['Heaven','Grande','Chica','Beachfront','Sky','TBD'];
 const ROOM_LABELS = {Heaven:'Heaven',Grande:'Grande',Chica:'Chica',Beachfront:'Beachfront (BF)',Sky:'Sky',TBD:'TBD'};
 const SOUL_TYPES = ['Temazcal','Mayan Clay','Ice Bath','Cacao & Sound Healing'];
@@ -605,25 +607,48 @@ function showCopyOk(){
   if(el){el.style.display='inline';setTimeout(()=>el.style.display='none',2500);}
 }
 
-function emailSchedule(){
+async function submitToOps(){
   refreshExport();
   const body = document.getElementById('exportTa').value;
   if(!body){toast('Build your schedule first.');return;}
-  const teacher = document.getElementById('sTeacher').value||'Teacher';
+  const teacher = document.getElementById('sTeacher').value||'';
   const group   = document.getElementById('sGroup').value||'';
-  const arr     = document.getElementById('sArrival').value||'';
+  const arrival = document.getElementById('sArrival').value||'';
   const dep     = document.getElementById('sDeparture').value||'';
-  const datePart = arr && dep ? ` · ${arr} – ${dep}` : '';
-  const subject = `Schedule Submission — ${teacher}${group?' — '+group:''}${datePart}`;
-  const mailto = `mailto:${AMANSALA_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-  // mailto has ~2000 char limit in some clients — fall back to copy + instructions if too long
-  if(mailto.length > 2000){
-    navigator.clipboard.writeText(body).then(()=>{
-      toast('Schedule copied! Paste it into an email to '+AMANSALA_EMAIL);
-    }).catch(()=>{ toast('Open your email and paste your schedule to '+AMANSALA_EMAIL); });
-    return;
+  if(!teacher){toast('Please enter your name first.');return;}
+
+  const btn    = document.getElementById('submitBtn');
+  const status = document.getElementById('submitStatus');
+  btn.disabled = true;
+  btn.textContent = 'Submitting…';
+  status.textContent = '';
+  status.style.color = '#5a8060';
+
+  try {
+    const url = AMANSALA_API
+      + '?action=submitSchedule'
+      + '&teacher='      + encodeURIComponent(teacher)
+      + '&group='        + encodeURIComponent(group)
+      + '&arrival='      + encodeURIComponent(arrival)
+      + '&departure='    + encodeURIComponent(dep)
+      + '&scheduleText=' + encodeURIComponent(body);
+    const resp = await fetch(url);
+    const json = await resp.json();
+    if(json.success){
+      btn.textContent = '✓ Submitted!';
+      btn.style.background = '#5a8060';
+      status.textContent = 'Your schedule has been sent to Amansala. They will review and confirm.';
+      saveState(); // record that it was submitted
+      toast('✓ Schedule submitted to Amansala!');
+    } else {
+      throw new Error(json.error||'Unknown error');
+    }
+  } catch(err){
+    btn.disabled = false;
+    btn.textContent = '✓ Submit to Amansala';
+    status.style.color = '#c0392b';
+    status.textContent = 'Could not submit: '+err.message+'. Try copying and sending manually.';
   }
-  window.location.href = mailto;
 }
 
 // ── UTILS ─────────────────────────────────────────────────────────────────

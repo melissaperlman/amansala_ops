@@ -724,7 +724,37 @@ Sunday March 22
 <div class="import-overlay" id="importScheduleOverlay" onclick="if(event.target===this)closeScheduleImport()">
   <div class="import-box">
     <div class="import-title">Import Group Schedule</div>
-    <div class="import-desc">Paste a Google Doc link or paste the schedule text directly. We'll read it and add the group.</div>
+
+    <!-- PENDING SUBMISSIONS -->
+    <div style="background:#f0f8f0;border:1.5px solid #a0d0a8;border-radius:8px;padding:12px 14px;margin-bottom:14px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div style="font-size:12px;font-weight:700;color:#2e5e38">📥 Teacher Submissions</div>
+        <button onclick="loadSubmissions()" id="loadSubsBtn" style="padding:5px 12px;background:#3d7a7c;color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">Check for New</button>
+      </div>
+      <div id="subsList" style="font-size:12px;color:#5a8060;min-height:18px">Click "Check for New" to load pending teacher submissions.</div>
+    </div>
+
+    <!-- CREATE TEMPLATE SHORTCUT -->
+    <div style="background:#eef6f6;border:1.5px solid #b0d8d8;border-radius:8px;padding:12px 14px;margin-bottom:14px">
+      <div style="font-size:12px;font-weight:700;color:#2a6870;margin-bottom:8px">📋 Create a Teacher Schedule Template</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">
+        <div style="display:flex;flex-direction:column;gap:3px;flex:1;min-width:120px">
+          <label style="font-size:10px;font-weight:600;color:#3d7a7c;text-transform:uppercase;letter-spacing:.08em">Teacher Name</label>
+          <input class="import-input" id="isTplTeacher" placeholder="e.g. Emily Chen" style="margin:0;padding:7px 10px;font-size:12px">
+        </div>
+        <div style="display:flex;flex-direction:column;gap:3px;flex:1;min-width:100px">
+          <label style="font-size:10px;font-weight:600;color:#3d7a7c;text-transform:uppercase;letter-spacing:.08em">Arrival</label>
+          <input class="import-input" id="isTplArrival" type="date" style="margin:0;padding:7px 10px;font-size:12px">
+        </div>
+        <div style="display:flex;flex-direction:column;gap:3px;flex:1;min-width:100px">
+          <label style="font-size:10px;font-weight:600;color:#3d7a7c;text-transform:uppercase;letter-spacing:.08em">Departure</label>
+          <input class="import-input" id="isTplDeparture" type="date" style="margin:0;padding:7px 10px;font-size:12px">
+        </div>
+        <button onclick="createScheduleTemplate()" style="padding:8px 14px;background:#3d7a7c;color:#fff;border:none;border-radius:7px;font-weight:700;font-size:12px;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0">Create Sheet ↗</button>
+      </div>
+      <div id="isTplStatus" style="font-size:12px;margin-top:8px;min-height:16px"></div>
+    </div>
+
     <div class="import-field" style="background:#fff8f0;border:1px solid #f5c0a0;border-radius:8px;padding:12px">
       <label class="import-label" style="color:#c0522a">🗑 Clear an existing group's schedule first</label>
       <div style="display:flex;gap:8px;align-items:center;margin-top:6px">
@@ -747,8 +777,8 @@ Sunday March 22
       <div style="display:flex;gap:6px;flex-wrap:wrap" id="isColorPicker"></div>
     </div>
     <div class="import-field">
-      <label class="import-label">Google Doc URL (paste the link)</label>
-      <input class="import-input" id="isDocUrl" placeholder="https://docs.google.com/document/d/...">
+      <label class="import-label">Google Sheet or Doc URL</label>
+      <input class="import-input" id="isDocUrl" placeholder="https://docs.google.com/spreadsheets/d/… or /document/d/…">
     </div>
     <div class="import-field">
       <label class="import-label">— OR paste the schedule text directly —</label>
@@ -3192,6 +3222,44 @@ function renderByRoom(){
     html+=`</div>`;
   });
 
+  // Unassigned section — classes/soul with no recognized room
+  if(activeRoom === 'All'){
+    const knownRoomSet = new Set(ROOMS);
+    const unassigned = visibleBookings().filter(b =>
+      (b.category === 'classes' || b.category === 'soul') &&
+      (!b.room || !knownRoomSet.has(b.room))
+    ).sort((a,b)=>(DAYS.indexOf(a.day)-DAYS.indexOf(b.day))||cmpTime(a.start,b.start));
+
+    if(unassigned.length > 0){
+      html += `<div class="room-section">
+        <div class="room-section-header">
+          <span class="room-tag" style="font-size:13px;background:#f5f5f5;color:#888;border:1px solid #ddd">No Room</span>
+          <span class="room-section-name"></span>
+          <span class="room-section-meta">${unassigned.length} booking${unassigned.length!==1?'s':''} — assign a room via ✏ Edit</span>
+        </div>`;
+      const byDay = {};
+      unassigned.forEach(b=>{ if(!byDay[b.day]) byDay[b.day]=[]; byDay[b.day].push(b); });
+      DAYS.forEach(day=>{
+        if(!byDay[day]) return;
+        const fullLabel = DAY_LABELS[day] || day;
+        html+=`<div style="font-size:11px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--muted);padding:10px 0 4px 2px;border-top:1px solid var(--border);margin-top:4px">${fullLabel}</div>`;
+        byDay[day].forEach(b=>{
+          const gm = groupMeta(b.group);
+          const groupTag = b.group && b.group!=='all' ? `<span style="display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:600;color:#333;background:${gm.color}22;border:1px solid ${gm.color}44;border-radius:4px;padding:1px 6px"><span style="width:6px;height:6px;border-radius:50%;background:${gm.color};display:inline-block"></span>${gm.short}</span>` : '';
+          html+=`<div class="teacher-booking-row">
+            <span class="trow-time">${fmt12(b.start)}–${fmt12(b.end)}</span>
+            <span class="trow-title"><strong>${b.title}</strong>${b.subtitle?` <span style="color:var(--muted)">${b.subtitle}</span>`:''}</span>
+            ${groupTag}
+            ${b.teacher?`<span class="teacher-chip ${tChip(b.teacher)}" style="font-size:12px">${b.teacher}</span>`:''}
+            <span class="trow-pax">${b.pax} pax</span>
+            <button class="edit-btn" onclick="openModal(${b.id})">✏ Edit</button>
+          </div>`;
+        });
+      });
+      html += `</div>`;
+    }
+  }
+
   content.innerHTML = html || `<div class="empty-state">No bookings found.</div>`;
 }
 
@@ -5267,6 +5335,62 @@ async function clearGroupSchedule(){
   alert(`✅ All bookings for "${g.label}" have been cleared and saved. You can now re-import.`);
 }
 
+function escHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+async function loadSubmissions(){
+  const btn = document.getElementById('loadSubsBtn');
+  const list = document.getElementById('subsList');
+  btn.disabled = true;
+  btn.textContent = 'Loading…';
+  list.innerHTML = '<span style="color:#3d7a7c">Checking for submissions…</span>';
+  try {
+    const resp = await fetch(API_URL + '?action=getSubmissions&_t=' + Date.now());
+    const json = await resp.json();
+    if(!json.success) throw new Error(json.error);
+    const subs = json.data.submissions || [];
+    if(!subs.length){
+      list.innerHTML = '<span style="color:#888">No pending submissions.</span>';
+    } else {
+      list.innerHTML = subs.map(s => {
+        const d = s.submittedAt ? new Date(s.submittedAt) : null;
+        const when = d ? d.toLocaleDateString('en-US',{month:'short',day:'numeric'})+' at '+d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : '';
+        const label = [s.teacher, s.group].filter(Boolean).join(' — ');
+        const dates = [s.arrival, s.departure].filter(Boolean).join(' → ');
+        return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(160,208,168,.4)">
+          <div style="flex:1">
+            <span style="font-weight:700;color:#2e5e38">${escHtml(label)}</span>
+            ${dates ? `<span style="color:#5a8060;margin-left:6px">${escHtml(dates)}</span>` : ''}
+            ${when ? `<span style="color:#aaa;font-size:11px;margin-left:6px">submitted ${when}</span>` : ''}
+          </div>
+          <button onclick="importSubmission(${JSON.stringify(s).replace(/"/g,'&quot;')})"
+            style="padding:4px 12px;background:#3d7a7c;color:#fff;border:none;border-radius:5px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">
+            Import →
+          </button>
+        </div>`;
+      }).join('');
+    }
+  } catch(err){
+    list.innerHTML = '<span style="color:#c0392b">Error: ' + err.message + '</span>';
+  }
+  btn.disabled = false;
+  btn.textContent = 'Check for New';
+}
+
+function importSubmission(sub){
+  // Pre-fill the group name, paste text, and trigger parse
+  document.getElementById('isGroupName').value = sub.teacher || sub.group || '';
+  document.getElementById('isDocText').value = sub.scheduleText || '';
+  document.getElementById('isDocUrl').value = '';
+  document.getElementById('isStatus').innerHTML = '';
+  document.getElementById('isPreview').innerHTML = '';
+  // Mark imported in background
+  if(sub.id){
+    fetch(API_URL + '?action=markImported&id=' + encodeURIComponent(sub.id)).catch(()=>{});
+  }
+  // Auto-trigger the parse
+  fetchScheduleDoc();
+}
+
 function openScheduleImport(){
   document.getElementById('isGroupName').value='';
   document.getElementById('isGroupPax').value='';
@@ -5297,6 +5421,32 @@ function closeScheduleImport(){
   document.getElementById('importScheduleOverlay').classList.remove('open');
 }
 
+async function createScheduleTemplate(){
+  const groupName = document.getElementById('isGroupName').value.trim() || 'Retreat';
+  const teacher   = document.getElementById('isTplTeacher').value.trim();
+  const arrival   = document.getElementById('isTplArrival').value;
+  const departure = document.getElementById('isTplDeparture').value;
+  const pax       = document.getElementById('isGroupPax').value || '12';
+  if(!arrival || !departure){ document.getElementById('isTplStatus').innerHTML='<span style="color:#c0392b">Please set arrival and departure dates first.</span>'; return; }
+  document.getElementById('isTplStatus').innerHTML='<span style="color:#3d7a7c">Creating template…</span>';
+  try {
+    const resp = await fetch(API_URL + '?action=createScheduleTemplate'
+      + '&groupName='    + encodeURIComponent(groupName)
+      + '&teacherName='  + encodeURIComponent(teacher)
+      + '&arrivalDate='  + encodeURIComponent(arrival)
+      + '&departureDate='+ encodeURIComponent(departure)
+      + '&pax='          + encodeURIComponent(pax));
+    const json = await resp.json();
+    if(!json.success) throw new Error(json.error);
+    const sheetUrl = json.data.url;
+    document.getElementById('isTplStatus').innerHTML=`✓ Template created! <a href="${sheetUrl}" target="_blank" style="color:#3d7a7c;font-weight:700">Open Sheet ↗</a> &nbsp;— copy the link to share with the teacher.`;
+    // Pre-fill the URL field so importing is one click after teacher fills it out
+    document.getElementById('isDocUrl').value = sheetUrl;
+  } catch(err) {
+    document.getElementById('isTplStatus').innerHTML='<span style="color:#c0392b">Error: ' + err.message + '</span>';
+  }
+}
+
 async function fetchScheduleDoc(){
   const url = document.getElementById('isDocUrl').value.trim();
   const text = document.getElementById('isDocText').value.trim();
@@ -5307,17 +5457,20 @@ async function fetchScheduleDoc(){
 
   let scheduleText = text;
 
-  // If URL provided, fetch via Apps Script
+  // If URL provided, fetch via Apps Script — auto-detect Sheet vs Doc
   if(url && !text){
-    document.getElementById('isStatus').innerHTML='<div class="import-msg loading"><div class="spinner"></div> Reading Google Doc...</div>';
+    const isSheet = url.includes('/spreadsheets/');
+    const actionName = isSheet ? 'readScheduleSheet' : 'readGoogleDoc';
+    const label = isSheet ? 'Google Sheet' : 'Google Doc';
+    document.getElementById('isStatus').innerHTML=`<div class="import-msg loading"><div class="spinner"></div> Reading ${label}...</div>`;
     try {
-      const resp = await fetch(API_URL + '?action=readGoogleDoc&url=' + encodeURIComponent(url));
+      const resp = await fetch(API_URL + '?action=' + actionName + '&url=' + encodeURIComponent(url));
       const json = await resp.json();
       if(!json.success) throw new Error(json.error);
       scheduleText = json.data.text;
       document.getElementById('isDocText').value = scheduleText;
     } catch(err){
-      document.getElementById('isStatus').innerHTML='<div class="import-msg err">Could not read Google Doc: ' + err.message + '</div>';
+      document.getElementById('isStatus').innerHTML=`<div class="import-msg err">Could not read ${label}: ${err.message}</div>`;
       return;
     }
   }
@@ -5413,11 +5566,22 @@ function parseScheduleText(text){
   // Build day map from DAYS array
   const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
+  // Build a lookup: "April 5" → "Sun 5" using DAY_LABELS
+  const monthDayToKey = {};
+  Object.entries(DAY_LABELS).forEach(([key, lbl]) => {
+    // lbl is like "Sunday, April 5" — extract "April 5"
+    const m = lbl.match(/(\w+)\s+(\d+)$/);
+    if(m) monthDayToKey[(m[1]+' '+m[2]).toLowerCase()] = key;
+  });
+
   lines.forEach(line => {
+    // Strip leading pipes/spaces (e.g. "|April 6")
+    const stripped = line.replace(/^\|+\s*/, '');
+
     // Check if this is a day header — supports many formats:
     // "Monday | March 16", "Tuesday, March 17", "Wednesday March 18", "Thursday Mar 19", "Fri 20 March"
-    const dayMatch = line.match(/^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)[,\s]*[\|·\-,]?\s*(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+(\d{1,2})/i)
-      || line.match(/^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)[,\s]+(\d{1,2})\s+(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)/i);
+    const dayMatch = stripped.match(/^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)[,\s]*[\|·\-,]?\s*(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+(\d{1,2})/i)
+      || stripped.match(/^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)[,\s]+(\d{1,2})\s+(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)/i);
     if(dayMatch){
       // dayMatch[1] = day name; day number is in [3] for first pattern or [2] for second (day-num-month)
       const dayNum = parseInt(dayMatch[3]) || parseInt(dayMatch[2]);
@@ -5427,11 +5591,22 @@ function parseScheduleText(text){
       return;
     }
 
+    // Fallback: "April 5", "april 7th", "April 6" — month + day only, no day name
+    const mdMatch = stripped.match(/^(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+(\d{1,2})(?:st|nd|rd|th)?\s*$/i);
+    if(mdMatch){
+      const lookup = (mdMatch[1]+' '+mdMatch[2]).toLowerCase();
+      const found = monthDayToKey[lookup];
+      if(found){ currentDay = found; return; }
+      // Not in range — generate a synthetic key so events still parse
+      currentDay = mdMatch[1].slice(0,3).charAt(0).toUpperCase()+mdMatch[1].slice(1,3).toLowerCase()+' '+parseInt(mdMatch[2]);
+      return;
+    }
+
     if(!currentDay) return;
 
     // Parse time and event: "7:00 PM | Dinner" or "5:45 PM – 7:00 PM | Yoga | Grande"
     // Capture AM/PM explicitly for each time part
-    const eventMatch = line.match(/^(\d{1,2}:?\d{2})\s*(AM|PM)?\s*(?:[-]\s*(\d{1,2}:?\d{2})\s*(AM|PM)?)?\s*[|]?\s*(.+)/i);
+    const eventMatch = stripped.match(/^(\d{1,2}:?\d{2})\s*(AM|PM)?\s*(?:[-]\s*(\d{1,2}:?\d{2})\s*(AM|PM)?)?\s*[|]?\s*(.+)/i);
     if(!eventMatch) return;
 
     let startRaw = eventMatch[1];
@@ -5491,6 +5666,17 @@ function parseScheduleText(text){
     if(!room){
       for(const r of knownRooms){
         const re = new RegExp('\\b(' + r + ')\\s*$', 'i');
+        if(re.test(title)){
+          room = r.replace(/Beachfront/i,'BF').replace(/Beach$/i,'BF');
+          title = title.replace(re,'').replace(/[\|\-,\s]+$/,'').trim();
+          break;
+        }
+      }
+    }
+    // Also check for room name in parentheses at end: "Morning Class (Beachfront shala)"
+    if(!room){
+      for(const r of knownRooms){
+        const re = new RegExp('\\(\\s*' + r + '[^)]*\\)\\s*$', 'i');
         if(re.test(title)){
           room = r.replace(/Beachfront/i,'BF').replace(/Beach$/i,'BF');
           title = title.replace(re,'').replace(/[\|\-,\s]+$/,'').trim();
