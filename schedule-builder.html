@@ -99,6 +99,27 @@ input.pax-in:focus{border-color:var(--teal);}
 .del-btn{background:none;border:none;color:#ccc;font-size:15px;cursor:pointer;padding:3px 5px;border-radius:5px;line-height:1;transition:color .15s;}
 .del-btn:hover{color:var(--red);}
 
+/* ROOM REQUEST BADGE */
+.room-req{font-size:.6rem;font-weight:700;letter-spacing:.08em;color:#b07020;background:#fff3cc;border:1px solid #f0d070;border-radius:10px;padding:2px 7px;white-space:nowrap;}
+
+/* NOTES BAR */
+.notes-bar{display:flex;align-items:flex-start;gap:10px;padding:7px 12px 9px 46px;border-bottom:1px solid rgba(240,232,222,.6);background:rgba(255,255,255,.55);flex-wrap:wrap;}
+.notes-bar:last-child{border-bottom:none;}
+.notes-half{display:flex;flex-direction:column;gap:3px;flex:1;min-width:200px;}
+.notes-half label{font-size:.56rem;letter-spacing:.16em;text-transform:uppercase;font-weight:700;}
+.notes-half label.teacher-lbl{color:#5a7a6a;}
+.notes-half label.amansala-lbl{color:#3d7a7c;}
+input.notes-in{border:none;border-bottom:1.5px dashed rgba(90,120,100,.3);background:transparent;font-family:'DM Sans',sans-serif;font-size:.8rem;color:var(--deep);padding:2px 3px;outline:none;width:100%;}
+input.notes-in:focus{border-bottom-style:solid;border-bottom-color:var(--teal);}
+input.notes-in::placeholder{color:rgba(100,100,100,.35);font-style:italic;}
+input.notes-in.amansala-in::placeholder{color:rgba(61,122,124,.35);}
+
+/* APPROVAL BADGE */
+select.approval-sel{border-radius:12px;padding:3px 20px 3px 9px;font-family:'DM Sans',sans-serif;font-size:.65rem;font-weight:700;letter-spacing:.06em;cursor:pointer;border:none;-webkit-appearance:none;appearance:none;background-repeat:no-repeat;background-position:right 5px center;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='7' height='4'%3E%3Cpath d='M0 0l3.5 4L7 0z' fill='%23555'/%3E%3C/svg%3E");outline:none;}
+select.approval-sel.pending  {background-color:#f5f5f5;color:#777;border:1px solid #ddd;}
+select.approval-sel.approved {background-color:#e8f5e9;color:#2e7d32;border:1px solid #a5d6a7;}
+select.approval-sel.change   {background-color:#fff3e0;color:#e65100;border:1px solid #ffcc80;}
+
 /* ADD BUTTONS */
 .add-row{padding:10px 14px;display:flex;gap:8px;flex-wrap:wrap;border-top:1px dashed var(--warm);background:#fdfaf7;}
 .add-btn{background:none;border:1.5px dashed var(--warm);color:var(--earth);font-family:'DM Sans',sans-serif;font-size:.7rem;font-weight:600;padding:5px 13px;border-radius:20px;cursor:pointer;transition:all .18s;white-space:nowrap;}
@@ -193,8 +214,8 @@ input.pax-in:focus{border-color:var(--teal);}
 
 <script>
 // ── CONSTANTS ─────────────────────────────────────────────────────────────
-const ROOMS = ['Heaven','Grande','Chica','Beachfront','Sky'];
-const ROOM_LABELS = {Heaven:'Heaven',Grande:'Grande',Chica:'Chica',Beachfront:'Beachfront (BF)',Sky:'Sky'};
+const ROOMS = ['Heaven','Grande','Chica','Beachfront','Sky','TBD'];
+const ROOM_LABELS = {Heaven:'Heaven',Grande:'Grande',Chica:'Chica',Beachfront:'Beachfront (BF)',Sky:'Sky',TBD:'TBD'};
 const SOUL_TYPES = ['Temazcal','Mayan Clay','Ice Bath','Cacao & Sound Healing'];
 const TOUR_TYPES = ['Gran Cenote','Tulum Ruins','Mangrove','Muyil Lagoon','Jungle Gym'];
 const DOW = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
@@ -240,7 +261,10 @@ function tSel(id,val,isMeal){
 function roomSel(id,val){
   let h=`<select class="drop room-d" id="${id}" onchange="syncRow(this)"><option value="">— Room —</option>`;
   ROOMS.forEach(r=>{ h+=`<option value="${r}"${r===val?' selected':''}>${ROOM_LABELS[r]}</option>`; });
-  return h+'</select>';
+  h+='</select>';
+  // Room is a request until Amansala confirms — show badge when a room is selected
+  h+=`<span class="room-req" id="${id}_req" style="${val?'':'display:none'}">Requested</span>`;
+  return h;
 }
 function soulSel(id,val){
   let h=`<select class="drop" id="${id}" onchange="syncRow(this)" style="color:#6a3fa0;min-width:160px"><option value="">— Soul Service —</option>`;
@@ -266,7 +290,8 @@ function paxIn(id,val){
 
 // ── DEFAULT ACTIVITIES ────────────────────────────────────────────────────
 function mkItem(cat,s,e,name,room,extra){
-  return Object.assign({id:nextId++,category:cat,startTime:s,endTime:e,name:name||'',room:room||'',soulType:'',tourType:'',status:'optional',pax:groupPax},extra||{});
+  return Object.assign({id:nextId++,category:cat,startTime:s,endTime:e,name:name||'',room:room||'',soulType:'',tourType:'',status:'optional',pax:groupPax,
+    teacherNotes:'', approval:'pending', amansalaNotes:''},extra||{});
 }
 function defaultActivities(dayType,morning){
   const end = addMins(morning,90);
@@ -391,6 +416,30 @@ function renderRow(di,ai,a){
       <span class="pax-label">pax:</span>${paxIn(id+'_pax',a.pax)}`;
   }
 
+  const approvalCls = a.approval==='approved'?'approved':a.approval==='change'?'change':'pending';
+
+  const notesBar = `<div class="notes-bar">
+    <div class="notes-half">
+      <label class="teacher-lbl">📝 Teacher Notes</label>
+      <input class="notes-in" id="${id}_tn" value="${escA(a.teacherNotes)}"
+        placeholder="e.g. need blankets, loud music ok, mats in circle, bring speaker…"
+        onchange="notesChg('${id}_tn',${di},${ai},'teacherNotes',this.value)">
+    </div>
+    <div class="notes-half" style="flex:0 0 auto;min-width:260px">
+      <label class="amansala-lbl">Amansala Response</label>
+      <div style="display:flex;gap:8px;align-items:center;margin-top:1px">
+        <select class="approval-sel ${approvalCls}" id="${id}_apv" onchange="approvalChg(this,'${id}_apv',${di},${ai})">
+          <option value="pending"${a.approval==='pending'?' selected':''}>⏳ Pending</option>
+          <option value="approved"${a.approval==='approved'?' selected':''}>✓ Approved</option>
+          <option value="change"${a.approval==='change'?' selected':''}>✎ Needs Change</option>
+        </select>
+        <input class="notes-in amansala-in" id="${id}_an" value="${escA(a.amansalaNotes)}"
+          placeholder="Notes to teacher…"
+          onchange="notesChg('${id}_an',${di},${ai},'amansalaNotes',this.value)">
+      </div>
+    </div>
+  </div>`;
+
   return `<div class="act-row ${meta.cls}" id="${id}">
     <div class="act-icon">${meta.icon}</div>
     ${times}
@@ -398,7 +447,7 @@ function renderRow(di,ai,a){
     <div class="act-right">
       <button class="del-btn" onclick="delAct(${di},${ai})">×</button>
     </div>
-  </div>`;
+  </div>${notesBar}`;
 }
 
 // ── MUTATIONS ─────────────────────────────────────────────────────────────
@@ -407,13 +456,28 @@ function nameChg(di,ai,v){
   refreshExport();
 }
 
+function notesChg(elId,di,ai,field,v){
+  if(schedule[di]&&schedule[di][ai]) schedule[di][ai][field]=v;
+  refreshExport();
+}
+
+function approvalChg(sel,elId,di,ai){
+  sel.className='approval-sel '+(sel.value==='approved'?'approved':sel.value==='change'?'change':'pending');
+  if(schedule[di]&&schedule[di][ai]) schedule[di][ai].approval=sel.value;
+  refreshExport();
+}
+
 function statusChanged(sel){
-  // Update pill style immediately
   sel.className = sel.value==='prepaid' ? 'status-sel prepaid' : 'status-sel optional';
   syncAll();
 }
 
 function syncRow(el){
+  // Update room-request badge visibility live
+  if(el && el.id && el.id.endsWith('_r')){
+    const badge = document.getElementById(el.id+'_req');
+    if(badge) badge.style.display = el.value ? '' : 'none';
+  }
   syncAll();
 }
 
@@ -430,6 +494,9 @@ function syncAll(){
       if(g('_status')!==null) a.status=g('_status');
       if(g('_pax')!==null) a.pax=parseInt(g('_pax'))||groupPax;
       if(g('_n')!==null) a.name=g('_n');
+      if(g('_tn')!==null) a.teacherNotes=g('_tn');
+      if(g('_an')!==null) a.amansalaNotes=g('_an');
+      if(g('_apv')!==null) a.approval=g('_apv');
     });
   });
   refreshExport();
@@ -476,13 +543,25 @@ function buildExportText(){
       if(a.category==='soul')       name=a.soulType||'Soul Service';
       else if(a.category==='tours') name=a.tourType||'Tour';
       else                          name=a.name||( a.category==='meals'?'Meal':'Class' );
-      const room=(a.room||'').replace(/Beachfront/i,'BF').trim();
-      const roomPart=room?` | ${room}`:'';
+      const rawRoom=(a.room||'').replace(/Beachfront/i,'BF').trim();
+      // TBD rooms get a clear tag; requested rooms get [Requested] marker
+      const roomDisplay = rawRoom==='TBD' ? 'TBD' : rawRoom;
+      const roomPart = roomDisplay ? ` | ${roomDisplay}` : '';
+      const roomReqPart = (rawRoom && rawRoom!=='TBD') ? ' [Room Requested]' : (rawRoom==='TBD' ? ' [Room TBD]' : '');
       let statusPart='';
       if(a.category==='soul'||a.category==='tours'){
         statusPart=a.status==='prepaid'?' | Included':' | Optional';
       }
-      out+=`${t} | ${name}${roomPart}${statusPart}\n`;
+      out+=`${t} | ${name}${roomPart}${statusPart}${roomReqPart}\n`;
+      // Teacher notes line (if any)
+      if(a.teacherNotes && a.teacherNotes.trim()){
+        out+=`  [Teacher Notes: ${a.teacherNotes.trim()}]\n`;
+      }
+      // Amansala response (if any)
+      const approvalLabel = a.approval==='approved'?'✓ Approved':a.approval==='change'?'✎ Needs Change':'⏳ Pending';
+      if(a.approval!=='pending' || (a.amansalaNotes&&a.amansalaNotes.trim())){
+        out+=`  [Amansala: ${approvalLabel}${a.amansalaNotes?' — '+a.amansalaNotes.trim():''}]\n`;
+      }
     });
   });
   return out.trim();
