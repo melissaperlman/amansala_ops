@@ -88,13 +88,13 @@ select.status-sel{border:none;border-radius:12px;padding:3px 20px 3px 9px;font-f
 select.status-sel.prepaid{background-color:#e8f5e9;color:#2e7d32;border:1px solid #a5d6a7;}
 select.status-sel.optional{background-color:#fff8e1;color:#f57f17;border:1px solid #ffe082;}
 
-input.name-in{border:none;border-bottom:1.5px dashed rgba(139,94,60,.3);background:transparent;font-family:'DM Sans',sans-serif;font-size:.88rem;color:var(--deep);font-weight:500;padding:2px 4px;outline:none;flex:1;min-width:130px;}
+input.name-in{border:none;border-bottom:1.5px dashed rgba(139,94,60,.3);background:transparent;font-family:'DM Sans',sans-serif;font-size:.83rem;color:var(--deep);font-weight:500;padding:2px 4px;outline:none;flex:1;min-width:90px;}
 input.name-in:focus{border-bottom-style:solid;border-bottom-color:var(--teal);}
-input.name-in::placeholder{color:rgba(139,94,60,.32);font-style:italic;font-weight:400;}
+input.name-in::placeholder{color:rgba(139,94,60,.3);font-style:italic;font-weight:400;}
 
-input.pax-in{border:1.5px solid var(--warm);border-radius:6px;background:var(--cream);font-family:'DM Sans',sans-serif;font-size:.75rem;color:var(--earth);font-weight:600;padding:3px 6px;outline:none;width:54px;text-align:center;}
+input.pax-in{border:1.5px solid var(--warm);border-radius:5px;background:var(--cream);font-family:'DM Sans',sans-serif;font-size:.72rem;color:var(--earth);font-weight:600;padding:2px 4px;outline:none;width:44px;text-align:center;}
 input.pax-in:focus{border-color:var(--teal);}
-.pax-label{font-size:.65rem;color:var(--muted);white-space:nowrap;}
+.pax-label{font-size:.6rem;color:var(--muted);white-space:nowrap;}
 
 .del-btn{background:none;border:none;color:#ccc;font-size:15px;cursor:pointer;padding:3px 5px;border-radius:5px;line-height:1;transition:color .15s;}
 .del-btn:hover{color:var(--red);}
@@ -102,17 +102,16 @@ input.pax-in:focus{border-color:var(--teal);}
 /* ROOM REQUEST BADGE */
 .room-req{font-size:.6rem;font-weight:700;letter-spacing:.08em;color:#b07020;background:#fff3cc;border:1px solid #f0d070;border-radius:10px;padding:2px 7px;white-space:nowrap;}
 
-/* NOTES BAR */
-.notes-bar{display:flex;align-items:flex-start;gap:10px;padding:7px 12px 9px 46px;border-bottom:1px solid rgba(240,232,222,.6);background:rgba(255,255,255,.55);flex-wrap:wrap;}
-.notes-bar:last-child{border-bottom:none;}
-.notes-half{display:flex;flex-direction:column;gap:3px;flex:1;min-width:200px;}
-.notes-half label{font-size:.56rem;letter-spacing:.16em;text-transform:uppercase;font-weight:700;}
-.notes-half label.teacher-lbl{color:#5a7a6a;}
-.notes-half label.amansala-lbl{color:#3d7a7c;}
-input.notes-in{border:none;border-bottom:1.5px dashed rgba(90,120,100,.3);background:transparent;font-family:'DM Sans',sans-serif;font-size:.8rem;color:var(--deep);padding:2px 3px;outline:none;width:100%;}
+/* NOTES BAR — single line */
+.notes-bar{display:flex;align-items:center;gap:8px;padding:4px 10px 5px 44px;border-bottom:1px solid rgba(240,232,222,.55);background:rgba(255,255,255,.5);}
+.nb-lbl{font-size:.54rem;letter-spacing:.14em;text-transform:uppercase;font-weight:700;white-space:nowrap;flex-shrink:0;}
+.nb-lbl.tl{color:#5a7a6a;}
+.nb-lbl.al{color:#3d7a7c;}
+.nb-div{width:1px;height:14px;background:rgba(200,185,170,.5);flex-shrink:0;}
+input.notes-in{border:none;border-bottom:1px dashed rgba(90,120,100,.28);background:transparent;font-family:'DM Sans',sans-serif;font-size:.78rem;color:var(--deep);padding:1px 3px;outline:none;flex:1;min-width:60px;}
 input.notes-in:focus{border-bottom-style:solid;border-bottom-color:var(--teal);}
-input.notes-in::placeholder{color:rgba(100,100,100,.35);font-style:italic;}
-input.notes-in.amansala-in::placeholder{color:rgba(61,122,124,.35);}
+input.notes-in::placeholder{color:rgba(100,100,100,.3);font-style:italic;}
+input.notes-in.amansala-in::placeholder{color:rgba(61,122,124,.3);}
 
 /* APPROVAL BADGE */
 select.approval-sel{border-radius:12px;padding:3px 20px 3px 9px;font-family:'DM Sans',sans-serif;font-size:.65rem;font-weight:700;letter-spacing:.06em;cursor:pointer;border:none;-webkit-appearance:none;appearance:none;background-repeat:no-repeat;background-position:right 5px center;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='7' height='4'%3E%3Cpath d='M0 0l3.5 4L7 0z' fill='%23555'/%3E%3C/svg%3E");outline:none;}
@@ -143,6 +142,19 @@ select.approval-sel.change   {background-color:#fff3e0;color:#e65100;border:1px 
 .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(16px);background:var(--deep);color:var(--sand);padding:10px 24px;border-radius:24px;font-size:.78rem;font-weight:500;opacity:0;transition:all .28s;pointer-events:none;z-index:200;}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 
+/* RESUME BANNER */
+.resume-banner{background:#f0f8f0;border:1.5px solid #a0d0a8;border-radius:10px;padding:16px 20px;margin:28px auto 0;max-width:680px;display:none;align-items:center;gap:14px;flex-wrap:wrap;}
+.resume-text{flex:1;}
+.resume-name{font-size:.92rem;font-weight:700;color:#2e5e38;}
+.resume-meta{font-size:.72rem;color:#5a8060;margin-top:3px;}
+.btn-resume{padding:9px 20px;background:#3d7a7c;color:#fff;border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;font-weight:600;cursor:pointer;transition:background .2s;white-space:nowrap;}
+.btn-resume:hover{background:#2e6264;}
+.btn-fresh{padding:9px 16px;background:none;border:1.5px solid #b0c8b4;color:#5a8060;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;font-weight:600;cursor:pointer;transition:all .18s;white-space:nowrap;}
+.btn-fresh:hover{border-color:#c0392b;color:#c0392b;}
+/* SAVED INDICATOR */
+.saved-dot{font-size:.65rem;color:#5a8060;opacity:0;transition:opacity .4s;position:fixed;bottom:28px;right:28px;background:#f0f8f0;border:1px solid #a0d0a8;padding:5px 12px;border-radius:20px;pointer-events:none;z-index:200;}
+.saved-dot.show{opacity:1;}
+
 @media(max-width:600px){
   .grid2,.grid3{grid-template-columns:1fr;}
   .builder,.setup-panel,.export-wrap{padding:0 12px;}
@@ -162,6 +174,16 @@ select.approval-sel.change   {background-color:#fff3e0;color:#e65100;border:1px 
   <div class="header-right">
     <button class="btn-header" id="topCopyBtn" onclick="copySchedule()" style="display:none">Copy Schedule ↗</button>
   </div>
+</div>
+
+<!-- ── RESUME BANNER ── -->
+<div class="resume-banner" id="resumeBanner">
+  <div class="resume-text">
+    <div class="resume-name" id="resumeName"></div>
+    <div class="resume-meta" id="resumeMeta"></div>
+  </div>
+  <button class="btn-resume" onclick="resumeSchedule()">Resume Schedule →</button>
+  <button class="btn-fresh" onclick="startFresh()">Start Fresh</button>
 </div>
 
 <!-- ── SETUP ── -->
@@ -211,6 +233,7 @@ select.approval-sel.change   {background-color:#fff3e0;color:#e65100;border:1px 
 </div>
 
 <div class="toast" id="toast"></div>
+<div class="saved-dot" id="savedDot">✓ Saved</div>
 
 <script>
 // ── CONSTANTS ─────────────────────────────────────────────────────────────
@@ -418,25 +441,19 @@ function renderRow(di,ai,a){
   const approvalCls = a.approval==='approved'?'approved':a.approval==='change'?'change':'pending';
 
   const notesBar = `<div class="notes-bar">
-    <div class="notes-half">
-      <label class="teacher-lbl">📝 Teacher Notes</label>
-      <input class="notes-in" id="${id}_tn" value="${escA(a.teacherNotes)}"
-        placeholder="e.g. need blankets, loud music ok, mats in circle, bring speaker…"
-        onchange="notesChg('${id}_tn',${di},${ai},'teacherNotes',this.value)">
-    </div>
-    <div class="notes-half" style="flex:0 0 auto;min-width:260px">
-      <label class="amansala-lbl">Amansala Response</label>
-      <div style="display:flex;gap:8px;align-items:center;margin-top:1px">
-        <select class="approval-sel ${approvalCls}" id="${id}_apv" onchange="approvalChg(this,'${id}_apv',${di},${ai})">
-          <option value="pending"${a.approval==='pending'?' selected':''}>⏳ Pending</option>
-          <option value="approved"${a.approval==='approved'?' selected':''}>✓ Approved</option>
-          <option value="change"${a.approval==='change'?' selected':''}>✎ Needs Change</option>
-        </select>
-        <input class="notes-in amansala-in" id="${id}_an" value="${escA(a.amansalaNotes)}"
-          placeholder="Notes to teacher…"
-          onchange="notesChg('${id}_an',${di},${ai},'amansalaNotes',this.value)">
-      </div>
-    </div>
+    <span class="nb-lbl tl">📝 Notes</span>
+    <input class="notes-in" id="${id}_tn" value="${escA(a.teacherNotes)}"
+      placeholder="equipment, music, props, special needs…"
+      onchange="notesChg('${id}_tn',${di},${ai},'teacherNotes',this.value)">
+    <span class="nb-div"></span>
+    <select class="approval-sel ${approvalCls}" id="${id}_apv" onchange="approvalChg(this,'${id}_apv',${di},${ai})" style="flex-shrink:0">
+      <option value="pending"${a.approval==='pending'?' selected':''}>⏳ Pending</option>
+      <option value="approved"${a.approval==='approved'?' selected':''}>✓ Approved</option>
+      <option value="change"${a.approval==='change'?' selected':''}>✎ Needs Change</option>
+    </select>
+    <input class="notes-in amansala-in" id="${id}_an" value="${escA(a.amansalaNotes)}"
+      placeholder="Amansala notes to teacher…"
+      onchange="notesChg('${id}_an',${di},${ai},'amansalaNotes',this.value)">
   </div>`;
 
   return `<div class="act-row ${meta.cls}" id="${id}">
@@ -567,6 +584,7 @@ function buildExportText(){
 function refreshExport(){
   const ta=document.getElementById('exportTa');
   if(ta) ta.value=buildExportText();
+  if(days.length) debouncedSave();
 }
 
 function copySchedule(){
@@ -598,8 +616,83 @@ function toast(msg){
   setTimeout(()=>el.classList.remove('show'),2800);
 }
 
+// ── LOCAL STORAGE AUTO-SAVE ───────────────────────────────────────────────
+const LS_KEY = 'amansala_schedule_v1';
+let _saveTimer = null;
+
+function saveState(){
+  try {
+    const morningEl = document.querySelector('input[name="morningTime"]:checked');
+    const state = {
+      v:1, savedAt:Date.now(),
+      setup:{
+        teacher: document.getElementById('sTeacher').value,
+        group:   document.getElementById('sGroup').value,
+        arrival: document.getElementById('sArrival').value,
+        departure: document.getElementById('sDeparture').value,
+        pax:     document.getElementById('sPax').value,
+        morning: morningEl ? morningEl.value : '09:30',
+      },
+      days, schedule, nextId, groupPax,
+      active: document.getElementById('builderSection').style.display !== 'none'
+    };
+    localStorage.setItem(LS_KEY, JSON.stringify(state));
+    showSavedDot();
+  } catch(e){}
+}
+
+function debouncedSave(){
+  clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(saveState, 700);
+}
+
+function showSavedDot(){
+  const el = document.getElementById('savedDot');
+  if(!el) return;
+  el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'), 2200);
+}
+
+function resumeSchedule(){
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if(!raw) return;
+    const state = JSON.parse(raw);
+    if(!state||!state.days) return;
+    // Restore setup fields
+    document.getElementById('sTeacher').value   = state.setup.teacher   || '';
+    document.getElementById('sGroup').value     = state.setup.group     || '';
+    document.getElementById('sArrival').value   = state.setup.arrival   || '';
+    document.getElementById('sDeparture').value = state.setup.departure || '';
+    document.getElementById('sPax').value       = state.setup.pax       || 12;
+    const mt = document.querySelector(`input[name="morningTime"][value="${state.setup.morning}"]`);
+    if(mt) mt.checked = true;
+    // Restore schedule state
+    days = state.days || [];
+    schedule = state.schedule || [];
+    nextId = state.nextId || 1;
+    groupPax = state.groupPax || 12;
+    // Show builder
+    document.getElementById('resumeBanner').style.display = 'none';
+    renderBuilder();
+    document.getElementById('setupPanel').style.display = 'none';
+    document.getElementById('builderSection').style.display = '';
+    document.getElementById('exportSection').style.display = '';
+    document.getElementById('topCopyBtn').style.display = '';
+    refreshExport();
+    window.scrollTo({top:0,behavior:'smooth'});
+  } catch(e){ toast('Could not restore saved schedule.'); }
+}
+
+function startFresh(){
+  if(!confirm('Start a new schedule? Your saved progress will be cleared.')) return;
+  localStorage.removeItem(LS_KEY);
+  document.getElementById('resumeBanner').style.display = 'none';
+}
+
 // ── INIT ──────────────────────────────────────────────────────────────────
 (function(){
+  // Default dates (next Sat → Thu)
   const today=new Date();
   const dSat=(6-today.getDay()+7)%7||7;
   const sat=new Date(today); sat.setDate(today.getDate()+dSat);
@@ -607,6 +700,22 @@ function toast(msg){
   const fmt=d=>d.toISOString().slice(0,10);
   document.getElementById('sArrival').value=fmt(sat);
   document.getElementById('sDeparture').value=fmt(thu);
+
+  // Check for saved schedule
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if(raw){
+      const s = JSON.parse(raw);
+      if(s && s.setup && s.setup.teacher && s.days && s.days.length){
+        const banner = document.getElementById('resumeBanner');
+        const d = new Date(s.savedAt);
+        const timeStr = d.toLocaleDateString('en-US',{month:'short',day:'numeric'})+' at '+d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+        document.getElementById('resumeName').textContent = s.setup.teacher + (s.setup.group ? ' — '+s.setup.group : '');
+        document.getElementById('resumeMeta').textContent = 'Last saved '+timeStr+' · '+s.days.length+' days';
+        banner.style.display = 'flex';
+      }
+    }
+  } catch(e){}
 })();
 </script>
 </body>
