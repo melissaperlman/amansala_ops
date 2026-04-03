@@ -136,6 +136,8 @@ select.approval-sel.change   {background-color:#fff3e0;color:#e65100;border:1px 
 .btn-copy-main:hover{background:#2e6264;}
 .btn-refresh{padding:11px 18px;background:var(--cream);color:var(--earth);border:1.5px solid var(--warm);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;font-weight:600;cursor:pointer;transition:all .2s;}
 .btn-refresh:hover{border-color:var(--teal);color:var(--teal);}
+.btn-email{padding:11px 22px;background:var(--clay);color:#fff;border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;font-weight:600;cursor:pointer;transition:background .2s;}
+.btn-email:hover{background:var(--earth);}
 .copy-ok{font-size:.75rem;color:var(--sage);font-weight:600;display:none;}
 .export-ta{width:100%;min-height:200px;padding:14px;border:1.5px solid var(--warm);border-radius:8px;font-family:monospace;font-size:.76rem;color:var(--deep);background:#fdfaf4;outline:none;resize:vertical;line-height:1.75;}
 
@@ -224,6 +226,7 @@ select.approval-sel.change   {background-color:#fff3e0;color:#e65100;border:1px 
   <div class="export-card">
     <div class="export-label">Your Schedule — ready to copy &amp; send</div>
     <div class="export-btns">
+      <button class="btn-email" onclick="emailSchedule()">✉ Send to Amansala</button>
       <button class="btn-copy-main" onclick="copySchedule()">Copy to Clipboard</button>
       <button class="btn-refresh" onclick="refreshExport()">Refresh</button>
       <span class="copy-ok" id="copyOk">✓ Copied!</span>
@@ -237,6 +240,7 @@ select.approval-sel.change   {background-color:#fff3e0;color:#e65100;border:1px 
 
 <script>
 // ── CONSTANTS ─────────────────────────────────────────────────────────────
+const AMANSALA_EMAIL = 'retreats@amansala.com'; // ← update this address as needed
 const ROOMS = ['Heaven','Grande','Chica','Beachfront','Sky','TBD'];
 const ROOM_LABELS = {Heaven:'Heaven',Grande:'Grande',Chica:'Chica',Beachfront:'Beachfront (BF)',Sky:'Sky',TBD:'TBD'};
 const SOUL_TYPES = ['Temazcal','Mayan Clay','Ice Bath','Cacao & Sound Healing'];
@@ -599,6 +603,27 @@ function copySchedule(){
 function showCopyOk(){
   const el=document.getElementById('copyOk');
   if(el){el.style.display='inline';setTimeout(()=>el.style.display='none',2500);}
+}
+
+function emailSchedule(){
+  refreshExport();
+  const body = document.getElementById('exportTa').value;
+  if(!body){toast('Build your schedule first.');return;}
+  const teacher = document.getElementById('sTeacher').value||'Teacher';
+  const group   = document.getElementById('sGroup').value||'';
+  const arr     = document.getElementById('sArrival').value||'';
+  const dep     = document.getElementById('sDeparture').value||'';
+  const datePart = arr && dep ? ` · ${arr} – ${dep}` : '';
+  const subject = `Schedule Submission — ${teacher}${group?' — '+group:''}${datePart}`;
+  const mailto = `mailto:${AMANSALA_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  // mailto has ~2000 char limit in some clients — fall back to copy + instructions if too long
+  if(mailto.length > 2000){
+    navigator.clipboard.writeText(body).then(()=>{
+      toast('Schedule copied! Paste it into an email to '+AMANSALA_EMAIL);
+    }).catch(()=>{ toast('Open your email and paste your schedule to '+AMANSALA_EMAIL); });
+    return;
+  }
+  window.location.href = mailto;
 }
 
 // ── UTILS ─────────────────────────────────────────────────────────────────
