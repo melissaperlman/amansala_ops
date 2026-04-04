@@ -4,15 +4,37 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Amansala · Teacher Schedule Form</title>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;500;600;700&family=Nunito:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-:root{--sand:#f7efe3;--warm:#ead9c4;--clay:#c4855a;--earth:#8b5e3c;--deep:#2e1f14;--teal:#3d7a7c;--sage:#6b9470;--cream:#fdf9f4;--white:#fff;--shadow:rgba(46,31,20,.10);--error:#c0392b;--error-bg:#fdf0ef;}
+:root{
+  --sand:#fdf3dc;
+  --warm:#f0d898;
+  --clay:#C9972A;
+  --earth:#8a6010;
+  --deep:#3d2800;
+  --teal:#b87c14;
+  --sage:#c9a84c;
+  --cream:#fffdf5;
+  --white:#fff;
+  --shadow:rgba(61,40,0,.10);
+  --error:#c0392b;
+  --error-bg:#fdf0ef;
+  --gold:#D4A020;
+  --amber:#E8A020;
+}
 *{margin:0;padding:0;box-sizing:border-box;}
-body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--deep);font-size:15px;}
+body{font-family:'Nunito',sans-serif;background:var(--cream);color:var(--deep);font-size:15px;}
+
+/* HERO */
+.form-hero{position:relative;width:100%;height:280px;overflow:hidden;margin-bottom:0;}
+.form-hero img{width:100%;height:100%;object-fit:cover;object-position:center 40%;}
+.form-hero-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,.18) 0%,rgba(0,0,0,.52) 100%);display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:32px;text-align:center;}
+.form-hero-overlay .logo{font-family:'Raleway',sans-serif;font-size:2.8rem;font-weight:300;letter-spacing:.16em;color:#fff;margin-bottom:4px;}
+.form-hero-overlay .sub{font-size:.62rem;letter-spacing:.36em;text-transform:uppercase;color:rgba(255,255,255,.75);}
 
 /* LOADING / ERROR */
 .state-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:80vh;padding:40px 24px;text-align:center;}
-.state-screen .logo{font-family:'Cormorant Garamond',serif;font-size:2.6rem;font-weight:300;letter-spacing:.12em;margin-bottom:6px;}
+.state-screen .logo{font-family:'Raleway',sans-serif;font-size:2.6rem;font-weight:300;letter-spacing:.12em;margin-bottom:6px;}
 .state-screen .sub{font-size:.68rem;color:var(--clay);letter-spacing:.32em;text-transform:uppercase;margin-bottom:40px;}
 .spinner{width:36px;height:36px;border:3px solid var(--warm);border-top-color:var(--clay);border-radius:50%;animation:spin .8s linear infinite;margin-bottom:20px;}
 @keyframes spin{to{transform:rotate(360deg);}}
@@ -22,13 +44,13 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--deep);
 /* DOC LAYOUT — matches leader schedule exactly */
 .doc-wrap{max-width:700px;margin:0 auto;padding:48px 28px 40px;}
 .doc-masthead{margin-bottom:36px;text-align:center;}
-.doc-resort{font-family:'Cormorant Garamond',serif;font-size:2.4rem;font-weight:300;letter-spacing:.14em;}
+.doc-resort{font-family:'Raleway',sans-serif;font-size:2.4rem;font-weight:300;letter-spacing:.14em;}
 .doc-subtitle{font-size:.68rem;letter-spacing:.28em;text-transform:uppercase;color:var(--clay);margin-top:8px;}
-.doc-leader-line{font-family:'Cormorant Garamond',serif;font-size:1.05rem;font-style:italic;color:var(--earth);margin-top:12px;}
+.doc-leader-line{font-family:'Raleway',sans-serif;font-size:1.05rem;font-style:italic;color:var(--earth);margin-top:12px;}
 .doc-rule{width:70px;height:1.5px;background:var(--clay);margin:14px auto 0;}
 
 .doc-day{margin-bottom:32px;}
-.doc-day-head{font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-weight:500;color:var(--deep);border-bottom:1.5px solid var(--deep);padding-bottom:5px;margin-bottom:4px;letter-spacing:.03em;}
+.doc-day-head{font-family:'Raleway',sans-serif;font-size:1.2rem;font-weight:500;color:var(--deep);border-bottom:1.5px solid var(--deep);padding-bottom:5px;margin-bottom:4px;letter-spacing:.03em;}
 
 .doc-row{display:flex;padding:8px 0;border-bottom:1px solid rgba(234,217,196,.45);line-height:1.5;font-size:.92rem;align-items:baseline;}
 .doc-row:last-child{border-bottom:none;}
@@ -80,18 +102,42 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--deep);
 @media(max-width:640px){.g2{grid-template-columns:1fr;}}
 
 /* SUBMIT */
-.gen-btn{width:100%;padding:16px;background:var(--deep);color:var(--sand);border:none;border-radius:9px;font-family:'DM Sans',sans-serif;font-size:.7rem;letter-spacing:.28em;text-transform:uppercase;cursor:pointer;transition:background .2s;margin-top:4px;}
-.gen-btn:hover{background:var(--earth);}
-.gen-btn:disabled{background:var(--warm);cursor:not-allowed;color:var(--earth);}
+.gen-btn{width:100%;padding:16px;background:linear-gradient(135deg,var(--amber),var(--gold));color:#fff;border:none;border-radius:30px;font-family:'Raleway',sans-serif;font-size:.72rem;font-weight:700;letter-spacing:.22em;text-transform:uppercase;cursor:pointer;transition:all .2s;margin-top:4px;box-shadow:0 4px 18px rgba(212,160,32,.35);}
+.gen-btn:hover{background:linear-gradient(135deg,var(--gold),var(--amber));box-shadow:0 6px 24px rgba(212,160,32,.5);transform:translateY(-1px);}
+.gen-btn:disabled{background:var(--warm);cursor:not-allowed;color:var(--earth);box-shadow:none;transform:none;}
 
 .server-error-banner{background:var(--error-bg);border:1.5px solid var(--error);border-radius:10px;padding:16px 20px;margin-bottom:18px;color:var(--error);font-size:.82rem;}
 .server-error-banner strong{display:block;margin-bottom:4px;}
 .server-error-banner ul{margin:8px 0 0 20px;}
 
+/* ROOM REQUEST */
+.room-request-btn{background:none;border:1px solid rgba(212,160,32,.4);border-radius:12px;color:var(--clay);font-family:'Raleway',sans-serif;font-size:.65rem;font-weight:600;padding:3px 9px;cursor:pointer;letter-spacing:.06em;transition:all .15s;vertical-align:middle;}
+.room-request-btn:hover{border-color:var(--gold);color:var(--gold);}
+.room-request-btn.room-request-active{background:var(--gold);border-color:var(--gold);color:#fff;}
+.room-pending-badge{display:inline-block;font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;font-weight:700;padding:3px 9px;border-radius:12px;background:#fff8e1;color:#b8860b;border:1px solid #f0c040;vertical-align:middle;margin-left:6px;}
+.room-request-note-wrap{display:block;margin-top:6px;}
+.room-request-note{width:100%;border:1px dashed rgba(212,160,32,.4);border-radius:6px;background:#fffdf5;font-family:'Nunito',sans-serif;font-size:.78rem;color:var(--deep);padding:6px 10px;outline:none;transition:border-color .15s;}
+.room-request-note:focus{border-color:var(--gold);border-style:solid;}
+.room-request-note::placeholder{color:rgba(138,96,16,.4);font-style:italic;}
+.room-pending-note{border:none;border-bottom:1px dashed rgba(212,160,32,.5);background:transparent;font-family:'Nunito',sans-serif;font-size:.75rem;color:var(--deep);padding:2px 6px;outline:none;width:200px;vertical-align:middle;margin-left:6px;}
+.room-pending-note:focus{border-bottom-color:var(--gold);border-bottom-style:solid;}
+.room-pending-note::placeholder{color:rgba(138,96,16,.4);font-style:italic;}
+.room-approve-btn{background:none;border:1.5px solid #a5d6a7;border-radius:12px;color:#2e7d32;font-family:'Raleway',sans-serif;font-size:.65rem;font-weight:600;padding:3px 10px;cursor:pointer;letter-spacing:.04em;transition:all .15s;vertical-align:middle;margin-left:4px;}
+.room-approve-btn:hover{background:#e8f5e9;}
+.room-approve-btn.room-approve-active{background:#2e7d32;border-color:#2e7d32;color:#fff;}
+
+/* ADD ROW */
+.add-row-wrap{padding:6px 0 10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.add-row-btn{background:none;border:1.5px dashed rgba(212,160,32,.5);border-radius:20px;color:var(--gold);font-family:'Raleway',sans-serif;font-size:.72rem;font-weight:600;padding:5px 16px;cursor:pointer;letter-spacing:.06em;transition:all .15s;}
+.add-row-btn:hover{background:rgba(212,160,32,.08);border-color:var(--gold);}
+.add-row-opts{display:flex;gap:6px;flex-wrap:wrap;}
+.add-row-opt{background:#fff;border:1.5px solid var(--warm);border-radius:20px;color:var(--earth);font-family:'Raleway',sans-serif;font-size:.7rem;font-weight:600;padding:5px 14px;cursor:pointer;transition:all .15s;letter-spacing:.04em;}
+.add-row-opt:hover{border-color:var(--gold);color:var(--gold);background:#fffbf0;}
+
 /* CONFIRMATION */
 .confirmation{text-align:center;padding:60px 24px;}
 .confirmation .check{width:64px;height:64px;border-radius:50%;background:rgba(107,148,112,.15);color:var(--sage);font-size:32px;display:flex;align-items:center;justify-content:center;margin:0 auto 24px;}
-.confirmation h2{font-family:'Cormorant Garamond',serif;font-size:1.8rem;font-weight:300;letter-spacing:.06em;margin-bottom:12px;}
+.confirmation h2{font-family:'Raleway',sans-serif;font-size:1.8rem;font-weight:300;letter-spacing:.06em;margin-bottom:12px;}
 .confirmation p{font-size:.85rem;color:var(--earth);max-width:440px;margin:0 auto;line-height:1.65;}
 
 @media(max-width:600px){
@@ -123,10 +169,18 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--deep);
 <!-- MAIN FORM -->
 <div id="form-app" style="display:none;">
 
+  <!-- HERO IMAGE -->
+  <div class="form-hero">
+    <img src="skye-shala.jpg" alt="Amansala Shala">
+    <div class="form-hero-overlay">
+      <div class="logo">Amansala</div>
+      <div class="sub">Retreat Schedule Form</div>
+    </div>
+  </div>
+
   <!-- SCHEDULE AS ITINERARY -->
   <div class="doc-wrap">
-    <div class="doc-masthead">
-      <div class="doc-resort">Amansala</div>
+    <div class="doc-masthead" style="margin-top:8px;">
       <div class="doc-subtitle" id="hdr-dates2"></div>
       <div class="doc-leader-line" id="hdr-leader"></div>
       <div class="doc-rule"></div>
@@ -134,21 +188,36 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--deep);
 
     <div id="server-error-banner" class="server-error-banner" style="display:none;"></div>
 
+    <!-- GROUP INFO — top of form -->
+    <div class="info-card" style="margin-bottom:24px">
+      <div class="card-title">Group Information</div>
+      <div class="g2">
+        <div class="f"><label>Retreat Name</label><input id="iName" type="text" readonly></div>
+        <div class="f"><label>Estimated Group Size <span style="font-size:.6rem;letter-spacing:0;text-transform:none;font-weight:400;color:var(--clay)">(to be confirmed closer to date)</span></label><input id="iSize" type="text" readonly></div>
+        <div class="f"><label>Retreat Dates</label><input id="iDates" type="text" readonly></div>
+        <div class="f"><label>Leader Name</label><input id="iCoord" type="text" placeholder="e.g. Maria"></div>
+        <div class="f full"><label>Theme of Retreat</label><textarea id="iNotes" placeholder="e.g. Yin & Restorative, Sound Healing Journey, Vinyasa Flow & Breathwork..."></textarea></div>
+      </div>
+    </div>
+
+    <!-- DAILY MEAL SCHEDULE -->
+    <div class="info-card" style="margin-bottom:28px">
+      <div class="card-title">Daily Meal Schedule</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px 24px;font-size:.88rem;">
+        <div><span style="color:var(--teal);font-weight:500">7:00 AM</span> &nbsp; Light Breakfast</div>
+        <div><span style="color:var(--teal);font-weight:500">10:30 AM</span> &nbsp; Brunch</div>
+        <div><span style="color:var(--teal);font-weight:500">2:30 PM</span> &nbsp; Snack</div>
+        <div><span style="color:var(--teal);font-weight:500">7:30 PM</span> &nbsp; Dinner</div>
+      </div>
+      <div style="margin-top:10px;font-size:.78rem;color:var(--earth);font-style:italic">Arrival day: Welcome snack at 2:30 PM · Departure day: Brunch at 10:30 AM</div>
+    </div>
+
     <!-- INLINE SCHEDULE — built by JS -->
     <div id="scheduleArea"></div>
 
-    <!-- GROUP INFO (collapsible) -->
+    <!-- DIETARY INFO -->
     <div style="margin-top:36px;border-top:1.5px solid var(--warm);padding-top:24px">
       <div class="info-card">
-        <div class="card-title">Group Information &amp; Special Needs</div>
-        <div class="g2">
-          <div class="f"><label>Leader / Group Name</label><input id="iName" type="text" readonly></div>
-          <div class="f"><label>Group Size</label><input id="iSize" type="text" readonly></div>
-          <div class="f"><label>Retreat Dates</label><input id="iDates" type="text" readonly></div>
-          <div class="f"><label>Group Leader</label><input id="iCoord" type="text" placeholder="e.g. Maria"></div>
-          <div class="f full"><label>Any Special Needs?</label><textarea id="iNotes" placeholder="e.g. Need bluetooth speaker, mats in circle, bolsters, candles..."></textarea></div>
-        </div>
-      </div>
 
       <div class="info-card">
         <div class="card-title">Dietary &amp; Allergy Information</div>
@@ -209,7 +278,14 @@ var DDAYS = [
 document.addEventListener('DOMContentLoaded', function(){
   var params = new URLSearchParams(window.location.search);
   TOKEN = params.get('token') || '';
-  if(!TOKEN){ showError('This link is missing a token parameter. Please use the link from your email.'); return; }
+  if(!TOKEN || TOKEN === 'demo'){
+    FORM_DATA = {
+      teacher: { name: 'Sarah Mitchell' },
+      group: { name: 'Yoga & Soul Retreat', pax: 14, arrival_date: '2026-05-10', departure_date: '2026-05-15' }
+    };
+    renderForm();
+    return;
+  }
   loadFormData();
 });
 
@@ -261,8 +337,25 @@ function classNameInput(id, placeholder){
 }
 function roomOpts(id, val){
   var h='<select class="e-sel" id="'+id+'">';
-  ROOMS.forEach(function(r){ h+='<option value="'+r+'"'+(r===val?' selected':'')+'>'+(r||'— Room —')+'</option>'; });
+  h+='<option value="tbd"'+((!val||val==='tbd')?' selected':'')+'>TBD</option>';
+  ROOMS.forEach(function(r){ if(!r) return; h+='<option value="'+r+'"'+(r===val?' selected':'')+'>'+(r||'— Room —')+'</option>'; });
   return h+'</select>';
+}
+function roomRequestBtn(id){ return ''; }
+function approveRoom(btn, id){
+  var badge = document.getElementById(id+'_badge');
+  var approved = btn.classList.toggle('room-approve-active');
+  badge.textContent = approved ? 'Approved' : 'Pending Approval';
+  badge.style.background = approved ? '#e8f5e9' : '';
+  badge.style.color = approved ? '#2e7d32' : '';
+  badge.style.borderColor = approved ? '#a5d6a7' : '';
+  btn.textContent = approved ? '✓ Approved' : '✓ Approve';
+}
+function toggleRoomRequest(btn, id){
+  var active = btn.classList.toggle('room-request-active');
+  var row = document.getElementById(id+'_pendingrow');
+  if(row) row.style.display = active ? 'block' : 'none';
+  btn.title = active ? 'Room requested — we\'ll do our best!' : 'Request this specific room';
 }
 function tourOpts(id){
   return '<select class="e-sel" id="'+id+'" style="color:var(--deep);font-weight:500">'
@@ -282,6 +375,27 @@ function expOpts(id){
     +'<option value="sound">Sound Healing</option>'
     +'</select>';
 }
+var extraCount = {};
+function showAddOpts(i, btn){
+  var opts = document.getElementById('add_opts_'+i);
+  var showing = opts.style.display !== 'none';
+  opts.style.display = showing ? 'none' : '';
+  btn.textContent = showing ? '+ Add' : '✕ Cancel';
+}
+function addExtra(i, type){
+  var key = i+'_'+type;
+  extraCount[key] = (extraCount[key]||0) + 1;
+  var pfx = 'd'+i+'_x'+type+extraCount[key];
+  var container = document.getElementById('day_rows_'+i);
+  var div = document.createElement('div');
+  if(type==='class') div.innerHTML = classRow(pfx,'','','','');
+  else if(type==='tour') div.innerHTML = tourRow(pfx);
+  else div.innerHTML = expRow(pfx);
+  container.appendChild(div.firstChild);
+  document.getElementById('add_opts_'+i).style.display='none';
+  document.querySelector('#add_opts_'+i).previousElementSibling.textContent='+ Add';
+}
+
 function autoExp(sel){
   var pfx=sel.id.replace('_exp',''), el=document.getElementById(pfx+'_exp_time');
   if(!el) return;
@@ -328,7 +442,8 @@ function classRow(pfx, startVal, endVal, roomVal, defaultName){
     +'<span class="doc-time">'+timeSel(pfx+'_s',startVal)+' – '+timeSel(pfx+'_e',endVal)+'</span>'
     +'<span class="doc-sep">|</span>'
     +'<span class="doc-main">'
-    +'<span class="doc-event">'+classNameInput(pfx+'_name', defaultName||'e.g. Vinyasa Flow, Yin Yoga…')+' &nbsp;'+roomOpts(pfx+'_r',roomVal)+' '+confirmSel(pfx+'_confirm')+'</span>'
+    +'<span class="doc-event">'+classNameInput(pfx+'_name', defaultName||'e.g. Vinyasa Flow, Yin Yoga…')+' &nbsp;'+roomOpts(pfx+'_r',roomVal)+' <button type="button" class="room-request-btn" id="'+pfx+'_req" onclick="toggleRoomRequest(this,\''+pfx+'_req\')" title="Request this specific room">Request</button></span>'
+    +'<span class="doc-sub" id="'+pfx+'_req_pendingrow" style="display:none"><span class="room-pending-badge" id="'+pfx+'_req_badge">Pending Approval</span> <input type="text" class="room-pending-note" id="'+pfx+'_req_pnote" placeholder="Leave a note e.g. can do Sky if Heaven unavailable..." /> <button type="button" class="room-approve-btn" id="'+pfx+'_req_appbtn" onclick="approveRoom(this,\''+pfx+'_req\')">✓ Approve</button></span>'
     +'<span class="doc-sub">'+noise(pfx)+' &nbsp; '+notesInput(pfx+'_notes')+'</span>'
     +'</span>'
     +'</div>';
@@ -369,28 +484,31 @@ function buildSchedule(){
 
     html += '<div class="doc-day">';
     html += '<div class="doc-day-head">'+d.lbl+dateLbl+'</div>';
+    html += '<div id="day_rows_'+i+'">';
 
     if(d.type === 'arrival'){
-      html += fixedRow('14:30','Welcome Snack');
       html += classRow('d'+i+'_a','19:00','20:00','Heaven','Opening Ceremony | Welcome Amansala');
-      html += fixedRow('19:30','Dinner');
 
     } else if(d.type === 'departure'){
-      html += fixedRow('07:00','Light Breakfast');
       html += classRow('d'+i+'_m',d.ms,d.me,d.mr,'Morning Class');
-      html += fixedRow('10:30','Brunch');
       html += '<div class="doc-row"><span class="doc-time"></span><span class="doc-sep"></span><span class="doc-main"><span class="doc-event" style="font-style:italic;color:var(--earth)">Departures — Wishing you safe travels</span></span></div>';
 
     } else {
-      html += fixedRow('07:00','Light Breakfast');
       html += classRow('d'+i+'_m',d.ms,d.me,d.mr,'Morning Class');
-      html += fixedRow('10:30','Brunch');
       html += tourRow('d'+i);
-      html += fixedRow('14:30','Snack');
       html += classRow('d'+i+'_a',d.as,d.ae,d.ar,'Afternoon Class');
       html += expRow('d'+i);
-      html += fixedRow('19:30','Dinner');
     }
+
+    html += '</div>';
+    html += '<div class="add-row-wrap">'
+      +'<button class="add-row-btn" onclick="showAddOpts('+i+',this)">+ Add</button>'
+      +'<div class="add-row-opts" id="add_opts_'+i+'" style="display:none">'
+      +'<button class="add-row-opt" onclick="addExtra('+i+',\'class\')">Class</button>'
+      +'<button class="add-row-opt" onclick="addExtra('+i+',\'tour\')">Tour</button>'
+      +'<button class="add-row-opt" onclick="addExtra('+i+',\'soul\')">Soul Service</button>'
+      +'</div>'
+      +'</div>';
 
     html += '</div>';
   });
