@@ -42,6 +42,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--deep);
 /* INLINE EDITABLE ELEMENTS — blend into doc-row */
 .e-time{border:none;border-bottom:1.5px dashed rgba(61,122,124,.35);background:transparent;font-family:'DM Sans',sans-serif;font-size:.88rem;color:var(--teal);font-weight:500;padding:2px 2px;outline:none;width:82px;cursor:pointer;}
 .e-time:focus{border-bottom-color:var(--teal);border-bottom-style:solid;}
+.e-time-sel{border:none;border-bottom:1.5px dashed rgba(61,122,124,.35);background:transparent;font-family:'DM Sans',sans-serif;font-size:.88rem;color:var(--teal);font-weight:500;padding:2px 16px 2px 2px;outline:none;cursor:pointer;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%233d7a7c'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 2px center;}
+.e-time-sel:focus{border-bottom-color:var(--teal);border-bottom-style:solid;}
+.e-classname{border:none;border-bottom:1.5px dashed rgba(196,133,90,.5);background:transparent;font-family:'DM Sans',sans-serif;font-size:.92rem;color:var(--deep);font-weight:500;padding:2px 2px;outline:none;min-width:180px;max-width:280px;}
+.e-classname:focus{border-bottom-color:var(--teal);border-bottom-style:solid;}
+.e-classname::placeholder{color:rgba(139,94,60,.4);font-style:italic;font-weight:400;}
 .e-status{border:1.5px solid var(--warm);border-radius:5px;background:var(--cream);font-family:'DM Sans',sans-serif;font-size:.75rem;color:var(--earth);font-weight:600;padding:4px 8px;outline:none;cursor:pointer;margin-left:8px;}
 .e-status:focus{border-color:var(--teal);}
 .e-confirm{border:1.5px solid var(--warm);border-radius:5px;background:var(--cream);font-family:'DM Sans',sans-serif;font-size:.75rem;color:var(--earth);font-weight:600;padding:4px 8px;outline:none;cursor:pointer;margin-left:8px;}
@@ -185,7 +190,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--deep);
 </div>
 
 <script>
-var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxnhymPPYBM6lXJFgCvemGQJaCyg7sJhHJ7ePGnutRMS3_Im_njyzbXOKKP6vmuxMoP7w/exec';
+var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzK1WZMw3wH0uqF0XAjxrqUtUngZ1UjShlGln1YmCNtjVhnSk3MzcdCAJWf7gjqkZyYzw/exec';
 var TOKEN = '';
 var FORM_DATA = null;
 
@@ -240,7 +245,19 @@ function formatDateShort(ds){
 }
 
 function timeSel(id, val){
-  return '<input type="time" class="e-time" id="'+id+'" value="'+(val||'')+'">';
+  // Generate every 15 min from 6:00 AM to 10:00 PM
+  var opts = '';
+  for(var h=6;h<=22;h++){
+    for(var m=0;m<60;m+=15){
+      var t = String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');
+      var sel = (t===val) ? ' selected' : '';
+      opts += '<option value="'+t+'"'+sel+'>'+fmt(t)+'</option>';
+    }
+  }
+  return '<select class="e-time-sel" id="'+id+'"><option value="">—</option>'+opts+'</select>';
+}
+function classNameInput(id, placeholder){
+  return '<input type="text" class="e-classname" id="'+id+'" placeholder="'+(placeholder||'Class name...')+'">';
 }
 function roomOpts(id, val){
   var h='<select class="e-sel" id="'+id+'">';
@@ -306,12 +323,12 @@ function fixedRow(time, label){
 }
 
 // ── CLASS ROW (editable) ────────────────────────────────────────────────
-function classRow(pfx, startVal, endVal, roomVal, label){
+function classRow(pfx, startVal, endVal, roomVal, defaultName){
   return '<div class="doc-row" style="align-items:flex-start">'
     +'<span class="doc-time">'+timeSel(pfx+'_s',startVal)+' – '+timeSel(pfx+'_e',endVal)+'</span>'
     +'<span class="doc-sep">|</span>'
     +'<span class="doc-main">'
-    +'<span class="doc-event">'+label+' | '+roomOpts(pfx+'_r',roomVal)+' '+confirmSel(pfx+'_confirm')+'</span>'
+    +'<span class="doc-event">'+classNameInput(pfx+'_name', defaultName||'e.g. Vinyasa Flow, Yin Yoga…')+' &nbsp;'+roomOpts(pfx+'_r',roomVal)+' '+confirmSel(pfx+'_confirm')+'</span>'
     +'<span class="doc-sub">'+noise(pfx)+' &nbsp; '+notesInput(pfx+'_notes')+'</span>'
     +'</span>'
     +'</div>';
@@ -403,16 +420,19 @@ function collectFormData(){
     var day={dayIndex:i, label:d.lbl, type:d.type};
     if(d.type==='arrival'){
       day.ceremony={start:gv('d'+i+'_a_s'),end:gv('d'+i+'_a_e'),room:gv('d'+i+'_a_r'),
+        name:gv('d'+i+'_a_name'),
         confirm:gv('d'+i+'_a_confirm'),
         noise:(document.querySelector('input[name="d'+i+'_a_noise"]:checked')||{}).value||'medium',
         notes:gv('d'+i+'_a_notes')};
     } else {
       day.morning={start:gv('d'+i+'_m_s'),end:gv('d'+i+'_m_e'),room:gv('d'+i+'_m_r'),
+        name:gv('d'+i+'_m_name'),
         confirm:gv('d'+i+'_m_confirm'),
         noise:(document.querySelector('input[name="d'+i+'_m_noise"]:checked')||{}).value||'medium',
         notes:gv('d'+i+'_m_notes')};
       if(d.type==='full'){
         day.afternoon={start:gv('d'+i+'_a_s'),end:gv('d'+i+'_a_e'),room:gv('d'+i+'_a_r'),
+          name:gv('d'+i+'_a_name'),
           confirm:gv('d'+i+'_a_confirm'),
           noise:(document.querySelector('input[name="d'+i+'_a_noise"]:checked')||{}).value||'medium',
           notes:gv('d'+i+'_a_notes')};

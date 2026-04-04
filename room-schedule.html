@@ -401,6 +401,7 @@
     <button class="btn-new-week" onclick="openNewWeekModal()" style="margin-left:auto">🗓 New Week</button>
     <button class="btn-import" onclick="openScheduleImport()" style="background:#e8f5e9;border-color:#81c784;color:#2e7d32">+ Add Group Schedule</button>
     <button class="btn-import" onclick="openTransportImport()" style="background:#e8eaf6;border-color:#9fa8da;color:#283593">+ Add Transport</button>
+    <button class="btn-import" onclick="openFormImportModal()" style="background:#fff3e0;border-color:#ffb74d;color:#e65100">+ Teacher Form Import</button>
   </div>
   <div class="tabs">
     <button class="tab" onclick="switchTab(&#39;retreats&#39;)">All Retreats</button>
@@ -790,6 +791,35 @@ Sunday March 22
       <button class="import-btn import-btn-cancel" onclick="closeScheduleImport()">Cancel</button>
       <button class="import-btn import-btn-primary" id="isFetchBtn" onclick="fetchScheduleDoc()">Import Schedule</button>
       <button class="import-btn import-btn-primary" id="isAddBtn" onclick="addParsedSchedule()" style="display:none;background:var(--green)">Add to Schedule</button>
+    </div>
+  </div>
+</div>
+
+<!-- TEACHER FORM IMPORT MODAL -->
+<div class="modal-overlay" id="formImportOverlay" style="display:none">
+  <div class="modal" style="max-width:580px">
+    <div class="modal-title">📝 Import from Teacher Form</div>
+    <div style="background:#fff8ee;border:1.5px solid #ffcc80;border-radius:8px;padding:12px 14px;font-size:13px;line-height:1.8;margin-bottom:14px">
+      <strong style="color:#e65100">In Google Sheets (Form Responses tab):</strong><br>
+      1. Select all — <strong>Cmd+A</strong><br>
+      2. Copy — <strong>Cmd+C</strong><br>
+      3. Paste below and click Import<br>
+      <span style="color:#888;font-size:11px">Expected columns: Timestamp · Teacher · Group · Date · Start · End · Room · Class Name · Type · Included/Optional · Notes</span>
+    </div>
+    <div style="margin-bottom:12px">
+      <label class="form-label">Assign to group (optional — auto-detected)</label>
+      <select id="formImportGroup" style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit">
+        <option value="">← auto-detect from form</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label class="form-label">Paste form responses here</label>
+      <textarea id="formImportPaste" rows="8" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;font-family:monospace;box-sizing:border-box;resize:vertical" placeholder="Paste here (Cmd+V / Ctrl+V)…"></textarea>
+    </div>
+    <div id="formImportStatus" style="font-size:13px;min-height:20px;margin-bottom:8px"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeFormImportModal()">Cancel</button>
+      <button class="btn-save" onclick="importFromTeacherForm()">✅ Import into Schedule</button>
     </div>
   </div>
 </div>
@@ -2589,6 +2619,110 @@ function openSheetImportModal(){
 }
 function closeSheetImportModal(){
   document.getElementById('sheetImportOverlay').style.display='none';
+}
+
+// ── TEACHER FORM IMPORT ──────────────────────────────────────────────────────
+
+function openFormImportModal(){
+  document.getElementById('formImportOverlay').style.display='flex';
+  document.getElementById('formImportPaste').value='';
+  document.getElementById('formImportStatus').textContent='';
+  const sel = document.getElementById('formImportGroup');
+  sel.innerHTML = '<option value="">← auto-detect from form</option>' +
+    GROUPS.filter(g => g.id !== 'all' && !g.removed).map(g =>
+      `<option value="${g.id}">${g.label}</option>`
+    ).join('');
+}
+
+function closeFormImportModal(){
+  document.getElementById('formImportOverlay').style.display='none';
+}
+
+function parseDateToDayKey(str){
+  if(!str) return null;
+  let d = null;
+  if(/^\d{4}-\d{2}-\d{2}/.test(str)){
+    const [y,mo,da] = str.split('-').map(Number);
+    d = new Date(y, mo-1, da);
+  } else if(/^\d{1,2}\/\d{1,2}\/\d{4}/.test(str)){
+    const [mo,da,y] = str.split('/').map(Number);
+    d = new Date(y, mo-1, da);
+  } else {
+    const months = {january:0,february:1,march:2,april:3,may:4,june:5,july:6,august:7,september:8,october:9,november:10,december:11,jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11};
+    const m = str.match(/([a-z]+)\s+(\d+)[,\s]+(\d{4})/i);
+    if(m){ const mo = months[m[1].toLowerCase()]; if(mo!==undefined) d=new Date(parseInt(m[3]),mo,parseInt(m[2])); }
+  }
+  if(!d || isNaN(d.getTime())) return null;
+  const key = `${_DS[d.getDay()]} ${d.getDate()}`;
+  if(!DAY_LABELS[key]) DAY_LABELS[key] = `${_DF[d.getDay()]}, ${_MF[d.getMonth()]} ${d.getDate()}`;
+  return key;
+}
+
+function importFromTeacherForm(){
+  const raw = document.getElementById('formImportPaste').value.trim();
+  const forceGroup = document.getElementById('formImportGroup').value;
+  const statusEl = document.getElementById('formImportStatus');
+  if(!raw){ statusEl.innerHTML='<span style="color:#c62828">Nothing pasted yet.</span>'; return; }
+
+  const rows = raw.split('\n').map(l=>l.trim()).filter(l=>l);
+  if(rows.length < 2){ statusEl.innerHTML='<span style="color:#c62828">Not enough rows — paste the full sheet including the header row.</span>'; return; }
+
+  // Support tab-separated (copied from Sheets) or comma-separated
+  const parsed = rows.map(r => r.includes('\t') ? r.split('\t') : parseCSVLine(r));
+  const dataRows = parsed.slice(1); // skip header
+
+  // Column order (matches Google Form):
+  // 0:Timestamp  1:Teacher  2:Group  3:Date  4:Start  5:End  6:Room  7:Class Name  8:Type  9:Included/Optional  10:Notes
+  let added=0, skipped=0;
+  const newBookings=[];
+  let nextId = Math.max(...bookings.map(b=>b.id), 600) + 1;
+
+  dataRows.forEach(r => {
+    const teacher    = (r[1]||'').trim();
+    const groupName  = (r[2]||'').trim();
+    const dateStr    = (r[3]||'').trim();
+    const startStr   = (r[4]||'').trim();
+    const endStr     = (r[5]||'').trim();
+    const roomRaw    = (r[6]||'').trim();
+    const title      = (r[7]||'').trim();
+    const typeRaw    = (r[8]||'classes').trim().toLowerCase();
+    const optionalRaw= (r[9]||'included').trim().toLowerCase();
+    const notes      = (r[10]||'').trim();
+
+    if(!title || !startStr || !dateStr){ skipped++; return; }
+
+    const day = parseDateToDayKey(dateStr);
+    if(!day){ skipped++; return; }
+
+    const start = parseTime(startStr);
+    if(!start){ skipped++; return; }
+    const end = endStr ? parseTime(endStr) : addMinutes(start, 60);
+
+    const room = normalizeRoom(roomRaw);
+    const category = typeRaw.includes('tour') ? 'tours' : typeRaw.includes('soul') ? 'soul' : 'classes';
+    const optional = optionalRaw.includes('optional');
+
+    let groupId = forceGroup;
+    if(!groupId){
+      const gLower = groupName.toLowerCase().split(' ')[0];
+      const match = GROUPS.find(g => g.id!=='all' && !g.removed && g.label.toLowerCase().includes(gLower));
+      groupId = match ? match.id : (groupName.toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,12)||'newgroup');
+    }
+
+    newBookings.push({ id:nextId++, group:groupId, day, start, end, title, subtitle:'', teacher, room, pax:12, notes, status:'pending', category, optional });
+    added++;
+  });
+
+  if(added===0){
+    statusEl.innerHTML='<span style="color:#c62828">No valid rows found. Check that your columns are: Timestamp, Teacher, Group, Date, Start Time, End Time, Room, Class Name, Type, Included/Optional, Notes.</span>';
+    return;
+  }
+
+  ensureBookingDaysExist(newBookings);
+  bookings.push(...newBookings);
+  render();
+  closeFormImportModal();
+  alert(`✅ Imported ${added} item${added!==1?'s':''}${skipped?' · '+skipped+' rows skipped':''} — marked as Pending for review.`);
 }
 function showSheetStep(n){
   document.getElementById('sheetStep1').style.display = n===1?'block':'none';
