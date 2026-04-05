@@ -602,15 +602,22 @@ function showServerErrors(json){
 }
 
 function renderConfirmation(){
-  document.getElementById('loading-screen').style.display='none';
-  document.getElementById('form-app').style.display='none';
-  document.getElementById('confirmation-screen').style.display='';
-  var link = document.getElementById('conf-link');
-  if(link){ link.href=window.location.href; link.textContent=window.location.href; }
-  if(FORM_DATA){
-    var teacherEl = document.getElementById('conf-teacher');
-    if(teacherEl) teacherEl.textContent = (FORM_DATA.teacher&&FORM_DATA.teacher.name)||'';
-  }
+  var teacherName = (FORM_DATA&&FORM_DATA.teacher&&FORM_DATA.teacher.name)||'';
+  var pageUrl = window.location.href;
+  document.body.innerHTML = '<div style="background:#fffdf5;min-height:100vh;font-family:Raleway,sans-serif;display:flex;align-items:center;justify-content:center;padding:40px 20px;">'
+    +'<div style="max-width:520px;width:100%;text-align:center;">'
+    +'<div style="font-size:2.2rem;font-weight:300;letter-spacing:.14em;color:#3d2800;margin-bottom:4px;">Amansala</div>'
+    +'<div style="font-size:.6rem;letter-spacing:.36em;text-transform:uppercase;color:#C9972A;margin-bottom:40px;">Tulum</div>'
+    +(teacherName?'<div style="font-style:italic;color:#8a6010;margin-bottom:32px;">'+teacherName+'</div>':'')
+    +'<div style="width:60px;height:60px;border-radius:50%;background:rgba(212,160,32,.15);color:#C9972A;font-size:28px;line-height:60px;margin:0 auto 24px;">✓</div>'
+    +'<h2 style="font-size:1.8rem;font-weight:400;color:#3d2800;margin-bottom:16px;">Thank You!</h2>'
+    +'<p style="font-size:.95rem;color:#8a6010;line-height:1.8;margin-bottom:28px;">Your schedule has been submitted successfully. Our team will review your schedule and get back to you shortly.</p>'
+    +'<div style="background:#fff8e8;border:1px solid #f0d898;border-radius:10px;padding:18px 20px;font-size:.82rem;color:#8a6010;line-height:1.8;text-align:left;">'
+    +'<strong style="display:block;margin-bottom:6px;color:#3d2800;">Save your schedule link</strong>'
+    +'Please bookmark this link to return to your schedule at any time:<br>'
+    +'<a href="'+pageUrl+'" style="color:#C9972A;word-break:break-all;font-size:.78rem;">'+pageUrl+'</a>'
+    +'</div>'
+    +'</div></div>';
 }
 </script>
 </body>
