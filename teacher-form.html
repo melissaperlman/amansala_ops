@@ -296,8 +296,7 @@ async function loadFormData(){
     var json = await resp.json();
     if(!json.success){ showError(json.error||'This link is not valid.'); return; }
     FORM_DATA = json.data;
-    if(FORM_DATA.alreadySubmitted) renderConfirmation();
-    else renderForm();
+    renderForm();
   } catch(e){ showError('Could not connect to the server. Please try again later.'); }
 }
 
@@ -528,8 +527,91 @@ function renderForm(){
 
   buildSchedule();
 
+  if(FORM_DATA.alreadySubmitted){
+    restoreFromSubmission();
+    showSubmittedBanner();
+  }
+
   document.getElementById('loading-screen').style.display='none';
   document.getElementById('form-app').style.display='';
+}
+
+function showSubmittedBanner(){
+  var sd = FORM_DATA.submissionData;
+  var status = sd ? (sd.status||'submitted') : 'submitted';
+  var statusColors = {
+    submitted: {bg:'#fff8e1', border:'#f0c040', color:'#8a6010', label:'Submitted — Awaiting Review'},
+    approved:  {bg:'#e8f5e9', border:'#a5d6a7', color:'#2e7d32', label:'Approved by Amansala Team'},
+    declined:  {bg:'#fdf0ef', border:'#f5c6c3', color:'#c0392b', label:'Not Approved — Please Update & Resubmit'}
+  };
+  var sc = statusColors[status] || statusColors.submitted;
+  var banner = document.createElement('div');
+  banner.style.cssText = 'background:'+sc.bg+';border:1.5px solid '+sc.border+';border-radius:10px;padding:14px 18px;margin-bottom:20px;font-size:.85rem;color:'+sc.color+';line-height:1.6;';
+  banner.innerHTML = '<strong style="display:block;margin-bottom:3px;">'+sc.label+'</strong>'
+    +(status==='submitted'?'Your schedule is under review. You can make changes below and resubmit.'
+     :status==='approved'?'Your schedule has been approved. You can still make changes and resubmit if needed.'
+     :'Please review the schedule below, make any needed changes, and resubmit.');
+  var area = document.getElementById('scheduleArea');
+  area.parentNode.insertBefore(banner, area);
+  var btn = document.getElementById('submit-btn');
+  if(btn) btn.textContent = status==='declined' ? '\u2726 Update & Resubmit Schedule' : '\u2726 Update My Schedule';
+}
+
+function setVal(id, val){
+  var el = document.getElementById(id);
+  if(el && val !== undefined && val !== null && val !== '') el.value = val;
+}
+
+function restoreFromSubmission(){
+  var sd = FORM_DATA && FORM_DATA.submissionData;
+  if(!sd || !sd.form_data_json) return;
+  var payload;
+  try { payload = JSON.parse(sd.form_data_json); } catch(e){ return; }
+
+  // General fields
+  var sched = payload.schedule_data || {};
+  if(sched.coordinator) setVal('iCoord', sched.coordinator);
+  if(payload.general_notes || sched.notes) setVal('iNotes', payload.general_notes || sched.notes);
+  if(payload.vegans) setVal('dVegan', payload.vegans);
+  if(payload.vegetarians) setVal('dVeg', payload.vegetarians);
+  if(payload.allergies) setVal('dAllergy', payload.allergies);
+
+  // Schedule days
+  var days = (sched.days || []);
+  days.forEach(function(day){
+    var i = day.dayIndex;
+    if(day.ceremony){
+      setVal('d'+i+'_a_s', day.ceremony.start);
+      setVal('d'+i+'_a_e', day.ceremony.end);
+      setVal('d'+i+'_a_r', day.ceremony.room);
+      setVal('d'+i+'_a_name', day.ceremony.name);
+      setVal('d'+i+'_a_notes', day.ceremony.notes);
+    }
+    if(day.morning){
+      setVal('d'+i+'_m_s', day.morning.start);
+      setVal('d'+i+'_m_e', day.morning.end);
+      setVal('d'+i+'_m_r', day.morning.room);
+      setVal('d'+i+'_m_name', day.morning.name);
+      setVal('d'+i+'_m_notes', day.morning.notes);
+    }
+    if(day.afternoon){
+      setVal('d'+i+'_a_s', day.afternoon.start);
+      setVal('d'+i+'_a_e', day.afternoon.end);
+      setVal('d'+i+'_a_r', day.afternoon.room);
+      setVal('d'+i+'_a_name', day.afternoon.name);
+      setVal('d'+i+'_a_notes', day.afternoon.notes);
+    }
+    if(day.tour && day.tour.type){
+      setVal('d'+i+'_tour', day.tour.type);
+      setVal('d'+i+'_tour_time', day.tour.time);
+      setVal('d'+i+'_tour_status', day.tour.status);
+    }
+    if(day.experience && day.experience.type){
+      setVal('d'+i+'_exp', day.experience.type);
+      setVal('d'+i+'_exp_time', day.experience.time);
+      setVal('d'+i+'_exp_status', day.experience.status);
+    }
+  });
 }
 
 // ── COLLECT ─────────────────────────────────────────────────────────────
