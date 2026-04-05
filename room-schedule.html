@@ -4737,8 +4737,16 @@ async function renderSubmissionsTab(){
     </div>`;
   }
 
-  let html = `<div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:12px">
-    Awaiting Approval${pending.length>0?` <span style="background:#e8703a;color:#fff;border-radius:8px;padding:1px 8px;font-size:11px;margin-left:6px">${pending.length}</span>`:''}
+  const pendingSummary = pending.map(s=>`<div style="padding:5px 0;border-bottom:1px solid #f0e8e0;font-size:12px"><strong>${s.teacher_name||'Unknown'}</strong> · ${s.group_name||''}<br><span style="color:#999;font-size:11px">${fmtDate(s.arrival_date)} – ${fmtDate(s.departure_date)} · ${s.pax||'?'} guests</span></div>`).join('');
+  const badgePopover = pending.length>0 ? `
+    <span id="pending-badge" onclick="togglePendingPopover(event)" style="background:#e8703a;color:#fff;border-radius:8px;padding:1px 8px;font-size:11px;margin-left:6px;cursor:pointer;user-select:none">${pending.length}</span>
+    <div id="pending-popover" style="display:none;position:absolute;z-index:999;background:#fff;border:1px solid #e0d0c0;border-radius:10px;box-shadow:0 4px 18px rgba(0,0,0,.13);padding:12px 16px;min-width:260px;margin-top:6px">
+      <div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#999;margin-bottom:8px">Awaiting Approval</div>
+      ${pendingSummary}
+    </div>` : '';
+
+  let html = `<div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;position:relative">
+    Awaiting Approval${badgePopover}
   </div>`;
 
   if(pending.length===0){
@@ -4816,6 +4824,18 @@ async function declineSubmission(subId){
     }
   } catch(e){
     showBanner('Network error — try again', '#cc3333');
+  }
+}
+
+function togglePendingPopover(e){
+  e.stopPropagation();
+  const pop = document.getElementById('pending-popover');
+  if(!pop) return;
+  const isOpen = pop.style.display !== 'none';
+  pop.style.display = isOpen ? 'none' : 'block';
+  if(!isOpen){
+    const close = function(){ pop.style.display='none'; document.removeEventListener('click',close); };
+    setTimeout(()=>document.addEventListener('click',close), 0);
   }
 }
 
