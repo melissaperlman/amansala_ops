@@ -243,17 +243,18 @@ body{font-family:'Nunito',sans-serif;background:var(--cream);color:var(--deep);f
 </div>
 
 <!-- CONFIRMATION -->
-<div id="confirmation-screen" style="display:none;">
-  <div class="doc-wrap">
-    <div class="doc-masthead">
-      <div class="doc-resort">Amansala</div>
-      <div class="doc-leader-line" id="conf-teacher"></div>
-      <div class="doc-rule"></div>
-    </div>
-    <div class="confirmation">
-      <div class="check">&#10003;</div>
-      <h2>Thank You!</h2>
-      <p id="conf-message">Your schedule has been submitted successfully. Please keep this link to access your schedule and make any changes. Our team will review your schedule and get back to you shortly.</p>
+<div id="confirmation-screen" style="display:none;background:#fffdf5;min-height:100vh;">
+  <div style="max-width:600px;margin:0 auto;padding:80px 28px;text-align:center;">
+    <div style="font-family:'Raleway',sans-serif;font-size:2.4rem;font-weight:300;letter-spacing:.14em;color:#3d2800;margin-bottom:6px;">Amansala</div>
+    <div style="font-size:.62rem;letter-spacing:.36em;text-transform:uppercase;color:#C9972A;margin-bottom:8px;">Tulum</div>
+    <div style="font-family:'Raleway',sans-serif;font-style:italic;color:#8a6010;margin-bottom:40px;" id="conf-teacher"></div>
+    <div style="width:64px;height:64px;border-radius:50%;background:rgba(212,160,32,.15);color:#C9972A;font-size:32px;display:flex;align-items:center;justify-content:center;margin:0 auto 24px;">&#10003;</div>
+    <h2 style="font-family:'Raleway',sans-serif;font-size:1.8rem;font-weight:400;color:#3d2800;margin-bottom:16px;">Thank You!</h2>
+    <p id="conf-message" style="font-size:.95rem;color:#8a6010;max-width:440px;margin:0 auto;line-height:1.8;">Your schedule has been submitted successfully. Our team will review your schedule and get back to you shortly.</p>
+    <div style="margin-top:28px;padding:16px 20px;background:#fff8e8;border:1px solid #f0d898;border-radius:10px;font-size:.82rem;color:#8a6010;line-height:1.7;">
+      <strong style="display:block;margin-bottom:6px;color:#3d2800;">Your schedule link</strong>
+      Please bookmark or save this link to return to your schedule at any time:<br>
+      <a id="conf-link" href="" style="color:#C9972A;word-break:break-all;font-size:.78rem;"></a>
     </div>
   </div>
 </div>
@@ -604,9 +605,11 @@ function renderConfirmation(){
   document.getElementById('loading-screen').style.display='none';
   document.getElementById('form-app').style.display='none';
   document.getElementById('confirmation-screen').style.display='';
+  var link = document.getElementById('conf-link');
+  if(link){ link.href=window.location.href; link.textContent=window.location.href; }
   if(FORM_DATA){
-    document.getElementById('conf-teacher').textContent=FORM_DATA.teacher.name||'Teacher';
-    if(FORM_DATA.alreadySubmitted) document.getElementById('conf-message').textContent='This form has already been submitted. Contact Melissa to make changes.';
+    var teacherEl = document.getElementById('conf-teacher');
+    if(teacherEl) teacherEl.textContent = (FORM_DATA.teacher&&FORM_DATA.teacher.name)||'';
   }
 }
 </script>
