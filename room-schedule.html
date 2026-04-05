@@ -4418,8 +4418,35 @@ async function renderSubmissionsTab(){
 
   const ALL_ROOMS = ['','Heaven','Sky','Beachfront (BF)','Grande','Chica','Beach','Pool Deck'];
 
-  function roomOpts(selected) {
-    return ALL_ROOMS.map(r => `<option value="${r}"${r===(selected||'')?' selected':''}>${r||'TBD'}</option>`).join('');
+  function subDayDate(arrivalDate, dayIdx) {
+    if(!arrivalDate) return '';
+    const d = new Date(arrivalDate + 'T12:00:00Z');
+    d.setUTCDate(d.getUTCDate() + dayIdx);
+    return d.toISOString().substring(0,10);
+  }
+
+  function getRoomConflicts(dayDate, start, end) {
+    if(!dayDate || !start) return {};
+    const result = {};
+    (bookings||[]).forEach(function(b){
+      if(!b.room || b.room==='TBD' || !b.day) return;
+      const bDay = typeof b.day==='string' ? b.day.substring(0,10) : '';
+      if(bDay !== dayDate) return;
+      const overlaps = b.start && b.end && (!end || b.start < end) && b.end > start;
+      if(!overlaps) return;
+      if(!result[b.room]) result[b.room] = [];
+      const grp = (GROUPS||[]).find(g => String(g.id)===String(b.group)) || {};
+      result[b.room].push({title:b.title, start:b.start, end:b.end, groupLabel:grp.label||grp.short||b.group||'', groupColor:grp.color||'#999'});
+    });
+    return result;
+  }
+
+  function roomOpts(selected, conflicts) {
+    return ALL_ROOMS.map(function(r){
+      const booked = r && conflicts && conflicts[r];
+      const label = r ? (booked ? '⚠ '+r+' — taken' : r) : 'TBD';
+      return `<option value="${r}"${r===(selected||'')?' selected':''}>${label}</option>`;
+    }).join('');
   }
 
   // Read-only preview (approved / declined cards)
@@ -4450,26 +4477,43 @@ async function renderSubmissionsTab(){
     const tourLabels = {cenote:'Cenote Swim',ruins:'Mayan Ruins',mangrove:'Mangrove Tour',float:'Float Tour'};
     const soulLabels = {ice:'Ice Bath',clay:'Mayan Clay',temazcal:'Temazcal',sound:'Sound Healing'};
 
+    function conflictBanner(conflicts) {
+      const entries = Object.entries(conflicts);
+      if(!entries.length) return '';
+      const parts = entries.map(function([room, bks]){
+        return bks.map(function(b){
+          const dot = `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${b.groupColor};margin-right:3px;vertical-align:middle"></span>`;
+          return `${dot}<strong>${room}</strong> ${fmtTime(b.start)}–${fmtTime(b.end)} · ${b.groupLabel}`;
+        }).join('  ');
+      });
+      return `<div style="font-size:11px;color:#a04000;background:#fff5ec;border:1px solid #f0c090;border-radius:6px;padding:4px 10px;margin-top:5px;line-height:1.7">⚠ Already booked that slot: ${parts.join('  ·  ')}</div>`;
+    }
+
     function classRow(cls, dayLabel, dayIdx, clsType, defaultName) {
       if(!cls || !cls.start) return '';
+      const dayDate = subDayDate(sub.arrival_date, dayIdx);
+      const conflicts = getRoomConflicts(dayDate, cls.start, cls.end);
       const reqIcon = cls.roomRequested ? ` <span title="${cls.roomRequestNote||'Room specifically requested'}" style="color:#c05000;font-size:12px">📌</span>` : '';
-      const roomStyle = ROOM_STYLES[cls.room] ? ` style="${ROOM_STYLES[cls.room]};font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;display:inline-block"` : '';
-      return `<div style="display:grid;grid-template-columns:18px 1fr auto;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)" data-day="${dayIdx}" data-type="${clsType}">
-        <input type="checkbox" checked class="sub-inc" style="width:15px;height:15px;cursor:pointer;accent-color:#4a8c5c">
-        <div style="font-size:13px;line-height:1.4">
-          <span style="color:var(--muted);font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;display:block">${dayLabel}</span>
-          ${cls.name||defaultName} <span style="color:var(--muted)">${fmtTime(cls.start)}${cls.end?' – '+fmtTime(cls.end):''}</span>${reqIcon}
+      const rowBorder = Object.keys(conflicts).length ? '1px solid #f0c090' : '1px solid var(--border)';
+      return `<div style="padding:8px 0;border-bottom:${rowBorder}" data-day="${dayIdx}" data-type="${clsType}">
+        <div style="display:grid;grid-template-columns:18px 1fr auto;gap:10px;align-items:center">
+          <input type="checkbox" checked class="sub-inc" style="width:15px;height:15px;cursor:pointer;accent-color:#4a8c5c">
+          <div style="font-size:13px;line-height:1.4">
+            <span style="color:var(--muted);font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;display:block">${dayLabel}</span>
+            ${cls.name||defaultName} <span style="color:var(--muted)">${fmtTime(cls.start)}${cls.end?' – '+fmtTime(cls.end):''}</span>${reqIcon}
+          </div>
+          <select class="sub-room" style="font-size:12px;padding:4px 8px;border:1.5px solid var(--border);border-radius:7px;background:var(--card);font-family:inherit;cursor:pointer;min-width:140px">${roomOpts(cls.room, conflicts)}</select>
         </div>
-        <select class="sub-room" style="font-size:12px;padding:4px 8px;border:1.5px solid var(--border);border-radius:7px;background:var(--card);font-family:inherit;cursor:pointer;min-width:130px">${roomOpts(cls.room)}</select>
+        ${conflictBanner(conflicts)}
       </div>`;
     }
 
-    function otherRow(label, dayLabel, dayIdx, clsType, badge) {
+    function otherRow(dayLabel, dayIdx, clsType, badge, time) {
       return `<div style="display:grid;grid-template-columns:18px 1fr;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)" data-day="${dayIdx}" data-type="${clsType}">
         <input type="checkbox" checked class="sub-inc" style="width:15px;height:15px;cursor:pointer;accent-color:#4a8c5c">
         <div style="font-size:13px;line-height:1.4">
           <span style="color:var(--muted);font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;display:block">${dayLabel}</span>
-          ${badge}
+          ${badge} <span style="color:var(--muted)">${fmtTime(time)}</span>
         </div>
       </div>`;
     }
@@ -4480,11 +4524,11 @@ async function renderSubmissionsTab(){
       rows += classRow(day.morning,  day.label, day.dayIndex, 'morning',  'Morning Class');
       rows += classRow(day.afternoon,day.label, day.dayIndex, 'afternoon','Afternoon Class');
       if(day.tour && day.tour.type)
-        rows += otherRow(tourLabels[day.tour.type]||day.tour.type, day.label, day.dayIndex, 'tour',
-          `<span style="background:#e8f4fd;color:#1565c0;font-size:11px;padding:2px 8px;border-radius:10px">🗺 ${tourLabels[day.tour.type]||day.tour.type}</span> <span style="color:var(--muted)">${fmtTime(day.tour.time)}</span>`);
+        rows += otherRow(day.label, day.dayIndex, 'tour',
+          `<span style="background:#e8f4fd;color:#1565c0;font-size:11px;padding:2px 8px;border-radius:10px">🗺 ${tourLabels[day.tour.type]||day.tour.type}</span>`, day.tour.time);
       if(day.experience && day.experience.type)
-        rows += otherRow(soulLabels[day.experience.type]||day.experience.type, day.label, day.dayIndex, 'experience',
-          `<span style="background:#f3e8ff;color:#6a1b9a;font-size:11px;padding:2px 8px;border-radius:10px">✨ ${soulLabels[day.experience.type]||day.experience.type}</span> <span style="color:var(--muted)">${fmtTime(day.experience.time)}</span>`);
+        rows += otherRow(day.label, day.dayIndex, 'experience',
+          `<span style="background:#f3e8ff;color:#6a1b9a;font-size:11px;padding:2px 8px;border-radius:10px">✨ ${soulLabels[day.experience.type]||day.experience.type}</span>`, day.experience.time);
     });
 
     return rows ? `<div id="sub-edit-${sub.id}" style="margin-top:12px;border-top:1px solid var(--border);padding-top:4px">
