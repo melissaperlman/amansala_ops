@@ -624,19 +624,25 @@ function collectFormData(){
         name:gv('d'+i+'_a_name'),
         confirm:gv('d'+i+'_a_confirm'),
         noise:(document.querySelector('input[name="d'+i+'_a_noise"]:checked')||{}).value||'medium',
-        notes:gv('d'+i+'_a_notes')};
+        notes:gv('d'+i+'_a_notes'),
+        roomRequested:!!(document.getElementById('d'+i+'_a_req')&&document.getElementById('d'+i+'_a_req').classList.contains('room-request-active')),
+        roomRequestNote:gv('d'+i+'_a_req_pnote')};
     } else {
       day.morning={start:gv('d'+i+'_m_s'),end:gv('d'+i+'_m_e'),room:gv('d'+i+'_m_r'),
         name:gv('d'+i+'_m_name'),
         confirm:gv('d'+i+'_m_confirm'),
         noise:(document.querySelector('input[name="d'+i+'_m_noise"]:checked')||{}).value||'medium',
-        notes:gv('d'+i+'_m_notes')};
+        notes:gv('d'+i+'_m_notes'),
+        roomRequested:!!(document.getElementById('d'+i+'_m_req')&&document.getElementById('d'+i+'_m_req').classList.contains('room-request-active')),
+        roomRequestNote:gv('d'+i+'_m_req_pnote')};
       if(d.type==='full'){
         day.afternoon={start:gv('d'+i+'_a_s'),end:gv('d'+i+'_a_e'),room:gv('d'+i+'_a_r'),
           name:gv('d'+i+'_a_name'),
           confirm:gv('d'+i+'_a_confirm'),
           noise:(document.querySelector('input[name="d'+i+'_a_noise"]:checked')||{}).value||'medium',
-          notes:gv('d'+i+'_a_notes')};
+          notes:gv('d'+i+'_a_notes'),
+          roomRequested:!!(document.getElementById('d'+i+'_a_req')&&document.getElementById('d'+i+'_a_req').classList.contains('room-request-active')),
+          roomRequestNote:gv('d'+i+'_a_req_pnote')};
         var tour=gv('d'+i+'_tour');
         if(tour) day.tour={type:tour, time:gv('d'+i+'_tour_time'), status:gv('d'+i+'_tour_status')};
         var exp=gv('d'+i+'_exp');

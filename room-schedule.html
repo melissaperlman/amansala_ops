@@ -4396,21 +4396,43 @@ async function renderSubmissionsTab(){
     const [h,m] = t.split(':').map(Number);
     return (h%12||12)+':'+(m<10?'0'+m:m)+' '+(h>=12?'PM':'AM');
   }
+  const ROOM_STYLES = {
+    'Heaven':         'background:#bde0f5;color:#0c3a5a',
+    'Sky':            'background:#c5b8d4;color:#3a2a6a',
+    'Beachfront (BF)':'background:#f5c842;color:#6b4a00',
+    'BF':             'background:#f5c842;color:#6b4a00',
+    'Grande':         'background:#a8d8a8;color:#1a4a28',
+    'Chica':          'background:#f5b8c8;color:#8a1a30',
+    'Beach':          'background:#c8e8c8;color:#1a4a28',
+    'Pool Deck':      'background:#d4eaf5;color:#0c3a5a'
+  };
+  function roomPill(room, requested, note) {
+    if(!room || room==='tbd') return '';
+    const style = ROOM_STYLES[room] || 'background:#e8e8e8;color:#555';
+    const pill = `<span style="${style};font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;margin-left:5px;display:inline-block;line-height:1.5">${room}</span>`;
+    const reqBadge = requested
+      ? `<span style="background:#fff3cd;color:#856404;border:1px solid #ffc107;font-size:10px;font-weight:700;padding:1px 7px;border-radius:10px;margin-left:3px" title="${note||'Room specifically requested'}">★ Requested${note?' · '+note:''}</span>`
+      : '';
+    return pill + reqBadge;
+  }
+
   function schedulePreview(sub) {
     if(!sub.form_data_json) return '';
     let fd; try { fd = JSON.parse(sub.form_data_json); } catch(e){ return ''; }
     const days = (fd.schedule_data||fd).days || [];
     let rows = '';
+    const tourLabels = {cenote:'Cenote Swim',ruins:'Mayan Ruins',mangrove:'Mangrove Tour',float:'Float Tour'};
+    const soulLabels = {ice:'Ice Bath',clay:'Mayan Clay',temazcal:'Temazcal',sound:'Sound Healing'};
     days.forEach(function(day){
-      const items = [];
-      if(day.ceremony && day.ceremony.start) items.push((day.ceremony.name||'Opening Ceremony')+' '+fmtTime(day.ceremony.start)+(day.ceremony.room&&day.ceremony.room!=='tbd'?' · '+day.ceremony.room:''));
-      if(day.morning  && day.morning.start)  items.push((day.morning.name||'Morning Class')+' '+fmtTime(day.morning.start)+(day.morning.room&&day.morning.room!=='tbd'?' · '+day.morning.room:''));
-      if(day.afternoon&& day.afternoon.start)items.push((day.afternoon.name||'Afternoon Class')+' '+fmtTime(day.afternoon.start)+(day.afternoon.room&&day.afternoon.room!=='tbd'?' · '+day.afternoon.room:''));
-      if(day.tour && day.tour.type) items.push({cenote:'Cenote Swim',ruins:'Mayan Ruins',mangrove:'Mangrove Tour',float:'Float Tour'}[day.tour.type]||day.tour.type);
-      if(day.experience && day.experience.type) items.push({ice:'Ice Bath',clay:'Mayan Clay',temazcal:'Temazcal',sound:'Sound Healing'}[day.experience.type]||day.experience.type);
-      if(items.length) rows += `<div style="margin-bottom:3px"><span style="font-weight:600;color:var(--muted);min-width:80px;display:inline-block">${day.label}</span> ${items.join(' &nbsp;·&nbsp; ')}</div>`;
+      let items = '';
+      if(day.ceremony && day.ceremony.start) items += `<span style="margin-right:12px">${day.ceremony.name||'Opening Ceremony'} <span style="color:var(--muted)">${fmtTime(day.ceremony.start)}</span>${roomPill(day.ceremony.room,day.ceremony.roomRequested,day.ceremony.roomRequestNote)}</span>`;
+      if(day.morning   && day.morning.start)  items += `<span style="margin-right:12px">${day.morning.name||'Morning Class'} <span style="color:var(--muted)">${fmtTime(day.morning.start)}</span>${roomPill(day.morning.room,day.morning.roomRequested,day.morning.roomRequestNote)}</span>`;
+      if(day.afternoon && day.afternoon.start) items += `<span style="margin-right:12px">${day.afternoon.name||'Afternoon Class'} <span style="color:var(--muted)">${fmtTime(day.afternoon.start)}</span>${roomPill(day.afternoon.room,day.afternoon.roomRequested,day.afternoon.roomRequestNote)}</span>`;
+      if(day.tour && day.tour.type) items += `<span style="margin-right:12px;background:#e8f4fd;color:#1565c0;font-size:11px;padding:2px 8px;border-radius:10px">🗺 ${tourLabels[day.tour.type]||day.tour.type}</span>`;
+      if(day.experience && day.experience.type) items += `<span style="margin-right:12px;background:#f3e8ff;color:#6a1b9a;font-size:11px;padding:2px 8px;border-radius:10px">✨ ${soulLabels[day.experience.type]||day.experience.type}</span>`;
+      if(items) rows += `<div style="margin-bottom:6px;display:flex;align-items:baseline;flex-wrap:wrap;gap:2px"><span style="font-weight:600;color:var(--muted);min-width:84px;font-size:11px;text-transform:uppercase;letter-spacing:.04em">${day.label}</span>${items}</div>`;
     });
-    return rows ? `<div style="margin-top:10px;font-size:12px;color:var(--text);line-height:1.7;border-top:1px solid var(--border);padding-top:10px">${rows}</div>` : '';
+    return rows ? `<div style="margin-top:12px;font-size:13px;line-height:1.8;border-top:1px solid var(--border);padding-top:12px">${rows}</div>` : '';
   }
 
   function subCard(sub) {
