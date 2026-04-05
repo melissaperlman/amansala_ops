@@ -1278,22 +1278,38 @@ function doPost(e) {
           created2.push(b);
         }
 
+        // Build overrides lookup from payload
+        const overrides2 = payload.overrides || [];
+        function getOverride(dayIdx, classType) {
+          return overrides2.find(o => Number(o.dayIndex) === Number(dayIdx) && o.classType === classType) || null;
+        }
+
         days2.forEach(function(day) {
           const dayDate = offsetDate(arrivalStr, day.dayIndex);
-          if (day.ceremony && day.ceremony.start) {
-            addRsBooking({ day: dayDate, start: day.ceremony.start, end: day.ceremony.end || '', room: day.ceremony.room || '', title: day.ceremony.name || 'Opening Ceremony', notes: day.ceremony.notes || '', category: 'classes' });
+
+          function maybeAdd(cls, classType, defaultTitle, extraProps) {
+            if (!cls || !cls.start) return;
+            const ov = getOverride(day.dayIndex, classType);
+            if (ov && ov.included === false) return; // excluded by coordinator
+            const room = (ov && ov.room !== undefined) ? ov.room : (cls.room || '');
+            addRsBooking(Object.assign({ day: dayDate, start: cls.start, end: cls.end || '', room: room, title: cls.name || defaultTitle, notes: cls.notes || '', category: 'classes' }, extraProps || {}));
           }
-          if (day.morning && day.morning.start) {
-            addRsBooking({ day: dayDate, start: day.morning.start, end: day.morning.end || '', room: day.morning.room || '', title: day.morning.name || 'Morning Class', notes: day.morning.notes || '', category: 'classes' });
-          }
-          if (day.afternoon && day.afternoon.start) {
-            addRsBooking({ day: dayDate, start: day.afternoon.start, end: day.afternoon.end || '', room: day.afternoon.room || '', title: day.afternoon.name || 'Afternoon Class', notes: day.afternoon.notes || '', category: 'classes' });
-          }
+
+          maybeAdd(day.ceremony, 'ceremony', 'Opening Ceremony');
+          maybeAdd(day.morning,  'morning',  'Morning Class');
+          maybeAdd(day.afternoon,'afternoon','Afternoon Class');
+
           if (day.tour && day.tour.type) {
-            addRsBooking({ day: dayDate, start: day.tour.time || '11:30', end: '', title: tourLabels2[day.tour.type] || day.tour.type, category: 'tours', optional: day.tour.status === 'optional' });
+            const ov = getOverride(day.dayIndex, 'tour');
+            if (!ov || ov.included !== false) {
+              addRsBooking({ day: dayDate, start: day.tour.time || '11:30', end: '', title: tourLabels2[day.tour.type] || day.tour.type, category: 'tours', optional: day.tour.status === 'optional' });
+            }
           }
           if (day.experience && day.experience.type) {
-            addRsBooking({ day: dayDate, start: day.experience.time || '', end: '', title: soulLabels2[day.experience.type] || day.experience.type, category: 'soul', optional: day.experience.status === 'optional' });
+            const ov = getOverride(day.dayIndex, 'experience');
+            if (!ov || ov.included !== false) {
+              addRsBooking({ day: dayDate, start: day.experience.time || '', end: '', title: soulLabels2[day.experience.type] || day.experience.type, category: 'soul', optional: day.experience.status === 'optional' });
+            }
           }
         });
 

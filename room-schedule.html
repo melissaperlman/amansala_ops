@@ -4416,6 +4416,13 @@ async function renderSubmissionsTab(){
     return pill + reqBadge;
   }
 
+  const ALL_ROOMS = ['','Heaven','Sky','Beachfront (BF)','Grande','Chica','Beach','Pool Deck'];
+
+  function roomOpts(selected) {
+    return ALL_ROOMS.map(r => `<option value="${r}"${r===(selected||'')?' selected':''}>${r||'TBD'}</option>`).join('');
+  }
+
+  // Read-only preview (approved / declined cards)
   function schedulePreview(sub) {
     if(!sub.form_data_json) return '';
     let fd; try { fd = JSON.parse(sub.form_data_json); } catch(e){ return ''; }
@@ -4433,6 +4440,62 @@ async function renderSubmissionsTab(){
       if(items) rows += `<div style="margin-bottom:6px;display:flex;align-items:baseline;flex-wrap:wrap;gap:2px"><span style="font-weight:600;color:var(--muted);min-width:84px;font-size:11px;text-transform:uppercase;letter-spacing:.04em">${day.label}</span>${items}</div>`;
     });
     return rows ? `<div style="margin-top:12px;font-size:13px;line-height:1.8;border-top:1px solid var(--border);padding-top:12px">${rows}</div>` : '';
+  }
+
+  // Editable form (pending cards) — room dropdowns + include checkboxes
+  function scheduleEditForm(sub) {
+    if(!sub.form_data_json) return '';
+    let fd; try { fd = JSON.parse(sub.form_data_json); } catch(e){ return ''; }
+    const days = (fd.schedule_data||fd).days || [];
+    const tourLabels = {cenote:'Cenote Swim',ruins:'Mayan Ruins',mangrove:'Mangrove Tour',float:'Float Tour'};
+    const soulLabels = {ice:'Ice Bath',clay:'Mayan Clay',temazcal:'Temazcal',sound:'Sound Healing'};
+
+    function classRow(cls, dayLabel, dayIdx, clsType, defaultName) {
+      if(!cls || !cls.start) return '';
+      const reqIcon = cls.roomRequested ? ` <span title="${cls.roomRequestNote||'Room specifically requested'}" style="color:#c05000;font-size:12px">📌</span>` : '';
+      const roomStyle = ROOM_STYLES[cls.room] ? ` style="${ROOM_STYLES[cls.room]};font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;display:inline-block"` : '';
+      return `<div style="display:grid;grid-template-columns:18px 1fr auto;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)" data-day="${dayIdx}" data-type="${clsType}">
+        <input type="checkbox" checked class="sub-inc" style="width:15px;height:15px;cursor:pointer;accent-color:#4a8c5c">
+        <div style="font-size:13px;line-height:1.4">
+          <span style="color:var(--muted);font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;display:block">${dayLabel}</span>
+          ${cls.name||defaultName} <span style="color:var(--muted)">${fmtTime(cls.start)}${cls.end?' – '+fmtTime(cls.end):''}</span>${reqIcon}
+        </div>
+        <select class="sub-room" style="font-size:12px;padding:4px 8px;border:1.5px solid var(--border);border-radius:7px;background:var(--card);font-family:inherit;cursor:pointer;min-width:130px">${roomOpts(cls.room)}</select>
+      </div>`;
+    }
+
+    function otherRow(label, dayLabel, dayIdx, clsType, badge) {
+      return `<div style="display:grid;grid-template-columns:18px 1fr;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)" data-day="${dayIdx}" data-type="${clsType}">
+        <input type="checkbox" checked class="sub-inc" style="width:15px;height:15px;cursor:pointer;accent-color:#4a8c5c">
+        <div style="font-size:13px;line-height:1.4">
+          <span style="color:var(--muted);font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;display:block">${dayLabel}</span>
+          ${badge}
+        </div>
+      </div>`;
+    }
+
+    let rows = '';
+    days.forEach(function(day) {
+      rows += classRow(day.ceremony, day.label, day.dayIndex, 'ceremony', 'Opening Ceremony');
+      rows += classRow(day.morning,  day.label, day.dayIndex, 'morning',  'Morning Class');
+      rows += classRow(day.afternoon,day.label, day.dayIndex, 'afternoon','Afternoon Class');
+      if(day.tour && day.tour.type)
+        rows += otherRow(tourLabels[day.tour.type]||day.tour.type, day.label, day.dayIndex, 'tour',
+          `<span style="background:#e8f4fd;color:#1565c0;font-size:11px;padding:2px 8px;border-radius:10px">🗺 ${tourLabels[day.tour.type]||day.tour.type}</span> <span style="color:var(--muted)">${fmtTime(day.tour.time)}</span>`);
+      if(day.experience && day.experience.type)
+        rows += otherRow(soulLabels[day.experience.type]||day.experience.type, day.label, day.dayIndex, 'experience',
+          `<span style="background:#f3e8ff;color:#6a1b9a;font-size:11px;padding:2px 8px;border-radius:10px">✨ ${soulLabels[day.experience.type]||day.experience.type}</span> <span style="color:var(--muted)">${fmtTime(day.experience.time)}</span>`);
+    });
+
+    return rows ? `<div id="sub-edit-${sub.id}" style="margin-top:12px;border-top:1px solid var(--border);padding-top:4px">
+      <div style="display:grid;grid-template-columns:18px 1fr auto;gap:10px;padding:6px 0 4px;border-bottom:2px solid var(--border);margin-bottom:2px">
+        <span></span>
+        <span style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">Session</span>
+        <span style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">Assign Room</span>
+      </div>
+      ${rows}
+      <div style="font-size:11px;color:var(--muted);margin-top:8px">Uncheck to exclude a session. Change any room before approving.</div>
+    </div>` : '';
   }
 
   function subCard(sub) {
@@ -4456,6 +4519,8 @@ async function renderSubmissionsTab(){
         <button onclick="declineSubmission(${sub.id})" style="background:none;color:#cc3333;border:1.5px solid #ffcccc;padding:8px 16px;border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit">Decline</button>
       </div>` : '';
 
+    const body = isPending ? scheduleEditForm(sub) : schedulePreview(sub);
+
     return `<div id="subcard-${sub.id}" style="background:var(--card);border:1px solid var(--border);border-left:3px solid ${borderColor};border-radius:10px;padding:18px 22px;margin-bottom:12px">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:6px">
         <div>
@@ -4470,7 +4535,7 @@ async function renderSubmissionsTab(){
         ${sub.submitted_at?'&nbsp;·&nbsp; Submitted '+new Date(sub.submitted_at).toLocaleDateString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):''}
       </div>
       ${sub.general_notes?`<div style="font-size:12px;color:var(--muted);font-style:italic">${sub.general_notes}</div>`:''}
-      ${schedulePreview(sub)}
+      ${body}
       ${actions}
     </div>`;
   }
@@ -4498,25 +4563,41 @@ async function renderSubmissionsTab(){
 }
 
 async function approveSubmission(subId){
+  // Collect room overrides and include/exclude choices from the edit form
+  const editDiv = document.getElementById('sub-edit-'+subId);
+  const overrides = [];
+  if(editDiv){
+    editDiv.querySelectorAll('[data-day]').forEach(function(row){
+      const inc = row.querySelector('.sub-inc');
+      const rm  = row.querySelector('.sub-room');
+      overrides.push({
+        dayIndex:  parseInt(row.dataset.day),
+        classType: row.dataset.type,
+        room:      rm ? rm.value : '',
+        included:  inc ? inc.checked : true
+      });
+    });
+  }
+
   const card = document.getElementById('subcard-'+subId);
-  if(card){ const btn = card.querySelector('button'); if(btn){ btn.disabled=true; btn.textContent='Approving…'; } }
+  if(card){ const btn = card.querySelector('button[onclick^="approveSubmission"]'); if(btn){ btn.disabled=true; btn.textContent='Approving…'; } }
   try {
     const resp = await fetch(API_URL, {
       method:'POST',
-      body: JSON.stringify({action:'approveFormSubmission', submission_id: subId})
+      body: JSON.stringify({action:'approveFormSubmission', submission_id: subId, overrides: overrides})
     });
     const json = await resp.json();
     if(json.success){
-      showBanner('Schedule approved and added to the schedule (' + (json.data.bookings_created||0) + ' entries). Click Load Cloud to refresh.', '#4a8c5c');
+      showBanner('Schedule approved — ' + (json.data.bookings_created||0) + ' sessions added. Reloading schedule…', '#4a8c5c');
       renderSubmissionsTab();
       loadFromCloud();
     } else {
       showBanner('Error: ' + (json.error||'Could not approve'), '#cc3333');
-      if(card){ const btn = card.querySelector('button'); if(btn){ btn.disabled=false; btn.textContent='✓ Approve & Add to Schedule'; } }
+      if(card){ const btn = card.querySelector('button[onclick^="approveSubmission"]'); if(btn){ btn.disabled=false; btn.textContent='✓ Approve & Add to Schedule'; } }
     }
   } catch(e){
     showBanner('Network error — try again', '#cc3333');
-    if(card){ const btn = card.querySelector('button'); if(btn){ btn.disabled=false; btn.textContent='✓ Approve & Add to Schedule'; } }
+    if(card){ const btn = card.querySelector('button[onclick^="approveSubmission"]'); if(btn){ btn.disabled=false; btn.textContent='✓ Approve & Add to Schedule'; } }
   }
 }
 
