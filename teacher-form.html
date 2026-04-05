@@ -259,7 +259,7 @@ body{font-family:'Nunito',sans-serif;background:var(--cream);color:var(--deep);f
 </div>
 
 <script>
-var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzK1WZMw3wH0uqF0XAjxrqUtUngZ1UjShlGln1YmCNtjVhnSk3MzcdCAJWf7gjqkZyYzw/exec';
+var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwQVp3vCgG38DDnPg3eXs_-uP6n1eWoqafGvCVlnIICmb9XXxF7FDt-6YUjNYd2mRg3HQ/exec';
 var TOKEN = '';
 var FORM_DATA = null;
 
@@ -573,6 +573,12 @@ function collectFormData(){
 
 // ── SUBMIT ──────────────────────────────────────────────────────────────
 async function submitForm(){
+  if(!TOKEN || TOKEN==='demo'){
+    document.getElementById('server-error-banner').style.display='none';
+    FORM_DATA = FORM_DATA || {teacher:{name:'Sarah Mitchell'},group:{}};
+    renderConfirmation();
+    return;
+  }
   var btn=document.getElementById('submit-btn');
   btn.disabled=true; btn.textContent='SUBMITTING...';
   document.getElementById('server-error-banner').style.display='none';
