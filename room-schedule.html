@@ -409,6 +409,7 @@
     <button class="tab" onclick="switchTab(&#39;dayview&#39;)">Day View</button>
     <button class="tab" onclick="switchTab(&#39;room&#39;)">By Room</button>
     <button class="tab" onclick="switchTab(&#39;teacher&#39;)">By Teacher</button>
+    <button class="tab" onclick="switchTab(&#39;submissions&#39;)" id="submissionsTab">📋 Submitted Schedules</button>
     <button class="tab" onclick="switchTab(&#39;requests&#39;)" id="pendingTab">⏳ Pending Approvals</button>
     <button class="tab" onclick="switchTab(&#39;retreat&#39;)">By Retreat</button>
     <button class="tab" onclick="switchTab(&#39;mealcal&#39;)">Meals Calendar</button>
@@ -3873,7 +3874,7 @@ function undoDelete(){
 function switchTab(tab){
   activeTab=tab;
   document.body.classList.toggle('dayview-active', tab==='dayview');
-  const tabOrder = ['retreats','day','dayview','room','teacher','requests','retreat','mealcal','transport'];
+  const tabOrder = ['retreats','day','dayview','room','teacher','submissions','requests','retreat','mealcal','transport'];
   document.querySelectorAll('.tab').forEach((t,i)=>{
     t.classList.toggle('active', tabOrder[i]===tab);
   });
@@ -3906,6 +3907,11 @@ function switchTab(tab){
     if(filterBar) filterBar.style.display='none';
     renderGroupBar();
     renderRetreatView();
+  } else if(tab==='submissions'){
+    if(catTabs) catTabs.style.display='none';
+    if(groupBar) groupBar.style.display='none';
+    if(filterBar) filterBar.style.display='none';
+    renderSubmissionsTab();
   } else if(tab==='requests'){
     if(catTabs) catTabs.style.display='none';
     if(groupBar) groupBar.style.display='none';
@@ -4360,6 +4366,173 @@ const KNOWN_TEACHERS = [
   'Meghan Kinsey','Sam Applebee','Lauren','Jess','Robin','Sergio',
   'Megan','Kun y Darlene','Maria & Gollo'
 ];
+
+// ── SUBMITTED SCHEDULES TAB ──────────────────────────────────────────────
+async function renderSubmissionsTab(){
+  const content = document.getElementById('mainContent');
+  content.innerHTML = `<div style="padding:24px 0;text-align:center;color:var(--muted);font-size:13px">Loading submitted schedules…</div>`;
+
+  let subs = [];
+  try {
+    const resp = await fetch(API_URL + '?action=submittedForms&_t=' + Date.now());
+    const json = await resp.json();
+    if(json.success) subs = json.data;
+  } catch(e) {
+    content.innerHTML = `<div style="padding:24px;color:#c0392b;font-size:13px">Failed to load submissions. Check your connection.</div>`;
+    return;
+  }
+
+  const pending  = subs.filter(s => s.status === 'submitted');
+  const approved = subs.filter(s => s.status === 'approved');
+  const declined = subs.filter(s => s.status === 'declined');
+
+  function fmtDate(ds) {
+    if(!ds) return '';
+    const d = new Date(ds + 'T12:00:00Z');
+    return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getUTCMonth()]+' '+d.getUTCDate();
+  }
+  function fmtTime(t) {
+    if(!t) return '';
+    const [h,m] = t.split(':').map(Number);
+    return (h%12||12)+':'+(m<10?'0'+m:m)+' '+(h>=12?'PM':'AM');
+  }
+  function schedulePreview(sub) {
+    if(!sub.form_data_json) return '';
+    let fd; try { fd = JSON.parse(sub.form_data_json); } catch(e){ return ''; }
+    const days = (fd.schedule_data||fd).days || [];
+    let rows = '';
+    days.forEach(function(day){
+      const items = [];
+      if(day.ceremony && day.ceremony.start) items.push((day.ceremony.name||'Opening Ceremony')+' '+fmtTime(day.ceremony.start)+(day.ceremony.room&&day.ceremony.room!=='tbd'?' · '+day.ceremony.room:''));
+      if(day.morning  && day.morning.start)  items.push((day.morning.name||'Morning Class')+' '+fmtTime(day.morning.start)+(day.morning.room&&day.morning.room!=='tbd'?' · '+day.morning.room:''));
+      if(day.afternoon&& day.afternoon.start)items.push((day.afternoon.name||'Afternoon Class')+' '+fmtTime(day.afternoon.start)+(day.afternoon.room&&day.afternoon.room!=='tbd'?' · '+day.afternoon.room:''));
+      if(day.tour && day.tour.type) items.push({cenote:'Cenote Swim',ruins:'Mayan Ruins',mangrove:'Mangrove Tour',float:'Float Tour'}[day.tour.type]||day.tour.type);
+      if(day.experience && day.experience.type) items.push({ice:'Ice Bath',clay:'Mayan Clay',temazcal:'Temazcal',sound:'Sound Healing'}[day.experience.type]||day.experience.type);
+      if(items.length) rows += `<div style="margin-bottom:3px"><span style="font-weight:600;color:var(--muted);min-width:80px;display:inline-block">${day.label}</span> ${items.join(' &nbsp;·&nbsp; ')}</div>`;
+    });
+    return rows ? `<div style="margin-top:10px;font-size:12px;color:var(--text);line-height:1.7;border-top:1px solid var(--border);padding-top:10px">${rows}</div>` : '';
+  }
+
+  function subCard(sub) {
+    const isPending = sub.status === 'submitted';
+    const borderColor = sub.status==='approved'?'#4a8c5c': sub.status==='declined'?'#cc3333':'#e8703a';
+    const statusBadge = sub.status==='approved'
+      ? `<span style="background:#d4ead9;color:#2d6e40;border-radius:5px;padding:2px 9px;font-size:12px;font-weight:700">✓ Approved</span>`
+      : sub.status==='declined'
+      ? `<span style="background:#fde8e8;color:#9c2a2a;border-radius:5px;padding:2px 9px;font-size:12px;font-weight:700">✗ Declined</span>`
+      : `<span style="background:#fdf0e0;color:#a05a00;border-radius:5px;padding:2px 9px;font-size:12px;font-weight:700">⏳ Awaiting Approval</span>`;
+
+    const dietary = [];
+    if(sub.vegans>0) dietary.push(sub.vegans+' vegan'+(sub.vegans>1?'s':''));
+    if(sub.vegetarians>0) dietary.push(sub.vegetarians+' veg');
+    if(sub.allergies) dietary.push(sub.allergies);
+    const dietStr = dietary.length ? `<span style="font-size:12px;color:var(--muted);margin-left:8px">· ${dietary.join(', ')}</span>` : '';
+
+    const actions = isPending ? `
+      <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+        <button onclick="approveSubmission(${sub.id})" style="background:#4a8c5c;color:#fff;border:none;padding:8px 20px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">✓ Approve &amp; Add to Schedule</button>
+        <button onclick="declineSubmission(${sub.id})" style="background:none;color:#cc3333;border:1.5px solid #ffcccc;padding:8px 16px;border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit">Decline</button>
+      </div>` : '';
+
+    return `<div id="subcard-${sub.id}" style="background:var(--card);border:1px solid var(--border);border-left:3px solid ${borderColor};border-radius:10px;padding:18px 22px;margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:6px">
+        <div>
+          <span style="font-weight:700;font-size:15px">${sub.teacher_name||'Unknown Teacher'}</span>
+          <span style="color:var(--muted);font-size:13px;margin-left:8px">· ${sub.group_name||'Group '+sub.group_id}</span>
+          ${dietStr}
+        </div>
+        ${statusBadge}
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:4px">
+        ${fmtDate(sub.arrival_date)} – ${fmtDate(sub.departure_date)} &nbsp;·&nbsp; ${sub.pax||'?'} guests
+        ${sub.submitted_at?'&nbsp;·&nbsp; Submitted '+new Date(sub.submitted_at).toLocaleDateString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):''}
+      </div>
+      ${sub.general_notes?`<div style="font-size:12px;color:var(--muted);font-style:italic">${sub.general_notes}</div>`:''}
+      ${schedulePreview(sub)}
+      ${actions}
+    </div>`;
+  }
+
+  let html = `<div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:12px">
+    Awaiting Approval${pending.length>0?` <span style="background:#e8703a;color:#fff;border-radius:8px;padding:1px 8px;font-size:11px;margin-left:6px">${pending.length}</span>`:''}
+  </div>`;
+
+  if(pending.length===0){
+    html += `<div style="color:var(--muted);font-size:13px;padding:10px 0 24px">No schedules awaiting approval.</div>`;
+  } else {
+    pending.forEach(s => { html += subCard(s); });
+  }
+
+  if(approved.length>0){
+    html += `<div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:28px 0 12px">Approved</div>`;
+    approved.forEach(s => { html += subCard(s); });
+  }
+  if(declined.length>0){
+    html += `<div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:28px 0 12px">Declined</div>`;
+    declined.forEach(s => { html += subCard(s); });
+  }
+
+  content.innerHTML = html;
+}
+
+async function approveSubmission(subId){
+  const card = document.getElementById('subcard-'+subId);
+  if(card){ const btn = card.querySelector('button'); if(btn){ btn.disabled=true; btn.textContent='Approving…'; } }
+  try {
+    const resp = await fetch(API_URL, {
+      method:'POST',
+      body: JSON.stringify({action:'approveFormSubmission', submission_id: subId})
+    });
+    const json = await resp.json();
+    if(json.success){
+      showBanner('Schedule approved and added to the schedule (' + (json.data.bookings_created||0) + ' entries). Click Load Cloud to refresh.', '#4a8c5c');
+      renderSubmissionsTab();
+      loadFromCloud();
+    } else {
+      showBanner('Error: ' + (json.error||'Could not approve'), '#cc3333');
+      if(card){ const btn = card.querySelector('button'); if(btn){ btn.disabled=false; btn.textContent='✓ Approve & Add to Schedule'; } }
+    }
+  } catch(e){
+    showBanner('Network error — try again', '#cc3333');
+    if(card){ const btn = card.querySelector('button'); if(btn){ btn.disabled=false; btn.textContent='✓ Approve & Add to Schedule'; } }
+  }
+}
+
+async function declineSubmission(subId){
+  const note = prompt('Optional: leave a note for the teacher about why this is being declined (or click OK to skip)');
+  if(note === null) return; // cancelled
+  const card = document.getElementById('subcard-'+subId);
+  try {
+    const resp = await fetch(API_URL, {
+      method:'POST',
+      body: JSON.stringify({action:'declineSubmission', submission_id: subId, note: note||''})
+    });
+    const json = await resp.json();
+    if(json.success){
+      showBanner('Schedule declined.', '#e8703a');
+      renderSubmissionsTab();
+    } else {
+      showBanner('Error: ' + (json.error||'Could not decline'), '#cc3333');
+    }
+  } catch(e){
+    showBanner('Network error — try again', '#cc3333');
+  }
+}
+
+function showBanner(msg, color){
+  let banner = document.getElementById('globalBanner');
+  if(!banner){
+    banner = document.createElement('div');
+    banner.id = 'globalBanner';
+    banner.style.cssText = 'position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:9999;padding:12px 24px;border-radius:10px;font-size:13px;font-weight:600;color:#fff;box-shadow:0 4px 18px rgba(0,0,0,.18);max-width:480px;text-align:center;';
+    document.body.appendChild(banner);
+  }
+  banner.textContent = msg;
+  banner.style.background = color||'#4a8c5c';
+  banner.style.display = 'block';
+  clearTimeout(banner._t);
+  banner._t = setTimeout(() => { banner.style.display='none'; }, 5000);
+}
 
 function renderTeacherRequestTab(){
   const content = document.getElementById('mainContent');
