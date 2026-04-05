@@ -588,10 +588,8 @@ async function submitForm(){
     dietary:{vegans:fd.vegans,vegetarians:fd.vegetarians,allergies:fd.allergies},
     general_notes:fd.notes||'',slots:[],soulServices:[],schedule_data:fd};
   try{
-    var resp=await fetch(APPS_SCRIPT_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),mode:'cors'});
-    var json=await resp.json();
-    if(json.success) renderConfirmation();
-    else{ btn.disabled=false;btn.textContent='\u2726 SUBMIT SCHEDULE TO MELISSA';showServerErrors(json); }
+    await fetch(APPS_SCRIPT_URL,{method:'POST',body:JSON.stringify(payload),mode:'no-cors'});
+    renderConfirmation();
   }catch(e){ btn.disabled=false;btn.textContent='\u2726 SUBMIT SCHEDULE TO MELISSA';showServerErrors({error:'Network error. Please try again.'}); }
 }
 
