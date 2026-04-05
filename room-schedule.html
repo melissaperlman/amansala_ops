@@ -409,6 +409,7 @@
     <button class="tab" onclick="switchTab(&#39;dayview&#39;)">Day View</button>
     <button class="tab" onclick="switchTab(&#39;room&#39;)">By Room</button>
     <button class="tab" onclick="switchTab(&#39;teacher&#39;)">By Teacher</button>
+    <button class="tab" onclick="switchTab(&#39;sendlinks&#39;)">📧 Send Links</button>
     <button class="tab" onclick="switchTab(&#39;submissions&#39;)" id="submissionsTab">📋 Submitted Schedules</button>
     <button class="tab" onclick="switchTab(&#39;requests&#39;)" id="pendingTab">⏳ Pending Approvals</button>
     <button class="tab" onclick="switchTab(&#39;retreat&#39;)">By Retreat</button>
@@ -3874,7 +3875,7 @@ function undoDelete(){
 function switchTab(tab){
   activeTab=tab;
   document.body.classList.toggle('dayview-active', tab==='dayview');
-  const tabOrder = ['retreats','day','dayview','room','teacher','submissions','requests','retreat','mealcal','transport'];
+  const tabOrder = ['retreats','day','dayview','room','teacher','sendlinks','submissions','requests','retreat','mealcal','transport'];
   document.querySelectorAll('.tab').forEach((t,i)=>{
     t.classList.toggle('active', tabOrder[i]===tab);
   });
@@ -3907,6 +3908,11 @@ function switchTab(tab){
     if(filterBar) filterBar.style.display='none';
     renderGroupBar();
     renderRetreatView();
+  } else if(tab==='sendlinks'){
+    if(catTabs) catTabs.style.display='none';
+    if(groupBar) groupBar.style.display='none';
+    if(filterBar) filterBar.style.display='none';
+    renderSendLinksTab();
   } else if(tab==='submissions'){
     if(catTabs) catTabs.style.display='none';
     if(groupBar) groupBar.style.display='none';
@@ -4366,6 +4372,153 @@ const KNOWN_TEACHERS = [
   'Meghan Kinsey','Sam Applebee','Lauren','Jess','Robin','Sergio',
   'Megan','Kun y Darlene','Maria & Gollo'
 ];
+
+// ── SEND LINKS TAB ───────────────────────────────────────────────────────
+async function renderSendLinksTab(){
+  const content = document.getElementById('mainContent');
+
+  function statusBadge(status){
+    const map = {
+      sent:      ['#e8f0fa','#1565c0','📨 Sent — awaiting response'],
+      opened:    ['#fff8e1','#f57f17','👀 Opened'],
+      submitted: ['#fdf0e0','#a05a00','⏳ Schedule Submitted'],
+      approved:  ['#d4ead9','#2d6e40','✓ Approved'],
+      declined:  ['#fde8e8','#9c2a2a','✗ Declined']
+    };
+    const [bg, color, label] = map[status] || ['#f0f0f0','#555', status];
+    return `<span style="background:${bg};color:${color};font-size:11px;font-weight:700;padding:2px 10px;border-radius:12px;white-space:nowrap">${label}</span>`;
+  }
+
+  function fmtDateShort(ds){
+    if(!ds) return '';
+    const d = new Date(ds+'T12:00:00Z');
+    return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getUTCMonth()]+' '+d.getUTCDate();
+  }
+
+  async function loadLinks(){
+    try {
+      const resp = await fetch(API_URL + '?action=allFormLinks&_t=' + Date.now());
+      const json = await resp.json();
+      return json.success ? json.data : [];
+    } catch(e){ return []; }
+  }
+
+  // Render initial shell immediately
+  content.innerHTML = `
+  <div style="max-width:680px">
+
+    <!-- SEND FORM -->
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px 28px;margin-bottom:28px">
+      <div style="font-size:13px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#1565c0;margin-bottom:18px">Send Schedule Link to Teacher</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+        <div>
+          <label class="form-label">Teacher Name</label>
+          <input class="form-input" id="sl-name" placeholder="e.g. Sarah Mitchell" autocomplete="off">
+        </div>
+        <div>
+          <label class="form-label">Teacher Email</label>
+          <input class="form-input" id="sl-email" type="email" placeholder="teacher@example.com" autocomplete="off">
+        </div>
+      </div>
+      <div style="margin-bottom:12px">
+        <label class="form-label">Retreat / Group Name</label>
+        <input class="form-input" id="sl-group" placeholder="e.g. Yoga & Soul Retreat with Sarah">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:18px">
+        <div>
+          <label class="form-label">Arrival Date</label>
+          <input class="form-input" id="sl-arrival" type="date">
+        </div>
+        <div>
+          <label class="form-label">Departure Date</label>
+          <input class="form-input" id="sl-departure" type="date">
+        </div>
+        <div>
+          <label class="form-label">Number of Guests</label>
+          <input class="form-input" id="sl-pax" type="number" min="1" placeholder="e.g. 12">
+        </div>
+      </div>
+      <div id="sl-error" style="display:none;color:#c0392b;font-size:13px;margin-bottom:12px"></div>
+      <button id="sl-send-btn" onclick="sendScheduleLink()" style="background:#1565c0;color:#fff;border:none;padding:10px 28px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">📧 Send Schedule Link</button>
+    </div>
+
+    <!-- SENT LINKS TABLE -->
+    <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:12px">All Sent Links</div>
+    <div id="sl-links-list" style="font-size:13px;color:var(--muted)">Loading…</div>
+  </div>`;
+
+  // Load and render links table
+  const links = await loadLinks();
+  const listEl = document.getElementById('sl-links-list');
+  if(!links.length){
+    listEl.textContent = 'No links sent yet.';
+    return;
+  }
+
+  let rows = links.map(function(lnk){
+    const formUrl = 'https://melissaperlman.github.io/amansala_ops/teacher-form.html?token=' + lnk.token;
+    const sentDate = lnk.created_at ? new Date(lnk.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '';
+    return `<tr style="border-bottom:1px solid var(--border)">
+      <td style="padding:10px 8px;font-weight:600">${lnk.teacher_name||'—'}<br><span style="font-size:11px;color:var(--muted);font-weight:400">${lnk.teacher_email||''}</span></td>
+      <td style="padding:10px 8px;color:var(--muted)">${lnk.group_name||'—'}<br><span style="font-size:11px">${fmtDateShort(lnk.arrival_date)} – ${fmtDateShort(lnk.departure_date)}${lnk.pax?' · '+lnk.pax+' guests':''}</span></td>
+      <td style="padding:10px 8px">${statusBadge(lnk.status)}<br><span style="font-size:11px;color:var(--muted)">${sentDate}</span></td>
+      <td style="padding:10px 8px;white-space:nowrap">
+        <button onclick="navigator.clipboard.writeText('${formUrl}').then(()=>showBanner('Link copied!','#1565c0'))" style="background:none;border:1.5px solid var(--border);border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;font-family:inherit;color:var(--muted)">Copy Link</button>
+      </td>
+    </tr>`;
+  }).join('');
+
+  listEl.innerHTML = `<table style="width:100%;border-collapse:collapse">
+    <thead><tr style="border-bottom:2px solid var(--border)">
+      <th style="text-align:left;padding:6px 8px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)">Teacher</th>
+      <th style="text-align:left;padding:6px 8px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)">Retreat</th>
+      <th style="text-align:left;padding:6px 8px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)">Status</th>
+      <th style="padding:6px 8px"></th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+}
+
+async function sendScheduleLink(){
+  const name     = document.getElementById('sl-name').value.trim();
+  const email    = document.getElementById('sl-email').value.trim();
+  const group    = document.getElementById('sl-group').value.trim();
+  const arrival  = document.getElementById('sl-arrival').value;
+  const departure= document.getElementById('sl-departure').value;
+  const pax      = document.getElementById('sl-pax').value;
+  const errEl    = document.getElementById('sl-error');
+  const btn      = document.getElementById('sl-send-btn');
+
+  errEl.style.display = 'none';
+  if(!email){ errEl.textContent = 'Teacher email is required.'; errEl.style.display=''; return; }
+  if(!arrival || !departure){ errEl.textContent = 'Please enter arrival and departure dates.'; errEl.style.display=''; return; }
+  if(arrival > departure){ errEl.textContent = 'Arrival must be before departure.'; errEl.style.display=''; return; }
+
+  btn.disabled = true; btn.textContent = 'Sending…';
+
+  try {
+    const resp = await fetch(API_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action:'sendScheduleLink', teacher_name:name, teacher_email:email, group_name:group, arrival_date:arrival, departure_date:departure, pax:pax })
+    });
+    const json = await resp.json();
+    if(json.success){
+      showBanner('Schedule link sent to ' + email, '#1565c0');
+      // Clear form
+      ['sl-name','sl-email','sl-group','sl-arrival','sl-departure','sl-pax'].forEach(id => { document.getElementById(id).value=''; });
+      // Reload the links table
+      renderSendLinksTab();
+    } else {
+      errEl.textContent = json.error || 'Could not send — check Apps Script logs.';
+      errEl.style.display = '';
+      btn.disabled = false; btn.textContent = '📧 Send Schedule Link';
+    }
+  } catch(e){
+    errEl.textContent = 'Network error — please try again.';
+    errEl.style.display = '';
+    btn.disabled = false; btn.textContent = '📧 Send Schedule Link';
+  }
+}
 
 // ── SUBMITTED SCHEDULES TAB ──────────────────────────────────────────────
 async function renderSubmissionsTab(){

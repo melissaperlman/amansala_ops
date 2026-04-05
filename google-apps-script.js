@@ -493,6 +493,25 @@ function doGet(e) {
       case 'pendingForms':
         return respondOk(tabToJSON('form_submissions').filter(s => s.status === 'submitted'));
 
+      case 'allFormLinks': {
+        const allLinksGroups   = tabToJSON('groups');
+        const allLinksTeachers = tabToJSON('teachers');
+        const allLinksSubs     = tabToJSON('form_submissions');
+        const allLinks = allLinksSubs.map(function(s) {
+          const grp = allLinksGroups.find(g => String(g.id) === String(s.group_id)) || {};
+          const tch = allLinksTeachers.find(t => String(t.id) === String(grp.teacher_id)) || {};
+          return {
+            id: s.id, group_id: s.group_id, token: s.token,
+            status: s.status, submitted_at: s.submitted_at, created_at: s.created_at,
+            teacher_name: tch.name || '', teacher_email: tch.email || '',
+            group_name: grp.name || '',   pax: grp.pax || 0,
+            arrival_date:   toDateStr(grp.arrival_date)   || '',
+            departure_date: toDateStr(grp.departure_date) || ''
+          };
+        }).sort((a, b) => (b.created_at||'').localeCompare(a.created_at||''));
+        return respondOk(allLinks);
+      }
+
       case 'submittedForms': {
         const allSubs = tabToJSON('form_submissions');
         const allGroups = tabToJSON('groups');
@@ -1412,6 +1431,71 @@ function doPost(e) {
         GmailApp.sendEmail(teacher.email, subject, body);
 
         return respondOk({ sent: true, token: token, email: teacher.email });
+      }
+
+      // ── SEND SCHEDULE LINK (from ops scheduler UI) ──────────────
+      case 'sendScheduleLink': {
+        const teacherEmail = payload.teacher_email;
+        const teacherName  = payload.teacher_name || '';
+        const groupName    = payload.group_name || (teacherName ? teacherName + "'s Retreat" : 'Retreat');
+        const arrivalDate  = payload.arrival_date;
+        const departureDate= payload.departure_date;
+        const paxCount     = parseInt(payload.pax) || 0;
+
+        if(!teacherEmail) return respondError('Teacher email is required');
+        if(!arrivalDate || !departureDate) return respondError('Arrival and departure dates are required');
+
+        // Find or create teacher by email
+        const allTeachersNow = tabToJSON('teachers');
+        let teacherRec = allTeachersNow.find(t => t.email && t.email.toLowerCase().trim() === teacherEmail.toLowerCase().trim());
+        let newTeacherId;
+        if(teacherRec) {
+          newTeacherId = teacherRec.id;
+        } else {
+          newTeacherId = nextId('teachers');
+          appendRow('teachers', { id: newTeacherId, name: teacherName, email: teacherEmail, bio: '', instagram: '', website: '', preferred_rooms: '', typical_pax: '', notes: '', created_at: now() });
+          teacherRec = { name: teacherName, email: teacherEmail };
+        }
+
+        // Create retreat
+        const newRetreatId = nextId('retreats');
+        appendRow('retreats', { id: newRetreatId, name: groupName, week_start: arrivalDate, week_end: departureDate, status: 'active', notes: '', created_at: now() });
+
+        // Create group
+        const newGroupId = nextId('groups');
+        appendRow('groups', { id: newGroupId, retreat_id: newRetreatId, name: groupName, color: '', pax: paxCount, arrival_date: arrivalDate, departure_date: departureDate, teacher_id: newTeacherId, package_type: 'full', notes: '', status: 'active', created_at: now() });
+
+        // Generate token and form_submissions record
+        const newToken = Utilities.getUuid();
+        appendRow('form_submissions', { id: nextId('form_submissions'), group_id: newGroupId, token: newToken, status: 'sent', submitted_at: '', form_data_json: '', vegans: 0, vegetarians: 0, gluten_free: 0, allergies: '', needs_speaker: false, needs_mats: false, equipment_notes: '', general_notes: '', ip_address: '', created_at: now() });
+
+        // Send email
+        const newFormUrl = 'https://melissaperlman.github.io/amansala_ops/teacher-form.html?token=' + newToken;
+        let arrFmt = arrivalDate, depFmt = departureDate;
+        try { arrFmt  = Utilities.formatDate(new Date(arrivalDate),   'America/Cancun', 'EEEE, MMMM d, yyyy'); } catch(e){}
+        try { depFmt  = Utilities.formatDate(new Date(departureDate),  'America/Cancun', 'EEEE, MMMM d, yyyy'); } catch(e){}
+
+        const newSubject = 'Your Retreat Schedule at Amansala Tulum — ' + arrFmt;
+        const newBody = 'Hi ' + (teacherRec.name || teacherEmail) + ',\n\n' +
+          'We are so excited to welcome you and your group to Amansala Tulum!\n\n' +
+          'Please use the link below to submit your preferred class schedule, room requests, tours, and soul services:\n\n' +
+          '  ' + newFormUrl + '\n\n' +
+          'Your retreat details:\n' +
+          '  ' + groupName + (paxCount ? '  ·  ' + paxCount + ' guests' : '') + '\n' +
+          '  Arrival: ' + arrFmt + '\n' +
+          '  Departure: ' + depFmt + '\n\n' +
+          'A few things to know:\n' +
+          '· Room assignments are confirmed by Melissa after reviewing the full week schedule\n' +
+          '· You can request a specific room and we will do our best to accommodate\n' +
+          '· Soul services and tours marked "Optional" allow your guests to opt in individually\n' +
+          '· Once submitted, our team will review and confirm everything within 48 hours\n\n' +
+          'Questions? Reach us at melissa@amansala.com\n\n' +
+          'With love and sunshine,\n' +
+          'Melissa & the Amansala Team\n' +
+          'Amansala · Tulum, Mexico';
+
+        GmailApp.sendEmail(teacherEmail, newSubject, newBody);
+        return respondOk({ sent: true, token: newToken, form_url: newFormUrl, email: teacherEmail });
       }
 
       // ── SAVE SOUL SERVICE ───────────────────────────────────────
