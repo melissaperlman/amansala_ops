@@ -1046,8 +1046,8 @@ function doPost(e) {
         const sub = allSubs.find(s => s.token === token);
         if (!sub) return respondError('Invalid token');
 
-        if (sub.status === 'submitted' || sub.status === 'approved') {
-          return respondError('This form has already been submitted.');
+        if (sub.status === 'approved') {
+          return respondError('This schedule has already been approved. Contact Melissa to make changes.');
         }
 
         // Get group

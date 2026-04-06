@@ -4615,8 +4615,8 @@ async function renderSubmissionsTab(){
       if(day.ceremony && day.ceremony.start) items += `<span style="margin-right:12px">${day.ceremony.name||'Opening Ceremony'} <span style="color:var(--muted)">${fmtTime(day.ceremony.start)}</span>${roomPill(day.ceremony.room,day.ceremony.roomRequested,day.ceremony.roomRequestNote)}</span>`;
       if(day.morning   && day.morning.start)  items += `<span style="margin-right:12px">${day.morning.name||'Morning Class'} <span style="color:var(--muted)">${fmtTime(day.morning.start)}</span>${roomPill(day.morning.room,day.morning.roomRequested,day.morning.roomRequestNote)}</span>`;
       if(day.afternoon && day.afternoon.start) items += `<span style="margin-right:12px">${day.afternoon.name||'Afternoon Class'} <span style="color:var(--muted)">${fmtTime(day.afternoon.start)}</span>${roomPill(day.afternoon.room,day.afternoon.roomRequested,day.afternoon.roomRequestNote)}</span>`;
-      if(day.tour && day.tour.type) items += `<span style="margin-right:12px;background:#e8f4fd;color:#1565c0;font-size:11px;padding:2px 8px;border-radius:10px">🗺 ${tourLabels[day.tour.type]||day.tour.type}</span>`;
-      if(day.experience && day.experience.type) items += `<span style="margin-right:12px;background:#f3e8ff;color:#6a1b9a;font-size:11px;padding:2px 8px;border-radius:10px">✨ ${soulLabels[day.experience.type]||day.experience.type}</span>`;
+      if(day.tour && day.tour.type) items += `<span style="margin-right:12px"><span style="background:#e8f4fd;color:#1565c0;font-size:11px;padding:2px 8px;border-radius:10px">🗺 ${tourLabels[day.tour.type]||day.tour.type}</span> <span style="font-size:10px;font-weight:700;padding:1px 6px;border-radius:8px;${day.tour.status==='included'?'background:#d4ead9;color:#2d6e40':'background:#f0f0f0;color:#666'}">${day.tour.status==='included'?'Included':'Optional'}</span></span>`;
+      if(day.experience && day.experience.type) items += `<span style="margin-right:12px"><span style="background:#f3e8ff;color:#6a1b9a;font-size:11px;padding:2px 8px;border-radius:10px">✨ ${soulLabels[day.experience.type]||day.experience.type}</span> <span style="font-size:10px;font-weight:700;padding:1px 6px;border-radius:8px;${day.experience.status==='included'?'background:#d4ead9;color:#2d6e40':'background:#f0f0f0;color:#666'}">${day.experience.status==='included'?'Included':'Optional'}</span></span>`;
       if(items) rows += `<div style="margin-bottom:6px;display:flex;align-items:baseline;flex-wrap:wrap;gap:2px"><span style="font-weight:600;color:var(--muted);min-width:84px;font-size:11px;text-transform:uppercase;letter-spacing:.04em">${day.label}</span>${items}</div>`;
     });
     return rows ? `<div style="margin-top:12px;font-size:13px;line-height:1.8;border-top:1px solid var(--border);padding-top:12px">${rows}</div>` : '';
@@ -4676,12 +4676,20 @@ async function renderSubmissionsTab(){
       rows += classRow(day.ceremony, day.label, day.dayIndex, 'ceremony', 'Opening Ceremony');
       rows += classRow(day.morning,  day.label, day.dayIndex, 'morning',  'Morning Class');
       rows += classRow(day.afternoon,day.label, day.dayIndex, 'afternoon','Afternoon Class');
-      if(day.tour && day.tour.type)
+      if(day.tour && day.tour.type){
+        const tourStatus = day.tour.status==='included'
+          ? `<span style="background:#d4ead9;color:#2d6e40;font-size:10px;font-weight:700;padding:1px 7px;border-radius:10px;margin-left:4px">Included</span>`
+          : `<span style="background:#f0f0f0;color:#666;font-size:10px;font-weight:700;padding:1px 7px;border-radius:10px;margin-left:4px">Optional</span>`;
         rows += otherRow(day.label, day.dayIndex, 'tour',
-          `<span style="background:#e8f4fd;color:#1565c0;font-size:11px;padding:2px 8px;border-radius:10px">🗺 ${tourLabels[day.tour.type]||day.tour.type}</span>`, day.tour.time);
-      if(day.experience && day.experience.type)
+          `<span style="background:#e8f4fd;color:#1565c0;font-size:11px;padding:2px 8px;border-radius:10px">🗺 ${tourLabels[day.tour.type]||day.tour.type}</span>${tourStatus}`, day.tour.time);
+      }
+      if(day.experience && day.experience.type){
+        const expStatus = day.experience.status==='included'
+          ? `<span style="background:#d4ead9;color:#2d6e40;font-size:10px;font-weight:700;padding:1px 7px;border-radius:10px;margin-left:4px">Included</span>`
+          : `<span style="background:#f0f0f0;color:#666;font-size:10px;font-weight:700;padding:1px 7px;border-radius:10px;margin-left:4px">Optional</span>`;
         rows += otherRow(day.label, day.dayIndex, 'experience',
-          `<span style="background:#f3e8ff;color:#6a1b9a;font-size:11px;padding:2px 8px;border-radius:10px">✨ ${soulLabels[day.experience.type]||day.experience.type}</span>`, day.experience.time);
+          `<span style="background:#f3e8ff;color:#6a1b9a;font-size:11px;padding:2px 8px;border-radius:10px">✨ ${soulLabels[day.experience.type]||day.experience.type}</span>${expStatus}`, day.experience.time);
+      }
     });
 
     return rows ? `<div id="sub-edit-${sub.id}" style="margin-top:12px;border-top:1px solid var(--border);padding-top:4px">
