@@ -385,12 +385,13 @@ function formatDateShort(ds){
   return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getUTCMonth()]+' '+d.getUTCDate();
 }
 
-function timeSel(id, val, minH, maxH){
+function timeSel(id, val, minH, maxH, step){
   var opts = '';
   var lo = (minH !== undefined) ? minH : 6;
   var hi = (maxH !== undefined) ? maxH : 22;
+  var inc = step || 15;
   for(var h=lo;h<=hi;h++){
-    for(var m=0;m<60;m+=15){
+    for(var m=0;m<60;m+=inc){
       var t = String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');
       var sel = (t===val) ? ' selected' : '';
       opts += '<option value="'+t+'"'+sel+'>'+fmt(t)+'</option>';
@@ -518,7 +519,7 @@ function classRow(pfx, startVal, endVal, roomVal, defaultName, minH, maxH){
 // ── TOUR ROW (editable) ────────────────────────────────────────────────
 function tourRow(pfx){
   return '<div class="doc-row">'
-    +'<span class="doc-time" style="font-size:.88rem;font-weight:500">'+timeSel(pfx+'_tour_time','11:30')+'</span>'
+    +'<span class="doc-time" style="font-size:.88rem;font-weight:500">'+timeSel(pfx+'_tour_time','11:00',10,14,30)+'</span>'
     +'<span class="doc-sep">|</span>'
     +'<span class="doc-main"><span class="doc-event">'+tourOpts(pfx+'_tour')+' '+statusSel(pfx+'_tour_status')+'</span></span>'
     +'</div>';
