@@ -194,7 +194,43 @@ body{font-family:'Nunito',sans-serif;background:var(--cream);color:var(--deep);f
     </div>
   </div>
 
-  <!-- SCHEDULE FORM -->
+  <!-- INTAKE STEP -->
+  <div id="intake-step" style="display:none;">
+    <div class="doc-wrap">
+      <div class="doc-masthead" style="margin-top:8px;">
+        <div class="doc-subtitle" id="intake-dates"></div>
+        <div class="doc-leader-line" id="intake-leader"></div>
+        <div class="doc-rule"></div>
+      </div>
+      <div class="info-card" style="margin-bottom:18px;">
+        <div class="card-title">A few quick questions to get you started</div>
+        <p style="font-size:.86rem;color:var(--earth);margin-bottom:22px;line-height:1.65;">Your answers will pre-fill your schedule — you can adjust anything once you see it.</p>
+        <div class="g2">
+          <div class="f">
+            <label>Preferred morning class time</label>
+            <select id="intake-morning" style="padding:9px 11px;border:1.5px solid var(--warm);border-radius:6px;font-size:.86rem;color:var(--deep);background:var(--cream);outline:none;width:100%;">
+              <option value="">— Select time —</option>
+            </select>
+          </div>
+          <div class="f">
+            <label>Preferred afternoon class time</label>
+            <select id="intake-afternoon" style="padding:9px 11px;border:1.5px solid var(--warm);border-radius:6px;font-size:.86rem;color:var(--deep);background:var(--cream);outline:none;width:100%;">
+              <option value="">— Select time —</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="info-card" style="margin-bottom:28px;">
+        <div class="card-title">Pre-Paid Tours &amp; Activities</div>
+        <p style="font-size:.86rem;color:var(--earth);margin-bottom:18px;line-height:1.65;">Do any of your guests have pre-paid tours? Select the days and times below.</p>
+        <div id="intake-tour-days"></div>
+      </div>
+      <button class="gen-btn" onclick="applyIntakeAndBuild()">Build My Schedule &rarr;</button>
+    </div>
+  </div>
+
+  <!-- SCHEDULE STEP -->
+  <div id="schedule-step" style="display:none;">
   <div class="doc-wrap">
     <div class="doc-masthead" style="margin-top:8px;">
       <div class="doc-subtitle" id="hdr-dates2"></div>
@@ -271,7 +307,7 @@ body{font-family:'Nunito',sans-serif;background:var(--cream);color:var(--deep);f
     </div>
   </div><!-- /doc-wrap -->
 
-  <!-- SHALA GUIDE SIDEBAR -->
+  <!-- SHALA GUIDE SIDEBAR (inside schedule-step) -->
   <aside class="shala-sidebar">
     <div class="shala-sidebar-title">Our Shalas</div>
 
@@ -331,6 +367,7 @@ body{font-family:'Nunito',sans-serif;background:var(--cream);color:var(--deep);f
     </div>
   </aside>
 
+  </div><!-- /schedule-step -->
 </div><!-- /form-app -->
 
 <!-- CONFIRMATION -->
@@ -646,26 +683,96 @@ function buildSchedule(){
   area.innerHTML = html;
 }
 
-// ── RENDER ──────────────────────────────────────────────────────────────
-function renderForm(){
+// ── INTAKE ──────────────────────────────────────────────────────────────
+function addMins(t, m){ var p=t.split(':').map(Number), tot=p[0]*60+p[1]+m; return String(Math.floor(tot/60)).padStart(2,'0')+':'+String(tot%60).padStart(2,'0'); }
+function fmtTimeOpts(sel, lo, hi, step, def){
+  var opts='<option value="">— No preference —</option>';
+  for(var h=lo;h<=hi;h++){for(var m=0;m<60;m+=step){if(h===hi&&m>0)break;var t=String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');opts+='<option value="'+t+'"'+(t===def?' selected':'')+'>'+fmt(t)+'</option>';}}
+  document.getElementById(sel).innerHTML+=opts;
+}
+function buildIntakeScreen(){
+  var t=FORM_DATA.teacher, g=FORM_DATA.group;
+  document.getElementById('intake-dates').textContent = formatDateShort(g.arrival_date)+' — '+formatDateShort(g.departure_date);
+  document.getElementById('intake-leader').textContent = 'Welcome, '+(t.name||'Retreat Leader')+(g.pax?' · '+g.pax+' guests':'');
+  fmtTimeOpts('intake-morning', 7, 11, 30, '08:00');
+  fmtTimeOpts('intake-afternoon', 15, 18, 30, '17:00');
+  // Tour day rows — full days only (indices 1-4 = Sun-Wed)
+  var html='';
+  DDAYS.forEach(function(d,i){
+    if(d.type!=='full') return;
+    var dateStr='';
+    if(g.arrival_date){var dt=new Date(new Date(g.arrival_date).getTime()+i*86400000);if(!isNaN(dt))dateStr=' <span style="font-size:.72rem;color:var(--earth)">'+dt.toLocaleDateString('en-US',{month:'short',day:'numeric'})+'</span>';}
+    html+='<div class="intake-tour-row" style="display:flex;align-items:center;gap:14px;padding:8px 0;border-bottom:1px solid rgba(234,217,196,.5);">'
+      +'<input type="checkbox" id="itour'+i+'" class="intake-tour-cb" data-idx="'+i+'" style="width:16px;height:16px;accent-color:var(--clay);flex-shrink:0;" onchange="toggleTourTime(this)">'
+      +'<label for="itour'+i+'" style="font-size:.88rem;font-weight:500;color:var(--deep);min-width:90px;cursor:pointer;">'+d.lbl+dateStr+'</label>'
+      +'<select id="itour-time'+i+'" disabled style="padding:6px 10px;border:1.5px solid var(--warm);border-radius:6px;font-size:.83rem;color:var(--deep);background:#f5f5f5;outline:none;opacity:.5;">'
+      +'<option value="">— Select time —</option>';
+    for(var h=10;h<=14;h++){for(var m=0;m<60;m+=30){if(h===14&&m>0)break;var tt=String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');html+='<option value="'+tt+'"'+(tt==='11:00'?' selected':'')+'>'+fmt(tt)+'</option>';}}
+    html+='</select></div>';
+  });
+  document.getElementById('intake-tour-days').innerHTML = html||'<p style="font-size:.83rem;color:var(--earth)">No tour days available for this retreat.</p>';
+}
+function toggleTourTime(cb){
+  var sel=document.getElementById('itour-time'+cb.dataset.idx);
+  sel.disabled=!cb.checked;
+  sel.style.background=cb.checked?'var(--cream)':'#f5f5f5';
+  sel.style.opacity=cb.checked?'1':'.5';
+}
+function applyIntakeAndBuild(){
+  var morning=document.getElementById('intake-morning').value;
+  var afternoon=document.getElementById('intake-afternoon').value;
+  // Apply preferred times to DDAYS defaults
+  DDAYS.forEach(function(d,i){
+    if((d.type==='full'||d.type==='departure') && morning){
+      d.ms=morning; d.me=addMins(morning,75);
+    }
+    if(d.type==='full' && afternoon){
+      d.as=afternoon; d.ae=addMins(afternoon,90);
+    }
+  });
+  // Store tour day selections to apply after buildSchedule
+  var tourSelections=[];
+  document.querySelectorAll('.intake-tour-cb:checked').forEach(function(cb){
+    var idx=cb.dataset.idx;
+    var sel=document.getElementById('itour-time'+idx);
+    tourSelections.push({idx:parseInt(idx), time:sel?sel.value:'11:00'});
+  });
+  // Show schedule
+  document.getElementById('intake-step').style.display='none';
+  showScheduleStep();
+  // Pre-fill tour times
+  tourSelections.forEach(function(t){
+    var el=document.getElementById('d'+t.idx+'_tour_time');
+    if(el) el.value=t.time;
+  });
+}
+function showScheduleStep(){
   var t=FORM_DATA.teacher, g=FORM_DATA.group;
   document.getElementById('hdr-dates2').textContent = formatDateShort(g.arrival_date)+' — '+formatDateShort(g.departure_date);
   document.getElementById('hdr-leader').textContent = (t.name||'Retreat Leader')+(g.pax?' · '+g.pax+' guests':'');
   document.getElementById('iName').value = t.name||g.name||'';
   document.getElementById('iSize').value = g.pax?g.pax+' participants':'';
   document.getElementById('iDates').value = formatDateShort(g.arrival_date)+' – '+formatDateShort(g.departure_date);
-
-  if(FORM_DATA.occupiedSlots) OCCUPIED_SLOTS = FORM_DATA.occupiedSlots;
-
+  if(FORM_DATA.occupiedSlots) OCCUPIED_SLOTS=FORM_DATA.occupiedSlots;
   buildSchedule();
+  document.getElementById('schedule-step').style.display='';
+}
 
-  if(FORM_DATA.alreadySubmitted){
-    restoreFromSubmission();
-    showSubmittedBanner();
-  }
-
+// ── RENDER ──────────────────────────────────────────────────────────────
+function renderForm(){
   document.getElementById('loading-screen').style.display='none';
   document.getElementById('form-app').style.display='';
+
+  if(FORM_DATA.alreadySubmitted){
+    // Skip intake — show schedule with restored submission
+    showScheduleStep();
+    restoreFromSubmission();
+    showSubmittedBanner();
+  } else {
+    // Show intake first
+    buildIntakeScreen();
+    document.getElementById('intake-step').style.display='';
+  }
 }
 
 function showSubmittedBanner(){
