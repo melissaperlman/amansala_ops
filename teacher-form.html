@@ -320,10 +320,11 @@ function formatDateShort(ds){
   return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getUTCMonth()]+' '+d.getUTCDate();
 }
 
-function timeSel(id, val){
-  // Generate every 15 min from 6:00 AM to 10:00 PM
+function timeSel(id, val, minH, maxH){
   var opts = '';
-  for(var h=6;h<=22;h++){
+  var lo = (minH !== undefined) ? minH : 6;
+  var hi = (maxH !== undefined) ? maxH : 22;
+  for(var h=lo;h<=hi;h++){
     for(var m=0;m<60;m+=15){
       var t = String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');
       var sel = (t===val) ? ' selected' : '';
@@ -437,13 +438,13 @@ function fixedRow(time, label){
 }
 
 // ── CLASS ROW (editable) ────────────────────────────────────────────────
-function classRow(pfx, startVal, endVal, roomVal, defaultName){
+function classRow(pfx, startVal, endVal, roomVal, defaultName, minH, maxH){
   return '<div class="doc-row" style="align-items:flex-start">'
-    +'<span class="doc-time">'+timeSel(pfx+'_s',startVal)+' – '+timeSel(pfx+'_e',endVal)+'</span>'
+    +'<span class="doc-time">'+timeSel(pfx+'_s',startVal,minH,maxH)+' – '+timeSel(pfx+'_e',endVal,minH,maxH)+'</span>'
     +'<span class="doc-sep">|</span>'
     +'<span class="doc-main">'
     +'<span class="doc-event">'+classNameInput(pfx+'_name', defaultName||'e.g. Vinyasa Flow, Yin Yoga…')+' &nbsp;'+roomOpts(pfx+'_r',roomVal)+' <button type="button" class="room-request-btn" id="'+pfx+'_req" onclick="toggleRoomRequest(this,\''+pfx+'_req\')" title="Request this specific room">Request</button></span>'
-    +'<span class="doc-sub" id="'+pfx+'_req_pendingrow" style="display:none"><span class="room-pending-badge" id="'+pfx+'_req_badge">Pending Approval</span> <input type="text" class="room-pending-note" id="'+pfx+'_req_pnote" placeholder="Leave a note e.g. can do Sky if Heaven unavailable..." /> <button type="button" class="room-approve-btn" id="'+pfx+'_req_appbtn" onclick="approveRoom(this,\''+pfx+'_req\')">✓ Approve</button></span>'
+    +'<span class="doc-sub" id="'+pfx+'_req_pendingrow" style="display:none"><span class="room-pending-badge" id="'+pfx+'_req_badge">Pending Approval</span> <input type="text" class="room-pending-note" id="'+pfx+'_req_pnote" placeholder="Leave a note e.g. can do Sky if Heaven unavailable..." /></span>'
     +'<span class="doc-sub">'+noise(pfx)+' &nbsp; '+notesInput(pfx+'_notes')+'</span>'
     +'</span>'
     +'</div>';
@@ -490,11 +491,11 @@ function buildSchedule(){
       html += classRow('d'+i+'_a','19:00','20:00','Heaven','Opening Ceremony | Welcome Amansala');
 
     } else if(d.type === 'departure'){
-      html += classRow('d'+i+'_m',d.ms,d.me,d.mr,'Morning Class');
+      html += classRow('d'+i+'_m',d.ms,d.me,d.mr,'Morning Class',7,11);
       html += '<div class="doc-row"><span class="doc-time"></span><span class="doc-sep"></span><span class="doc-main"><span class="doc-event" style="font-style:italic;color:var(--earth)">Departures — Wishing you safe travels</span></span></div>';
 
     } else {
-      html += classRow('d'+i+'_m',d.ms,d.me,d.mr,'Morning Class');
+      html += classRow('d'+i+'_m',d.ms,d.me,d.mr,'Morning Class',7,11);
       html += tourRow('d'+i);
       html += classRow('d'+i+'_a',d.as,d.ae,d.ar,'Afternoon Class');
       html += expRow('d'+i);
@@ -562,6 +563,17 @@ function setVal(id, val){
   if(el && val !== undefined && val !== null && val !== '') el.value = val;
 }
 
+function restoreRoomRequest(btnId, requested, note){
+  if(!requested) return;
+  var btn = document.getElementById(btnId);
+  if(!btn) return;
+  btn.classList.add('room-request-active');
+  btn.title = 'Room requested — we\'ll do our best!';
+  var row = document.getElementById(btnId+'_pendingrow');
+  if(row) row.style.display = 'block';
+  if(note) setVal(btnId+'_pnote', note);
+}
+
 function restoreFromSubmission(){
   var sd = FORM_DATA && FORM_DATA.submissionData;
   if(!sd || !sd.form_data_json) return;
@@ -586,6 +598,7 @@ function restoreFromSubmission(){
       setVal('d'+i+'_a_r', day.ceremony.room);
       setVal('d'+i+'_a_name', day.ceremony.name);
       setVal('d'+i+'_a_notes', day.ceremony.notes);
+      restoreRoomRequest('d'+i+'_a_req', day.ceremony.roomRequested, day.ceremony.roomRequestNote);
     }
     if(day.morning){
       setVal('d'+i+'_m_s', day.morning.start);
@@ -593,6 +606,7 @@ function restoreFromSubmission(){
       setVal('d'+i+'_m_r', day.morning.room);
       setVal('d'+i+'_m_name', day.morning.name);
       setVal('d'+i+'_m_notes', day.morning.notes);
+      restoreRoomRequest('d'+i+'_m_req', day.morning.roomRequested, day.morning.roomRequestNote);
     }
     if(day.afternoon){
       setVal('d'+i+'_a_s', day.afternoon.start);
@@ -600,6 +614,7 @@ function restoreFromSubmission(){
       setVal('d'+i+'_a_r', day.afternoon.room);
       setVal('d'+i+'_a_name', day.afternoon.name);
       setVal('d'+i+'_a_notes', day.afternoon.notes);
+      restoreRoomRequest('d'+i+'_a_req', day.afternoon.roomRequested, day.afternoon.roomRequestNote);
     }
     if(day.tour && day.tour.type){
       setVal('d'+i+'_tour', day.tour.type);
