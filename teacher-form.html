@@ -139,23 +139,22 @@ body{font-family:'Nunito',sans-serif;background:var(--cream);color:var(--deep);f
 .confirmation h2{font-family:'Raleway',sans-serif;font-size:1.8rem;font-weight:300;letter-spacing:.06em;margin-bottom:12px;}
 .confirmation p{font-size:.85rem;color:var(--earth);max-width:440px;margin:0 auto;line-height:1.65;}
 
-/* PAGE LAYOUT — form + sidebar */
-.page-layout{display:grid;grid-template-columns:1fr 240px;gap:0;align-items:start;max-width:980px;margin:0 auto;}
-.doc-wrap{max-width:none;margin:0;padding:48px 28px 40px;}
+/* DOC WRAP */
+.doc-wrap{max-width:700px;margin:0 auto;padding:48px 28px 40px;}
 
-.shala-sidebar{padding:32px 16px 40px 8px;position:sticky;top:24px;min-width:200px;}
-.shala-sidebar-title{font-family:'Raleway',sans-serif;font-size:.58rem;letter-spacing:.28em;text-transform:uppercase;color:var(--clay);margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--warm);}
-.shala-card{background:var(--white);border:1px solid var(--warm);border-radius:10px;padding:12px 14px;margin-bottom:10px;box-shadow:0 2px 8px rgba(61,40,0,.06);}
-.shala-name{font-family:'Raleway',sans-serif;font-size:.85rem;font-weight:600;color:var(--deep);margin-bottom:3px;}
-.shala-cap{font-size:.72rem;color:var(--earth);display:flex;align-items:center;gap:5px;margin-bottom:4px;}
+/* SHALA SIDEBAR — fixed on right */
+.shala-sidebar{position:fixed;right:20px;top:100px;width:210px;max-height:calc(100vh - 120px);overflow-y:auto;padding:0 0 20px 0;z-index:10;}
+.shala-sidebar-title{font-family:'Raleway',sans-serif;font-size:.58rem;letter-spacing:.28em;text-transform:uppercase;color:var(--clay);margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--warm);}
+.shala-card{background:var(--white);border:1px solid var(--warm);border-radius:10px;overflow:hidden;margin-bottom:10px;box-shadow:0 2px 8px rgba(61,40,0,.06);}
+.shala-card img{width:100%;height:90px;object-fit:cover;display:block;}
+.shala-card-body{padding:8px 10px 10px;}
+.shala-name{font-family:'Raleway',sans-serif;font-size:.85rem;font-weight:600;color:var(--deep);margin-bottom:2px;}
+.shala-cap{font-size:.7rem;color:var(--earth);display:flex;align-items:center;gap:4px;}
 .shala-dots{display:flex;flex-wrap:wrap;gap:2px;margin-top:5px;}
-.shala-dot{width:6px;height:6px;border-radius:50%;background:var(--warm);}
+.shala-dot{width:5px;height:5px;border-radius:50%;background:var(--warm);}
 .shala-dot.filled{background:var(--clay);}
 
-@media(max-width:640px){
-  .page-layout{grid-template-columns:1fr;}
-  .shala-sidebar{display:none;}
-}
+@media(max-width:1080px){.shala-sidebar{display:none;}}
 @media(max-width:600px){
   .doc-wrap{padding:28px 16px 30px;}
   .doc-time{min-width:110px;font-size:.8rem;}
@@ -194,8 +193,7 @@ body{font-family:'Nunito',sans-serif;background:var(--cream);color:var(--deep);f
     </div>
   </div>
 
-  <!-- SCHEDULE + SIDEBAR -->
-  <div class="page-layout">
+  <!-- SCHEDULE FORM -->
   <div class="doc-wrap">
     <div class="doc-masthead" style="margin-top:8px;">
       <div class="doc-subtitle" id="hdr-dates2"></div>
@@ -263,53 +261,50 @@ body{font-family:'Nunito',sans-serif;background:var(--cream);color:var(--deep);f
     <div class="shala-sidebar-title">Our Shalas</div>
 
     <div class="shala-card">
-      <div class="shala-name">Grande</div>
-      <div class="shala-cap">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--clay);flex-shrink:0"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-        Up to 45 guests
-      </div>
-      <div class="shala-dots">
-        <div class="shala-dot filled"></div><div class="shala-dot filled"></div><div class="shala-dot filled"></div><div class="shala-dot filled"></div><div class="shala-dot filled"></div><div class="shala-dot filled"></div><div class="shala-dot filled"></div><div class="shala-dot filled"></div><div class="shala-dot filled"></div>
-      </div>
-    </div>
-
-    <div class="shala-card">
-      <div class="shala-name">Heaven</div>
-      <div class="shala-cap">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--clay);flex-shrink:0"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-        Up to 26 guests
-      </div>
-      <div class="shala-dots">
-        <div class="shala-dot filled"></div><div class="shala-dot filled"></div><div class="shala-dot filled"></div><div class="shala-dot filled"></div><div class="shala-dot filled"></div><div class="shala-dot"></div><div class="shala-dot"></div><div class="shala-dot"></div><div class="shala-dot"></div>
+      <img src="shala-grande.webp" alt="Grande Shala">
+      <div class="shala-card-body">
+        <div class="shala-name">Grande</div>
+        <div class="shala-cap">Up to 45 guests</div>
+        <div class="shala-dots">
+          <div class="shala-dot filled"></div><div class="shala-dot filled"></div><div class="shala-dot filled"></div><div class="shala-dot filled"></div><div class="shala-dot filled"></div><div class="shala-dot filled"></div><div class="shala-dot filled"></div><div class="shala-dot filled"></div><div class="shala-dot filled"></div>
+        </div>
       </div>
     </div>
 
     <div class="shala-card">
-      <div class="shala-name">Beachfront</div>
-      <div class="shala-cap">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--clay);flex-shrink:0"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-        Up to 24 guests
-      </div>
-      <div class="shala-dots">
-        <div class="shala-dot filled"></div><div class="shala-dot filled"></div><div class="shala-dot filled"></div><div class="shala-dot filled"></div><div class="shala-dot filled"></div><div class="shala-dot"></div><div class="shala-dot"></div><div class="shala-dot"></div><div class="shala-dot"></div>
+      <img src="shala-heaven.webp" alt="Heaven Shala">
+      <div class="shala-card-body">
+        <div class="shala-name">Heaven</div>
+        <div class="shala-cap">Up to 26 guests</div>
+        <div class="shala-dots">
+          <div class="shala-dot filled"></div><div class="shala-dot filled"></div><div class="shala-dot filled"></div><div class="shala-dot filled"></div><div class="shala-dot filled"></div><div class="shala-dot"></div><div class="shala-dot"></div><div class="shala-dot"></div><div class="shala-dot"></div>
+        </div>
       </div>
     </div>
 
     <div class="shala-card">
-      <div class="shala-name">Sky</div>
-      <div class="shala-cap">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--clay);flex-shrink:0"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-        Up to 10 guests
-      </div>
-      <div class="shala-dots">
-        <div class="shala-dot filled"></div><div class="shala-dot filled"></div><div class="shala-dot"></div><div class="shala-dot"></div><div class="shala-dot"></div><div class="shala-dot"></div><div class="shala-dot"></div><div class="shala-dot"></div><div class="shala-dot"></div>
+      <img src="shala-beachfront.jpg" alt="Beachfront Shala">
+      <div class="shala-card-body">
+        <div class="shala-name">Beachfront</div>
+        <div class="shala-cap">Up to 24 guests</div>
+        <div class="shala-dots">
+          <div class="shala-dot filled"></div><div class="shala-dot filled"></div><div class="shala-dot filled"></div><div class="shala-dot filled"></div><div class="shala-dot filled"></div><div class="shala-dot"></div><div class="shala-dot"></div><div class="shala-dot"></div><div class="shala-dot"></div>
+        </div>
       </div>
     </div>
 
-    <div style="font-size:.67rem;color:var(--earth);font-style:italic;line-height:1.6;margin-top:12px;opacity:.75">Dots represent relative capacity. Select a room from the dropdown on each class row.</div>
+    <div class="shala-card">
+      <img src="shala-chica.jpg" alt="Chica Shala">
+      <div class="shala-card-body">
+        <div class="shala-name">Chica</div>
+        <div class="shala-cap">Up to 10 guests</div>
+        <div class="shala-dots">
+          <div class="shala-dot filled"></div><div class="shala-dot filled"></div><div class="shala-dot"></div><div class="shala-dot"></div><div class="shala-dot"></div><div class="shala-dot"></div><div class="shala-dot"></div><div class="shala-dot"></div><div class="shala-dot"></div>
+        </div>
+      </div>
+    </div>
   </aside>
 
-  </div><!-- /page-layout -->
 </div><!-- /form-app -->
 
 <!-- CONFIRMATION -->
