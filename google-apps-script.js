@@ -472,6 +472,14 @@ function doGet(e) {
           return true;
         });
 
+        // Occupied slots — bookings from other groups in the same retreat
+        const otherGroupIds = tabToJSON('groups')
+          .filter(g => String(g.retreat_id) === String(groupObj.retreat_id) && String(g.id) !== String(sub.group_id))
+          .map(g => String(g.id));
+        const occupiedSlots = tabToJSON('rs_bookings')
+          .filter(b => otherGroupIds.includes(String(b.group_id)) && b.status !== 'cancelled' && b.room)
+          .map(b => ({ day: b.day, start: b.start, end: b.end, room: b.room, label: b.title || 'Another group' }));
+
         return respondOk({
           teacher: teacher,
           group: groupObj,
@@ -480,7 +488,8 @@ function doGet(e) {
           soulServices: soulServices,
           roomOptions: roomOptions,
           alreadySubmitted: alreadySubmitted,
-          submissionData: alreadySubmitted ? sub : null
+          submissionData: alreadySubmitted ? sub : null,
+          occupiedSlots: occupiedSlots
         });
       }
 
@@ -1271,11 +1280,13 @@ function doPost(e) {
           });
         }
 
-        // Compute date from arrival_date + dayIndex
-        function offsetDate(base, delta) {
+        // Compute rs_bookings day key from arrival_date + dayIndex
+        // Format must match ops scheduler: "Sun 26", "Mon 27" etc.
+        function offsetToDayKey(base, delta) {
           const d = new Date(base + 'T12:00:00Z');
           d.setUTCDate(d.getUTCDate() + delta);
-          return d.toISOString().substring(0, 10);
+          const abbrs = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+          return abbrs[d.getUTCDay()] + ' ' + d.getUTCDate();
         }
 
         const rsBookings2 = tabToJSON('rs_bookings');
@@ -1304,7 +1315,7 @@ function doPost(e) {
         }
 
         days2.forEach(function(day) {
-          const dayDate = offsetDate(arrivalStr, day.dayIndex);
+          const dayDate = offsetToDayKey(arrivalStr, day.dayIndex);
 
           function maybeAdd(cls, classType, defaultTitle, extraProps) {
             if (!cls || !cls.start) return;
@@ -1358,6 +1369,14 @@ function doPost(e) {
         }
 
         return respondOk({ declined: true });
+      }
+
+      // ── DELETE SUBMISSION ────────────────────────────────────────
+      case 'deleteFormSubmission': {
+        const subRow = findRowById('form_submissions', payload.submission_id);
+        if (!subRow) return respondError('Submission not found');
+        subRow.sheet.deleteRow(subRow.rowIndex);
+        return respondOk({ deleted: true });
       }
 
       // ── SEND FORM EMAIL ─────────────────────────────────────────

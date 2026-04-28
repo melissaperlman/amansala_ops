@@ -143,7 +143,8 @@ body{font-family:'Nunito',sans-serif;background:var(--cream);color:var(--deep);f
 .doc-wrap{max-width:700px;margin:0 auto;padding:48px 28px 40px;}
 
 /* SHALA SIDEBAR — fixed on right */
-.shala-sidebar{position:fixed;right:20px;top:100px;width:210px;max-height:calc(100vh - 120px);overflow-y:auto;padding:0 0 20px 0;z-index:10;}
+.shala-sidebar{position:fixed;right:20px;top:295px;width:210px;max-height:calc(100vh - 315px);overflow-y:auto;padding:0 0 20px 0;z-index:10;}
+.room-conflict-badge{display:inline-block;font-size:.6rem;letter-spacing:.06em;text-transform:uppercase;font-weight:700;padding:3px 8px;border-radius:10px;background:#fdf0ef;color:#c0392b;border:1px solid #e8a09a;vertical-align:middle;margin-left:6px;}
 .shala-sidebar-title{font-family:'Raleway',sans-serif;font-size:.58rem;letter-spacing:.28em;text-transform:uppercase;color:var(--clay);margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--warm);}
 .shala-card{background:var(--white);border:1px solid var(--warm);border-radius:10px;overflow:hidden;margin-bottom:10px;box-shadow:0 2px 8px rgba(61,40,0,.06);}
 .shala-card img{width:100%;height:90px;object-fit:cover;display:block;}
@@ -294,6 +295,17 @@ body{font-family:'Nunito',sans-serif;background:var(--cream);color:var(--deep);f
     </div>
 
     <div class="shala-card">
+      <img src="shala-sky.jpg" alt="Sky Shala">
+      <div class="shala-card-body">
+        <div class="shala-name">Sky</div>
+        <div class="shala-cap">Up to 10 guests</div>
+        <div class="shala-dots">
+          <div class="shala-dot filled"></div><div class="shala-dot filled"></div><div class="shala-dot"></div><div class="shala-dot"></div><div class="shala-dot"></div><div class="shala-dot"></div><div class="shala-dot"></div><div class="shala-dot"></div><div class="shala-dot"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="shala-card">
       <img src="shala-chica.jpg" alt="Chica Shala">
       <div class="shala-card-body">
         <div class="shala-name">Chica</div>
@@ -330,6 +342,38 @@ var TOKEN = '';
 var FORM_DATA = null;
 
 var ROOMS = ['','Heaven','Sky','Beachfront (BF)','Grande','Chica','Beach','Pool Deck'];
+var OCCUPIED_SLOTS = []; // [{day:'YYYY-MM-DD', start:'HH:MM', end:'HH:MM', room:'...', label:'...'}]
+
+function toMins(t){ if(!t) return null; var p=t.split(':').map(Number); return p[0]*60+(p[1]||0); }
+function normRoom(r){ return (r||'').toLowerCase().replace(/[^a-z]/g,''); }
+function getDayDate(idx){
+  if(!FORM_DATA||!FORM_DATA.group||!FORM_DATA.group.arrival_date) return null;
+  var dt=new Date(new Date(FORM_DATA.group.arrival_date).getTime()+idx*86400000);
+  return isNaN(dt)?null:dt.toISOString().slice(0,10);
+}
+function checkRoomConflict(roomId){
+  var roomEl=document.getElementById(roomId); if(!roomEl) return;
+  var room=roomEl.value; if(!room||room==='tbd'){hideBadge(roomId);return;}
+  var base=roomId.slice(0,-2); // strip _r
+  var match=base.match(/^d(\d+)/); if(!match){hideBadge(roomId);return;}
+  var dayDate=getDayDate(parseInt(match[1])); if(!dayDate){hideBadge(roomId);return;}
+  var sEl=document.getElementById(base+'_s'), eEl=document.getElementById(base+'_e');
+  var sMin=sEl?toMins(sEl.value):null, eMin=eEl?toMins(eEl.value):null;
+  if(sMin===null){hideBadge(roomId);return;}
+  if(eMin===null) eMin=sMin+90;
+  var conflict=OCCUPIED_SLOTS.some(function(o){
+    if(normRoom(o.room)!==normRoom(room)) return false;
+    if(o.day!==dayDate) return false;
+    var oS=toMins(o.start), oE=o.end?toMins(o.end):oS+90;
+    return sMin<oE && eMin>oS;
+  });
+  var badge=document.getElementById(base+'_conflict');
+  if(badge) badge.style.display=conflict?'inline-block':'none';
+}
+function hideBadge(roomId){
+  var badge=document.getElementById(roomId.slice(0,-2)+'_conflict');
+  if(badge) badge.style.display='none';
+}
 
 var DDAYS = [
   {lbl:'Saturday',  type:'arrival'},
@@ -403,7 +447,7 @@ function classNameInput(id, placeholder){
   return '<input type="text" class="e-classname" id="'+id+'" placeholder="'+(placeholder||'Class name...')+'">';
 }
 function roomOpts(id, val){
-  var h='<select class="e-sel" id="'+id+'">';
+  var h='<select class="e-sel" id="'+id+'" onchange="checkRoomConflict(\''+id+'\')">';
   h+='<option value="tbd"'+((!val||val==='tbd')?' selected':'')+'>TBD</option>';
   ROOMS.forEach(function(r){ if(!r) return; h+='<option value="'+r+'"'+(r===val?' selected':'')+'>'+(r||'— Room —')+'</option>'; });
   return h+'</select>';
@@ -504,12 +548,17 @@ function fixedRow(time, label){
 }
 
 // ── CLASS ROW (editable) ────────────────────────────────────────────────
+function timeSelOC(id, val, minH, maxH, step, roomId){
+  var opts='', lo=(minH!==undefined)?minH:6, hi=(maxH!==undefined)?maxH:22, inc=step||15;
+  for(var h=lo;h<=hi;h++){for(var m=0;m<60;m+=inc){var t=String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');var sel=(t===val)?' selected':'';opts+='<option value="'+t+'"'+sel+'>'+fmt(t)+'</option>';}}
+  return '<select class="e-time-sel" id="'+id+'" onchange="checkRoomConflict(\''+roomId+'\')">'+'<option value="">—</option>'+opts+'</select>';
+}
 function classRow(pfx, startVal, endVal, roomVal, defaultName, minH, maxH){
   return '<div class="doc-row" style="align-items:flex-start">'
-    +'<span class="doc-time">'+timeSel(pfx+'_s',startVal,minH,maxH)+' – '+timeSel(pfx+'_e',endVal,minH,maxH)+'</span>'
+    +'<span class="doc-time">'+timeSelOC(pfx+'_s',startVal,minH,maxH,undefined,pfx+'_r')+' – '+timeSelOC(pfx+'_e',endVal,minH,maxH,undefined,pfx+'_r')+'</span>'
     +'<span class="doc-sep">|</span>'
     +'<span class="doc-main">'
-    +'<span class="doc-event">'+classNameInput(pfx+'_name', defaultName||'e.g. Vinyasa Flow, Yin Yoga…')+' &nbsp;'+roomOpts(pfx+'_r',roomVal)+' <button type="button" class="room-request-btn" id="'+pfx+'_req" onclick="toggleRoomRequest(this,\''+pfx+'_req\')" title="Request this specific room">Request</button></span>'
+    +'<span class="doc-event">'+classNameInput(pfx+'_name', defaultName||'e.g. Vinyasa Flow, Yin Yoga…')+' &nbsp;'+roomOpts(pfx+'_r',roomVal)+'<span class="room-conflict-badge" id="'+pfx+'_conflict" style="display:none">⚠ Occupied</span> <button type="button" class="room-request-btn" id="'+pfx+'_req" onclick="toggleRoomRequest(this,\''+pfx+'_req\')" title="Request this specific room">Request</button></span>'
     +'<span class="doc-sub" id="'+pfx+'_req_pendingrow" style="display:none"><span class="room-pending-badge" id="'+pfx+'_req_badge">Pending Approval</span> <input type="text" class="room-pending-note" id="'+pfx+'_req_pnote" placeholder="Leave a note e.g. can do Sky if Heaven unavailable..." /></span>'
     +'<span class="doc-sub">'+noise(pfx)+' &nbsp; '+notesInput(pfx+'_notes')+'</span>'
     +'</span>'
@@ -591,6 +640,8 @@ function renderForm(){
   document.getElementById('iName').value = t.name||g.name||'';
   document.getElementById('iSize').value = g.pax?g.pax+' participants':'';
   document.getElementById('iDates').value = formatDateShort(g.arrival_date)+' – '+formatDateShort(g.departure_date);
+
+  if(FORM_DATA.occupiedSlots) OCCUPIED_SLOTS = FORM_DATA.occupiedSlots;
 
   buildSchedule();
 
