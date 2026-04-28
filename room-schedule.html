@@ -855,7 +855,7 @@ Sunday March 22
 </div>
 
 <script>
-const API_URL = 'https://script.google.com/macros/s/AKfycbzcplCuWdaZT1iwC2l_kiae8G6iEN-_jZLulaC5oZ3JqJNLy3O08ix9_UmxV9gMDJ0_0g/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbxnhymPPYBM6lXJFgCvemGQJaCyg7sJhHJ7ePGnutRMS3_Im_njyzbXOKKP6vmuxMoP7w/exec';
 let cloudMode = false; // set to true once data loads from API
 let saveTimer = null;
 
@@ -2092,7 +2092,7 @@ function mergedTourRow(b){
               <option value="miguel" ${ts.transport==='miguel' ?'selected':''}>Miguel</option>
             </select>
           </div>
-          <div id="tvehicle-wrap-${slotKey}" style="display:${ts.transport==='ours'?'contents':'none'}">
+          <div id="tvehicle-wrap-${slotKey}">
             <div class="tour-field">
               <span class="tour-label">🚗 Vehicle</span>
               <select class="tour-input" id="tvehicle-${slotKey}">
@@ -2187,9 +2187,7 @@ function liveUpdateTour(slotKey, pesos){
 }
 
 function toggleVehicleFields(slotKey){
-  const val = document.getElementById('ttransport-'+slotKey).value;
-  const wrap = document.getElementById('tvehicle-wrap-'+slotKey);
-  if(wrap) wrap.style.display = val === 'ours' ? 'contents' : 'none';
+  // Vehicle and driver always visible regardless of transport selection
 }
 
 function saveTourSlot(slotKey){
@@ -4549,6 +4547,11 @@ async function renderSubmissionsTab(){
     const [h,m] = t.split(':').map(Number);
     return (h%12||12)+':'+(m<10?'0'+m:m)+' '+(h>=12?'PM':'AM');
   }
+  function toMins(t) {
+    if(!t) return 9999;
+    const parts = t.split(':').map(Number);
+    return parts[0]*60+(parts[1]||0);
+  }
   const ROOM_STYLES = {
     'Heaven':         'background:#bde0f5;color:#0c3a5a',
     'Sky':            'background:#c5b8d4;color:#3a2a6a',
@@ -4611,13 +4614,15 @@ async function renderSubmissionsTab(){
     const tourLabels = {cenote:'Cenote Swim',ruins:'Mayan Ruins',mangrove:'Mangrove Tour',float:'Float Tour'};
     const soulLabels = {ice:'Ice Bath',clay:'Mayan Clay',temazcal:'Temazcal',sound:'Sound Healing'};
     days.forEach(function(day){
-      let items = '';
-      if(day.ceremony && day.ceremony.start) items += `<span style="margin-right:12px">${day.ceremony.name||'Opening Ceremony'} <span style="color:var(--muted)">${fmtTime(day.ceremony.start)}</span>${roomPill(day.ceremony.room,day.ceremony.roomRequested,day.ceremony.roomRequestNote)}</span>`;
-      if(day.morning   && day.morning.start)  items += `<span style="margin-right:12px">${day.morning.name||'Morning Class'} <span style="color:var(--muted)">${fmtTime(day.morning.start)}</span>${roomPill(day.morning.room,day.morning.roomRequested,day.morning.roomRequestNote)}</span>`;
-      if(day.afternoon && day.afternoon.start) items += `<span style="margin-right:12px">${day.afternoon.name||'Afternoon Class'} <span style="color:var(--muted)">${fmtTime(day.afternoon.start)}</span>${roomPill(day.afternoon.room,day.afternoon.roomRequested,day.afternoon.roomRequestNote)}</span>`;
-      if(day.tour && day.tour.type) items += `<span style="margin-right:12px"><span style="background:#e8f4fd;color:#1565c0;font-size:11px;padding:2px 8px;border-radius:10px">🗺 ${tourLabels[day.tour.type]||day.tour.type}</span> <span style="font-size:10px;font-weight:700;padding:1px 6px;border-radius:8px;${day.tour.status==='included'?'background:#d4ead9;color:#2d6e40':'background:#f0f0f0;color:#666'}">${day.tour.status==='included'?'Included':'Optional'}</span></span>`;
-      if(day.experience && day.experience.type) items += `<span style="margin-right:12px"><span style="background:#f3e8ff;color:#6a1b9a;font-size:11px;padding:2px 8px;border-radius:10px">✨ ${soulLabels[day.experience.type]||day.experience.type}</span> <span style="font-size:10px;font-weight:700;padding:1px 6px;border-radius:8px;${day.experience.status==='included'?'background:#d4ead9;color:#2d6e40':'background:#f0f0f0;color:#666'}">${day.experience.status==='included'?'Included':'Optional'}</span></span>`;
-      if(items) rows += `<div style="margin-bottom:6px;display:flex;align-items:baseline;flex-wrap:wrap;gap:2px"><span style="font-weight:600;color:var(--muted);min-width:84px;font-size:11px;text-transform:uppercase;letter-spacing:.04em">${day.label}</span>${items}</div>`;
+      const items = [];
+      if(day.ceremony && day.ceremony.start) items.push({t:toMins(day.ceremony.start), html:`<span style="margin-right:12px">${day.ceremony.name||'Opening Ceremony'} <span style="color:var(--muted)">${fmtTime(day.ceremony.start)}</span>${roomPill(day.ceremony.room,day.ceremony.roomRequested,day.ceremony.roomRequestNote)}</span>`});
+      if(day.morning   && day.morning.start)  items.push({t:toMins(day.morning.start),   html:`<span style="margin-right:12px">${day.morning.name||'Morning Class'} <span style="color:var(--muted)">${fmtTime(day.morning.start)}</span>${roomPill(day.morning.room,day.morning.roomRequested,day.morning.roomRequestNote)}</span>`});
+      if(day.afternoon && day.afternoon.start) items.push({t:toMins(day.afternoon.start), html:`<span style="margin-right:12px">${day.afternoon.name||'Afternoon Class'} <span style="color:var(--muted)">${fmtTime(day.afternoon.start)}</span>${roomPill(day.afternoon.room,day.afternoon.roomRequested,day.afternoon.roomRequestNote)}</span>`});
+      if(day.tour && day.tour.type) items.push({t:toMins(day.tour.time), html:`<span style="margin-right:12px"><span style="background:#e8f4fd;color:#1565c0;font-size:11px;padding:2px 8px;border-radius:10px">🗺 ${tourLabels[day.tour.type]||day.tour.type}</span> <span style="font-size:10px;font-weight:700;padding:1px 6px;border-radius:8px;${day.tour.status==='included'?'background:#d4ead9;color:#2d6e40':'background:#f0f0f0;color:#666'}">${day.tour.status==='included'?'Included':'Optional'}</span></span>`});
+      if(day.experience && day.experience.type) items.push({t:toMins(day.experience.time), html:`<span style="margin-right:12px"><span style="background:#f3e8ff;color:#6a1b9a;font-size:11px;padding:2px 8px;border-radius:10px">✨ ${soulLabels[day.experience.type]||day.experience.type}</span> <span style="font-size:10px;font-weight:700;padding:1px 6px;border-radius:8px;${day.experience.status==='included'?'background:#d4ead9;color:#2d6e40':'background:#f0f0f0;color:#666'}">${day.experience.status==='included'?'Included':'Optional'}</span></span>`});
+      items.sort(function(a,b){return a.t-b.t;});
+      const itemsHtml = items.map(function(i){return i.html;}).join('');
+      if(itemsHtml) rows += `<div style="margin-bottom:6px;display:flex;align-items:baseline;flex-wrap:wrap;gap:2px"><span style="font-weight:600;color:var(--muted);min-width:84px;font-size:11px;text-transform:uppercase;letter-spacing:.04em">${day.label}</span>${itemsHtml}</div>`;
     });
     return rows ? `<div style="margin-top:12px;font-size:13px;line-height:1.8;border-top:1px solid var(--border);padding-top:12px">${rows}</div>` : '';
   }
@@ -4673,23 +4678,27 @@ async function renderSubmissionsTab(){
 
     let rows = '';
     days.forEach(function(day) {
-      rows += classRow(day.ceremony, day.label, day.dayIndex, 'ceremony', 'Opening Ceremony');
-      rows += classRow(day.morning,  day.label, day.dayIndex, 'morning',  'Morning Class');
-      rows += classRow(day.afternoon,day.label, day.dayIndex, 'afternoon','Afternoon Class');
+      const dayItems = [];
+      function addItem(t, html){ if(html) dayItems.push({t:t, html:html}); }
+      addItem(toMins(day.ceremony && day.ceremony.start), classRow(day.ceremony, day.label, day.dayIndex, 'ceremony', 'Opening Ceremony'));
+      addItem(toMins(day.morning  && day.morning.start),  classRow(day.morning,  day.label, day.dayIndex, 'morning',  'Morning Class'));
+      addItem(toMins(day.afternoon&& day.afternoon.start),classRow(day.afternoon,day.label, day.dayIndex, 'afternoon','Afternoon Class'));
       if(day.tour && day.tour.type){
         const tourStatus = day.tour.status==='included'
           ? `<span style="background:#d4ead9;color:#2d6e40;font-size:10px;font-weight:700;padding:1px 7px;border-radius:10px;margin-left:4px">Included</span>`
           : `<span style="background:#f0f0f0;color:#666;font-size:10px;font-weight:700;padding:1px 7px;border-radius:10px;margin-left:4px">Optional</span>`;
-        rows += otherRow(day.label, day.dayIndex, 'tour',
-          `<span style="background:#e8f4fd;color:#1565c0;font-size:11px;padding:2px 8px;border-radius:10px">🗺 ${tourLabels[day.tour.type]||day.tour.type}</span>${tourStatus}`, day.tour.time);
+        addItem(toMins(day.tour.time), otherRow(day.label, day.dayIndex, 'tour',
+          `<span style="background:#e8f4fd;color:#1565c0;font-size:11px;padding:2px 8px;border-radius:10px">🗺 ${tourLabels[day.tour.type]||day.tour.type}</span>${tourStatus}`, day.tour.time));
       }
       if(day.experience && day.experience.type){
         const expStatus = day.experience.status==='included'
           ? `<span style="background:#d4ead9;color:#2d6e40;font-size:10px;font-weight:700;padding:1px 7px;border-radius:10px;margin-left:4px">Included</span>`
           : `<span style="background:#f0f0f0;color:#666;font-size:10px;font-weight:700;padding:1px 7px;border-radius:10px;margin-left:4px">Optional</span>`;
-        rows += otherRow(day.label, day.dayIndex, 'experience',
-          `<span style="background:#f3e8ff;color:#6a1b9a;font-size:11px;padding:2px 8px;border-radius:10px">✨ ${soulLabels[day.experience.type]||day.experience.type}</span>${expStatus}`, day.experience.time);
+        addItem(toMins(day.experience.time), otherRow(day.label, day.dayIndex, 'experience',
+          `<span style="background:#f3e8ff;color:#6a1b9a;font-size:11px;padding:2px 8px;border-radius:10px">✨ ${soulLabels[day.experience.type]||day.experience.type}</span>${expStatus}`, day.experience.time));
       }
+      dayItems.sort(function(a,b){return a.t-b.t;});
+      rows += dayItems.map(function(i){return i.html;}).join('');
     });
 
     return rows ? `<div id="sub-edit-${sub.id}" style="margin-top:12px;border-top:1px solid var(--border);padding-top:4px">
@@ -4718,11 +4727,13 @@ async function renderSubmissionsTab(){
     if(sub.allergies) dietary.push(sub.allergies);
     const dietStr = dietary.length ? `<span style="font-size:12px;color:var(--muted);margin-left:8px">· ${dietary.join(', ')}</span>` : '';
 
+    const deleteBtn = `<button onclick="deleteSubmission(${sub.id})" style="background:none;color:#999;border:1.5px solid #ddd;padding:8px 14px;border-radius:8px;font-size:12px;cursor:pointer;font-family:inherit;margin-left:auto">🗑 Delete</button>`;
     const actions = isPending ? `
-      <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+      <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;align-items:center">
         <button onclick="approveSubmission(${sub.id})" style="background:#4a8c5c;color:#fff;border:none;padding:8px 20px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">✓ Approve &amp; Add to Schedule</button>
         <button onclick="declineSubmission(${sub.id})" style="background:none;color:#cc3333;border:1.5px solid #ffcccc;padding:8px 16px;border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit">Decline</button>
-      </div>` : '';
+        ${deleteBtn}
+      </div>` : `<div style="display:flex;justify-content:flex-end;margin-top:10px">${deleteBtn}</div>`;
 
     const body = isPending ? scheduleEditForm(sub) : schedulePreview(sub);
 
@@ -4829,6 +4840,25 @@ async function declineSubmission(subId){
       renderSubmissionsTab();
     } else {
       showBanner('Error: ' + (json.error||'Could not decline'), '#cc3333');
+    }
+  } catch(e){
+    showBanner('Network error — try again', '#cc3333');
+  }
+}
+
+async function deleteSubmission(subId){
+  if(!confirm('Delete this submission entirely? This cannot be undone.')) return;
+  try {
+    const resp = await fetch(API_URL, {
+      method:'POST',
+      body: JSON.stringify({action:'deleteFormSubmission', submission_id: subId})
+    });
+    const json = await resp.json();
+    if(json.success){
+      showBanner('Submission deleted.', '#666');
+      renderSubmissionsTab();
+    } else {
+      showBanner('Error: ' + (json.error||'Could not delete'), '#cc3333');
     }
   } catch(e){
     showBanner('Network error — try again', '#cc3333');
