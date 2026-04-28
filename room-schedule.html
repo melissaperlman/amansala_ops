@@ -856,6 +856,7 @@ Sunday March 22
 
 <script>
 const API_URL = 'https://script.google.com/macros/s/AKfycbxnhymPPYBM6lXJFgCvemGQJaCyg7sJhHJ7ePGnutRMS3_Im_njyzbXOKKP6vmuxMoP7w/exec';
+const ROOM_REQ_DECISIONS = {}; // keyed by reqId → {approved, note}
 let cloudMode = false; // set to true once data loads from API
 let saveTimer = null;
 
@@ -4651,18 +4652,28 @@ async function renderSubmissionsTab(){
       if(!cls || !cls.start) return '';
       const dayDate = subDayDate(sub.arrival_date, dayIdx);
       const conflicts = getRoomConflicts(dayDate, cls.start, cls.end);
-      const reqIcon = cls.roomRequested ? ` <span title="${cls.roomRequestNote||'Room specifically requested'}" style="color:#c05000;font-size:12px">📌</span>` : '';
-      const rowBorder = Object.keys(conflicts).length ? '1px solid #f0c090' : '1px solid var(--border)';
+      const reqId = `req-${sub.id}-${dayIdx}-${clsType}`;
+      const reqIcon = cls.roomRequested ? ` <span style="color:#D4A020;font-size:13px;vertical-align:middle" title="${cls.roomRequestNote||'Room specifically requested'}">★</span>` : '';
+      const reqNote = cls.roomRequestNote ? `<span style="font-size:11px;color:#8a6010;font-style:italic;margin-left:4px">"${cls.roomRequestNote}"</span>` : '';
+      const rowBorder = Object.keys(conflicts).length ? '1px solid #f0c090' : cls.roomRequested ? '1px solid #f0c040' : '1px solid var(--border)';
+      const reqActions = cls.roomRequested ? `
+        <div id="${reqId}" style="margin-top:7px;padding:8px 10px;background:#fffdf0;border:1px solid #f0e0a0;border-radius:8px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
+          <span style="font-size:11px;color:#8a6010;font-weight:600;">★ Room Request:</span>
+          <button onclick="approveRoomReq('${reqId}',true)" style="font-size:11px;padding:3px 12px;border:1.5px solid #a5d6a7;border-radius:10px;background:#fff;color:#2e7d32;cursor:pointer;font-weight:600;transition:all .15s" onmouseover="this.style.background='#e8f5e9'" onmouseout="this.style.background='#fff'">✓ Approve</button>
+          <button onclick="approveRoomReq('${reqId}',false)" style="font-size:11px;padding:3px 12px;border:1.5px solid #f5c6c3;border-radius:10px;background:#fff;color:#c0392b;cursor:pointer;font-weight:600;transition:all .15s" onmouseover="this.style.background='#fdf0ef'" onmouseout="this.style.background='#fff'">✗ Decline</button>
+          <input type="text" placeholder="Add a note e.g. 10am taken, can you do 11am?" style="flex:1;min-width:180px;font-size:11px;padding:3px 8px;border:1px dashed #f0c040;border-radius:6px;background:#fffdf5;outline:none;font-family:inherit;" id="${reqId}-note">
+        </div>` : '';
       return `<div style="padding:8px 0;border-bottom:${rowBorder}" data-day="${dayIdx}" data-type="${clsType}">
         <div style="display:grid;grid-template-columns:18px 1fr auto;gap:10px;align-items:center">
           <input type="checkbox" checked class="sub-inc" style="width:15px;height:15px;cursor:pointer;accent-color:#4a8c5c">
           <div style="font-size:13px;line-height:1.4">
             <span style="color:var(--muted);font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;display:block">${dayLabel}</span>
-            ${cls.name||defaultName} <span style="color:var(--muted)">${fmtTime(cls.start)}${cls.end?' – '+fmtTime(cls.end):''}</span>${reqIcon}
+            ${cls.name||defaultName} <span style="color:var(--muted)">${fmtTime(cls.start)}${cls.end?' – '+fmtTime(cls.end):''}</span>${reqIcon}${reqNote}
           </div>
-          <select class="sub-room" style="font-size:12px;padding:4px 8px;border:1.5px solid var(--border);border-radius:7px;background:var(--card);font-family:inherit;cursor:pointer;min-width:140px">${roomOpts(cls.room, conflicts)}</select>
+          <select class="sub-room" style="font-size:12px;padding:4px 8px;border:1.5px solid ${cls.roomRequested?'#f0c040':'var(--border)'};border-radius:7px;background:var(--card);font-family:inherit;cursor:pointer;min-width:140px">${roomOpts(cls.room, conflicts)}</select>
         </div>
         ${conflictBanner(conflicts)}
+        ${reqActions}
       </div>`;
     }
 
@@ -4728,8 +4739,18 @@ async function renderSubmissionsTab(){
     const dietStr = dietary.length ? `<span style="font-size:12px;color:var(--muted);margin-left:8px">· ${dietary.join(', ')}</span>` : '';
 
     const deleteBtn = `<button onclick="deleteSubmission(${sub.id})" style="background:none;color:#999;border:1.5px solid #ddd;padding:8px 14px;border-radius:8px;font-size:12px;cursor:pointer;font-family:inherit;margin-left:auto">🗑 Delete</button>`;
+    const sendBlock = isPending ? `
+      <div style="margin-top:14px;padding:12px 14px;background:#fffdf5;border:1px solid #f0e0a0;border-radius:10px">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#8a6010;margin-bottom:7px">Notes to Teacher</div>
+        <textarea id="ops-notes-${sub.id}" placeholder="Optional: add any notes or instructions for the teacher before sending (e.g. 'Please note Grande Shala is unavailable Monday morning')" style="width:100%;min-height:64px;font-size:12px;padding:7px 10px;border:1px dashed #f0c040;border-radius:7px;background:#fff;font-family:inherit;resize:vertical;outline:none;color:var(--text)"></textarea>
+        <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;align-items:center">
+          <button onclick="sendScheduleToTeacher(${sub.id})" style="background:#D4A020;color:#fff;border:none;padding:8px 20px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">📧 Send Schedule to Teacher</button>
+          <span style="font-size:11px;color:#aaa">Sends schedule + room request decisions and notes to the teacher by email</span>
+        </div>
+      </div>` : '';
     const actions = isPending ? `
-      <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;align-items:center">
+      ${sendBlock}
+      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;align-items:center">
         <button onclick="approveSubmission(${sub.id})" style="background:#4a8c5c;color:#fff;border:none;padding:8px 20px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">✓ Approve &amp; Add to Schedule</button>
         <button onclick="declineSubmission(${sub.id})" style="background:none;color:#cc3333;border:1.5px solid #ffcccc;padding:8px 16px;border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit">Decline</button>
         ${deleteBtn}
@@ -4862,6 +4883,69 @@ async function deleteSubmission(subId){
     }
   } catch(e){
     showBanner('Network error — try again', '#cc3333');
+  }
+}
+
+function approveRoomReq(reqId, approved) {
+  const noteInput = document.getElementById(reqId + '-note');
+  const note = noteInput ? noteInput.value.trim() : '';
+  ROOM_REQ_DECISIONS[reqId] = { approved, note };
+  const div = document.getElementById(reqId);
+  if (!div) return;
+  const noteHtml = note ? `<span style="font-size:11px;color:#555;font-style:italic;margin-left:8px">"${note}"</span>` : '';
+  const undoBtn = `<button onclick="undoRoomReq('${reqId}')" style="font-size:10px;color:#aaa;background:none;border:none;cursor:pointer;margin-left:auto;text-decoration:underline">undo</button>`;
+  if (approved) {
+    div.style.background = '#f0fff4';
+    div.style.borderColor = '#a5d6a7';
+    div.innerHTML = `<span style="font-size:12px;color:#2e7d32;font-weight:600">✓ Room Request Approved</span>${noteHtml}${undoBtn}`;
+  } else {
+    div.style.background = '#fff5f5';
+    div.style.borderColor = '#f5c6c3';
+    div.innerHTML = `<span style="font-size:12px;color:#c0392b;font-weight:600">✗ Room Request Declined</span>${noteHtml}${undoBtn}`;
+  }
+}
+
+function undoRoomReq(reqId) {
+  delete ROOM_REQ_DECISIONS[reqId];
+  renderSubmissionsTab();
+}
+
+async function sendScheduleToTeacher(subId) {
+  const opsNotesEl = document.getElementById('ops-notes-' + subId);
+  const opsNotes = opsNotesEl ? opsNotesEl.value.trim() : '';
+
+  // Collect room request decisions for this submission
+  const roomDecisions = [];
+  Object.keys(ROOM_REQ_DECISIONS).forEach(function(reqId) {
+    const parts = reqId.split('-'); // req-{subId}-{dayIdx}-{clsType}
+    if (parts[1] !== String(subId)) return;
+    roomDecisions.push({
+      dayIndex:  parseInt(parts[2]),
+      classType: parts[3],
+      approved:  ROOM_REQ_DECISIONS[reqId].approved,
+      note:      ROOM_REQ_DECISIONS[reqId].note
+    });
+  });
+
+  const btn = document.querySelector(`button[onclick="sendScheduleToTeacher(${subId})"]`);
+  if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
+
+  try {
+    const resp = await fetch(API_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'sendScheduleToTeacher', submission_id: subId, ops_notes: opsNotes, room_decisions: roomDecisions })
+    });
+    const json = await resp.json();
+    if (json.success) {
+      showBanner('Schedule sent to ' + (json.data.email || 'teacher') + ' ✓', '#4a8c5c');
+      if (btn) { btn.disabled = false; btn.textContent = '📧 Send Schedule to Teacher'; }
+    } else {
+      showBanner('Error: ' + (json.error || 'Could not send'), '#cc3333');
+      if (btn) { btn.disabled = false; btn.textContent = '📧 Send Schedule to Teacher'; }
+    }
+  } catch(e) {
+    showBanner('Network error — try again', '#cc3333');
+    if (btn) { btn.disabled = false; btn.textContent = '📧 Send Schedule to Teacher'; }
   }
 }
 

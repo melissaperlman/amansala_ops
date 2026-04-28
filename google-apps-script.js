@@ -535,6 +535,7 @@ function doGet(e) {
             status: s.status,
             submitted_at: s.submitted_at,
             teacher_name: tch.name || '',
+            teacher_email: tch.email || '',
             group_name: grp.name || '',
             pax: grp.pax || 0,
             arrival_date: toDateStr(grp.arrival_date) || '',
@@ -1377,6 +1378,103 @@ function doPost(e) {
         if (!subRow) return respondError('Submission not found');
         subRow.sheet.deleteRow(subRow.rowIndex);
         return respondOk({ deleted: true });
+      }
+
+      // ── SEND SCHEDULE TO TEACHER ─────────────────────────────────
+      case 'sendScheduleToTeacher': {
+        const stSubRow = findRowById('form_submissions', payload.submission_id);
+        if (!stSubRow) return respondError('Submission not found');
+        const stSub = stSubRow.obj;
+
+        const stGroup = (tabToJSON('groups').find(g => String(g.id) === String(stSub.group_id))) || {};
+        const stTeacher = (tabToJSON('teachers').find(t => String(t.id) === String(stGroup.teacher_id))) || {};
+        if (!stTeacher.email) return respondError('Teacher has no email address');
+
+        // Parse schedule
+        let stDays = [];
+        try {
+          const stFd = JSON.parse(stSub.form_data_json || '{}');
+          stDays = (stFd.schedule_data || stFd).days || [];
+        } catch(e) {}
+
+        // Build room decisions map: "dayIndex-classType" → {approved, note}
+        const stDecisions = {};
+        (payload.room_decisions || []).forEach(function(d) {
+          stDecisions[d.dayIndex + '-' + d.classType] = d;
+        });
+
+        const tourLabels = {cenote:'Cenote Swim', ruins:'Mayan Ruins', mangrove:'Mangrove Tour', float:'Float Tour'};
+        const soulLabels = {ice:'Ice Bath', clay:'Mayan Clay', temazcal:'Temazcal', sound:'Sound Healing'};
+
+        function fmtT(t) {
+          if (!t) return '';
+          const parts = t.split(':');
+          let h = parseInt(parts[0]), m = parseInt(parts[1] || 0);
+          const ampm = h >= 12 ? 'PM' : 'AM';
+          if (h > 12) h -= 12;
+          if (h === 0) h = 12;
+          return h + (m ? ':' + String(m).padStart(2,'0') : '') + ' ' + ampm;
+        }
+
+        let scheduleLines = '';
+        stDays.forEach(function(day) {
+          scheduleLines += '\n' + (day.label || ('Day ' + (day.dayIndex + 1))).toUpperCase() + '\n';
+          function addClassLine(cls, label, clsType) {
+            if (!cls || !cls.start) return;
+            const timeStr = fmtT(cls.start) + (cls.end ? ' – ' + fmtT(cls.end) : '');
+            const roomStr = cls.room && cls.room !== 'TBD' ? '  ·  ' + cls.room : '';
+            let reqLine = '';
+            if (cls.roomRequested) {
+              const dec = stDecisions[day.dayIndex + '-' + clsType];
+              if (dec) {
+                reqLine = dec.approved
+                  ? '  ✓ Room request approved' + (dec.note ? ' — ' + dec.note : '')
+                  : '  ✗ Room request: ' + (dec.note || 'unable to accommodate that room');
+              } else {
+                reqLine = '  ★ Room request pending';
+              }
+            }
+            scheduleLines += '  ' + label + ': ' + timeStr + roomStr + '\n';
+            if (reqLine) scheduleLines += '  ' + reqLine + '\n';
+          }
+          addClassLine(day.ceremony,  'Opening Ceremony',  'ceremony');
+          addClassLine(day.morning,   'Morning Class',     'morning');
+          addClassLine(day.afternoon, 'Afternoon Class',   'afternoon');
+          if (day.tour && day.tour.type) {
+            const status = day.tour.status === 'included' ? '(Included)' : '(Optional)';
+            scheduleLines += '  Tour: ' + (tourLabels[day.tour.type] || day.tour.type) + '  ' + fmtT(day.tour.time) + '  ' + status + '\n';
+          }
+          if (day.experience && day.experience.type) {
+            const status = day.experience.status === 'included' ? '(Included)' : '(Optional)';
+            scheduleLines += '  Soul Service: ' + (soulLabels[day.experience.type] || day.experience.type) + '  ' + fmtT(day.experience.time) + '  ' + status + '\n';
+          }
+        });
+
+        const arrFmt = stGroup.arrival_date
+          ? Utilities.formatDate(new Date(stGroup.arrival_date), 'America/Cancun', 'MMMM d, yyyy')
+          : (stGroup.arrival_date || '');
+        const depFmt = stGroup.departure_date
+          ? Utilities.formatDate(new Date(stGroup.departure_date), 'America/Cancun', 'MMMM d, yyyy')
+          : (stGroup.departure_date || '');
+
+        const subject = 'Your Amansala Schedule Update — ' + arrFmt;
+
+        const opsNotes = payload.ops_notes ? '\nNOTES FROM MELISSA:\n' + payload.ops_notes + '\n' : '';
+
+        const emailBody =
+          'Hi ' + (stTeacher.name || 'there') + ',\n\n' +
+          'Thank you for submitting your retreat schedule! Here is a summary of your schedule for ' +
+          (stGroup.name || 'your group') + ' (' + arrFmt + ' – ' + depFmt + '):\n' +
+          scheduleLines +
+          opsNotes +
+          '\nIf you have any questions or would like to make changes, please reply to this email or reach us at melissa@amansala.com\n\n' +
+          'With love and sunshine,\n' +
+          'Melissa & the Amansala Team\n' +
+          'Amansala · Tulum, Mexico';
+
+        GmailApp.sendEmail(stTeacher.email, subject, emailBody, { name: 'Amansala Tulum' });
+
+        return respondOk({ sent: true, email: stTeacher.email });
       }
 
       // ── SEND FORM EMAIL ─────────────────────────────────────────
