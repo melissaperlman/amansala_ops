@@ -403,17 +403,19 @@
     <button class="btn-import" onclick="openTransportImport()" style="background:#e8eaf6;border-color:#9fa8da;color:#283593">+ Add Transport</button>
     <button class="btn-import" onclick="openFormImportModal()" style="background:#fff3e0;border-color:#ffb74d;color:#e65100">+ Teacher Form Import</button>
   </div>
-  <div class="tabs">
+  <div class="tabs" style="display:flex;align-items:center;">
     <button class="tab" onclick="switchTab(&#39;retreats&#39;)">All Retreats</button>
     <button class="tab active" onclick="switchTab(&#39;day&#39;)">By Room &amp; Day</button>
     <button class="tab" onclick="switchTab(&#39;dayview&#39;)">Day View</button>
     <button class="tab" onclick="switchTab(&#39;room&#39;)">By Room</button>
     <button class="tab" onclick="switchTab(&#39;teacher&#39;)">By Teacher</button>
-    <button class="tab" onclick="switchTab(&#39;sendlinks&#39;)">📧 Send Links</button>
-    <button class="tab" onclick="switchTab(&#39;submissions&#39;)" id="submissionsTab">📋 Submitted Schedules</button>
     <button class="tab" onclick="switchTab(&#39;retreat&#39;)">By Retreat</button>
     <button class="tab" onclick="switchTab(&#39;mealcal&#39;)">Meals Calendar</button>
     <button class="tab" onclick="switchTab(&#39;transport&#39;)">Transport</button>
+    <span style="flex:1;"></span>
+    <span style="width:1px;height:18px;background:var(--border);margin:0 8px;flex-shrink:0;"></span>
+    <button class="tab" onclick="switchTab(&#39;sendlinks&#39;)">📧 Send Links</button>
+    <button class="tab" onclick="switchTab(&#39;submissions&#39;)" id="submissionsTab">📋 Submitted Schedules</button>
   </div>
 </div>
 
@@ -3863,7 +3865,7 @@ function undoDelete(){
 function switchTab(tab){
   activeTab=tab;
   document.body.classList.toggle('dayview-active', tab==='dayview');
-  const tabOrder = ['retreats','day','dayview','room','teacher','sendlinks','submissions','retreat','mealcal','transport'];
+  const tabOrder = ['retreats','day','dayview','room','teacher','retreat','mealcal','transport','sendlinks','submissions'];
   document.querySelectorAll('.tab').forEach((t,i)=>{
     t.classList.toggle('active', tabOrder[i]===tab);
   });
