@@ -1403,6 +1403,12 @@ function doPost(e) {
           stDecisions[d.dayIndex + '-' + d.classType] = d;
         });
 
+        // Build room overrides map: "dayIndex-classType" → {originalRoom, newRoom}
+        const stOverrides = {};
+        (payload.room_overrides || []).forEach(function(o) {
+          stOverrides[o.dayIndex + '-' + o.classType] = o;
+        });
+
         const tourLabels = {cenote:'Cenote Swim', ruins:'Mayan Ruins', mangrove:'Mangrove Tour', float:'Float Tour'};
         const soulLabels = {ice:'Ice Bath', clay:'Mayan Clay', temazcal:'Temazcal', sound:'Sound Healing'};
 
@@ -1422,20 +1428,25 @@ function doPost(e) {
           function addClassLine(cls, label, clsType) {
             if (!cls || !cls.start) return;
             const timeStr = fmtT(cls.start) + (cls.end ? ' – ' + fmtT(cls.end) : '');
-            const roomStr = cls.room && cls.room !== 'TBD' ? '  ·  ' + cls.room : '';
-            let reqLine = '';
+            const override = stOverrides[day.dayIndex + '-' + clsType];
+            const displayRoom = override ? override.newRoom : (cls.room || '');
+            const roomStr = displayRoom && displayRoom !== 'TBD' ? '  ·  ' + displayRoom : '';
+            let extraLines = '';
+            if (override) {
+              extraLines += '  (Room updated from ' + override.originalRoom + ' to ' + override.newRoom + ')\n';
+            }
             if (cls.roomRequested) {
               const dec = stDecisions[day.dayIndex + '-' + clsType];
               if (dec) {
-                reqLine = dec.approved
-                  ? '  ✓ Room request approved' + (dec.note ? ' — ' + dec.note : '')
-                  : '  ✗ Room request: ' + (dec.note || 'unable to accommodate that room');
+                extraLines += dec.approved
+                  ? '  ✓ Room request approved' + (dec.note ? ' — ' + dec.note : '') + '\n'
+                  : '  ✗ Room request: ' + (dec.note || 'unable to accommodate that room') + '\n';
               } else {
-                reqLine = '  ★ Room request pending';
+                extraLines += '  ★ Room request pending\n';
               }
             }
             scheduleLines += '  ' + label + ': ' + timeStr + roomStr + '\n';
-            if (reqLine) scheduleLines += '  ' + reqLine + '\n';
+            scheduleLines += extraLines;
           }
           addClassLine(day.ceremony,  'Opening Ceremony',  'ceremony');
           addClassLine(day.morning,   'Morning Class',     'morning');
