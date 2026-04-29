@@ -206,16 +206,30 @@ body{font-family:'Nunito',sans-serif;background:var(--cream);color:var(--deep);f
       <div class="info-card" style="margin-bottom:18px;">
         <div class="card-title">A few quick questions to get you started</div>
         <p style="font-size:.86rem;color:var(--earth);margin-bottom:22px;line-height:1.65;">Your answers will pre-fill your schedule — you can adjust anything once you see it.</p>
-        <div class="g2">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
           <div class="f">
-            <label>Preferred morning class start time</label>
+            <label>Morning class start time</label>
             <select id="intake-morning" style="padding:9px 11px;border:1.5px solid var(--warm);border-radius:6px;font-size:.86rem;color:var(--deep);background:var(--cream);outline:none;width:100%;">
               <option value="">— Select time —</option>
             </select>
           </div>
           <div class="f">
-            <label>Preferred afternoon class start time</label>
+            <label>Morning class end time</label>
+            <select id="intake-morning-end" style="padding:9px 11px;border:1.5px solid var(--warm);border-radius:6px;font-size:.86rem;color:var(--deep);background:var(--cream);outline:none;width:100%;">
+              <option value="">— Select time —</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="f">
+            <label>Afternoon class start time</label>
             <select id="intake-afternoon" style="padding:9px 11px;border:1.5px solid var(--warm);border-radius:6px;font-size:.86rem;color:var(--deep);background:var(--cream);outline:none;width:100%;">
+              <option value="">— Select time —</option>
+            </select>
+          </div>
+          <div class="f">
+            <label>Afternoon class end time</label>
+            <select id="intake-afternoon-end" style="padding:9px 11px;border:1.5px solid var(--warm);border-radius:6px;font-size:.86rem;color:var(--deep);background:var(--cream);outline:none;width:100%;">
               <option value="">— Select time —</option>
             </select>
           </div>
@@ -223,7 +237,7 @@ body{font-family:'Nunito',sans-serif;background:var(--cream);color:var(--deep);f
       </div>
       <div class="info-card" style="margin-bottom:28px;">
         <div class="card-title">Add-On Activities</div>
-        <p style="font-size:.86rem;color:var(--earth);margin-bottom:18px;line-height:1.65;">Do you have any add-on activities included in your retreat? If so, select your preferred day and time below.</p>
+        <p style="font-size:.86rem;color:var(--earth);margin-bottom:18px;line-height:1.65;">Select the activities included in your retreat and your preferred day and time. If a tour or soul service is optional for your guests, leave the time blank — we already have those scheduled.</p>
         <div style="font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;color:var(--clay);font-weight:600;margin-bottom:10px;">Tours</div>
         <div id="intake-tour-days" style="margin-bottom:22px;"></div>
         <div style="font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;color:var(--clay);font-weight:600;margin-bottom:10px;margin-top:4px;">Soul Services</div>
@@ -701,7 +715,9 @@ function buildIntakeScreen(){
   document.getElementById('intake-dates').textContent = formatDateShort(g.arrival_date)+' — '+formatDateShort(g.departure_date);
   document.getElementById('intake-leader').textContent = 'Welcome, '+(t.name||'Retreat Leader')+(g.pax?' · '+g.pax+' guests':'');
   fmtTimeOpts('intake-morning', 7, 11, 30, '08:00');
+  fmtTimeOpts('intake-morning-end', 8, 12, 30, '09:15');
   fmtTimeOpts('intake-afternoon', 15, 18, 30, '17:00');
+  fmtTimeOpts('intake-afternoon-end', 16, 20, 30, '18:30');
   // Build a day row for tours or soul services
   function buildActivityRows(cbClass, idPrefix, typeOpts, containerId) {
     var html = '';
@@ -746,14 +762,16 @@ function toggleActivityRow(cb){
 function toggleTourTime(cb){ toggleActivityRow(cb); }
 function applyIntakeAndBuild(){
   var morning=document.getElementById('intake-morning').value;
+  var morningEnd=document.getElementById('intake-morning-end').value;
   var afternoon=document.getElementById('intake-afternoon').value;
+  var afternoonEnd=document.getElementById('intake-afternoon-end').value;
   // Apply preferred times to DDAYS defaults
   DDAYS.forEach(function(d,i){
     if((d.type==='full'||d.type==='departure') && morning){
-      d.ms=morning; d.me=addMins(morning,75);
+      d.ms=morning; d.me=morningEnd||addMins(morning,75);
     }
     if(d.type==='full' && afternoon){
-      d.as=afternoon; d.ae=addMins(afternoon,90);
+      d.as=afternoon; d.ae=afternoonEnd||addMins(afternoon,90);
     }
   });
   // Collect tour selections
