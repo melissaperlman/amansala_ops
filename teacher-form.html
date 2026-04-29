@@ -224,7 +224,10 @@ body{font-family:'Nunito',sans-serif;background:var(--cream);color:var(--deep);f
       <div class="info-card" style="margin-bottom:28px;">
         <div class="card-title">Add-On Activities</div>
         <p style="font-size:.86rem;color:var(--earth);margin-bottom:18px;line-height:1.65;">Do you have any add-on activities included in your retreat? If so, select your preferred day and time below.</p>
-        <div id="intake-tour-days"></div>
+        <div style="font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;color:var(--clay);font-weight:600;margin-bottom:10px;">Tours</div>
+        <div id="intake-tour-days" style="margin-bottom:22px;"></div>
+        <div style="font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;color:var(--clay);font-weight:600;margin-bottom:10px;margin-top:4px;">Soul Services</div>
+        <div id="intake-soul-days"></div>
       </div>
       <button class="gen-btn" onclick="applyIntakeAndBuild()">Build My Schedule &rarr;</button>
     </div>
@@ -699,28 +702,48 @@ function buildIntakeScreen(){
   document.getElementById('intake-leader').textContent = 'Welcome, '+(t.name||'Retreat Leader')+(g.pax?' · '+g.pax+' guests':'');
   fmtTimeOpts('intake-morning', 7, 11, 30, '08:00');
   fmtTimeOpts('intake-afternoon', 15, 18, 30, '17:00');
-  // Tour day rows — full days only (indices 1-4 = Sun-Wed)
-  var html='';
-  DDAYS.forEach(function(d,i){
-    if(d.type!=='full') return;
-    var dateStr='';
-    if(g.arrival_date){var dt=new Date(new Date(g.arrival_date).getTime()+i*86400000);if(!isNaN(dt))dateStr=' <span style="font-size:.72rem;color:var(--earth)">'+dt.toLocaleDateString('en-US',{month:'short',day:'numeric'})+'</span>';}
-    html+='<div class="intake-tour-row" style="display:flex;align-items:center;gap:14px;padding:8px 0;border-bottom:1px solid rgba(234,217,196,.5);">'
-      +'<input type="checkbox" id="itour'+i+'" class="intake-tour-cb" data-idx="'+i+'" style="width:16px;height:16px;accent-color:var(--clay);flex-shrink:0;" onchange="toggleTourTime(this)">'
-      +'<label for="itour'+i+'" style="font-size:.88rem;font-weight:500;color:var(--deep);min-width:90px;cursor:pointer;">'+d.lbl+dateStr+'</label>'
-      +'<select id="itour-time'+i+'" disabled style="padding:6px 10px;border:1.5px solid var(--warm);border-radius:6px;font-size:.83rem;color:var(--deep);background:#f5f5f5;outline:none;opacity:.5;">'
-      +'<option value="">— Select time —</option>';
-    for(var h=10;h<=14;h++){for(var m=0;m<60;m+=30){if(h===14&&m>0)break;var tt=String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');html+='<option value="'+tt+'"'+(tt==='11:00'?' selected':'')+'>'+fmt(tt)+'</option>';}}
-    html+='</select></div>';
-  });
-  document.getElementById('intake-tour-days').innerHTML = html||'<p style="font-size:.83rem;color:var(--earth)">No tour days available for this retreat.</p>';
+  // Build a day row for tours or soul services
+  function buildActivityRows(cbClass, idPrefix, typeOpts, containerId) {
+    var html = '';
+    DDAYS.forEach(function(d, i) {
+      if (d.type !== 'full') return;
+      var dateStr = '';
+      if (g.arrival_date) { var dt = new Date(new Date(g.arrival_date).getTime() + i * 86400000); if (!isNaN(dt)) dateStr = ' <span style="font-size:.72rem;color:var(--earth)">' + dt.toLocaleDateString('en-US', {month:'short', day:'numeric'}) + '</span>'; }
+      var selStyle = 'padding:6px 10px;border:1.5px solid var(--warm);border-radius:6px;font-size:.83rem;color:var(--deep);background:#f5f5f5;outline:none;opacity:.5;';
+      html += '<div class="intake-tour-row" style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(234,217,196,.5);flex-wrap:wrap;">'
+        + '<input type="checkbox" id="' + idPrefix + i + '" class="' + cbClass + '" data-idx="' + i + '" data-prefix="' + idPrefix + '" style="width:16px;height:16px;accent-color:var(--clay);flex-shrink:0;" onchange="toggleActivityRow(this)">'
+        + '<label for="' + idPrefix + i + '" style="font-size:.88rem;font-weight:500;color:var(--deep);min-width:90px;cursor:pointer;">' + d.lbl + dateStr + '</label>'
+        + '<select id="' + idPrefix + 'type' + i + '" disabled style="' + selStyle + '">' + typeOpts + '</select>'
+        + '<select id="' + idPrefix + 'time' + i + '" disabled style="' + selStyle + '"><option value="">— Time —</option>';
+      for (var h = 10; h <= 14; h++) { for (var m = 0; m < 60; m += 30) { if (h === 14 && m > 0) break; var tt = String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0'); html += '<option value="' + tt + '"' + (tt === '11:00' ? ' selected' : '') + '>' + fmt(tt) + '</option>'; } }
+      html += '</select></div>';
+    });
+    document.getElementById(containerId).innerHTML = html || '<p style="font-size:.83rem;color:var(--earth)">No days available.</p>';
+  }
+
+  var tourTypeOpts = '<option value="">— Select tour —</option>'
+    + '<option value="cenote">Cenote Swim</option>'
+    + '<option value="ruins">Mayan Ruins</option>'
+    + '<option value="mangrove">Mangrove Tour</option>'
+    + '<option value="float">Mayan Float</option>';
+
+  var soulTypeOpts = '<option value="">— Select service —</option>'
+    + '<option value="temazcal">Temazcal</option>'
+    + '<option value="sound">Sound Healing</option>'
+    + '<option value="clay">Mayan Clay</option>'
+    + '<option value="ice">Ice Bath</option>';
+
+  buildActivityRows('intake-tour-cb', 'itour-', tourTypeOpts, 'intake-tour-days');
+  buildActivityRows('intake-soul-cb', 'isoul-', soulTypeOpts, 'intake-soul-days');
 }
-function toggleTourTime(cb){
-  var sel=document.getElementById('itour-time'+cb.dataset.idx);
-  sel.disabled=!cb.checked;
-  sel.style.background=cb.checked?'var(--cream)':'#f5f5f5';
-  sel.style.opacity=cb.checked?'1':'.5';
+function toggleActivityRow(cb){
+  var pfx = cb.dataset.prefix;
+  var i = cb.dataset.idx;
+  var typeEl = document.getElementById(pfx+'type'+i);
+  var timeEl = document.getElementById(pfx+'time'+i);
+  [typeEl, timeEl].forEach(function(el){ if(!el) return; el.disabled=!cb.checked; el.style.background=cb.checked?'var(--cream)':'#f5f5f5'; el.style.opacity=cb.checked?'1':'.5'; });
 }
+function toggleTourTime(cb){ toggleActivityRow(cb); }
 function applyIntakeAndBuild(){
   var morning=document.getElementById('intake-morning').value;
   var afternoon=document.getElementById('intake-afternoon').value;
@@ -733,20 +756,34 @@ function applyIntakeAndBuild(){
       d.as=afternoon; d.ae=addMins(afternoon,90);
     }
   });
-  // Store tour day selections to apply after buildSchedule
+  // Collect tour selections
   var tourSelections=[];
   document.querySelectorAll('.intake-tour-cb:checked').forEach(function(cb){
     var idx=cb.dataset.idx;
-    var sel=document.getElementById('itour-time'+idx);
-    tourSelections.push({idx:parseInt(idx), time:sel?sel.value:'11:00'});
+    var typeEl=document.getElementById('itour-type'+idx);
+    var timeEl=document.getElementById('itour-time'+idx);
+    tourSelections.push({idx:parseInt(idx), type:typeEl?typeEl.value:'', time:timeEl?timeEl.value:'11:00'});
+  });
+  // Collect soul service selections
+  var soulSelections=[];
+  document.querySelectorAll('.intake-soul-cb:checked').forEach(function(cb){
+    var idx=cb.dataset.idx;
+    var typeEl=document.getElementById('isoul-type'+idx);
+    var timeEl=document.getElementById('isoul-time'+idx);
+    soulSelections.push({idx:parseInt(idx), type:typeEl?typeEl.value:'', time:timeEl?timeEl.value:'11:00'});
   });
   // Show schedule
   document.getElementById('intake-step').style.display='none';
   showScheduleStep();
-  // Pre-fill tour times
+  // Pre-fill tour rows
   tourSelections.forEach(function(t){
-    var el=document.getElementById('d'+t.idx+'_tour_time');
-    if(el) el.value=t.time;
+    var typeEl=document.getElementById('d'+t.idx+'_tour'); if(typeEl&&t.type) typeEl.value=t.type;
+    var timeEl=document.getElementById('d'+t.idx+'_tour_time'); if(timeEl&&t.time) timeEl.value=t.time;
+  });
+  // Pre-fill soul service rows
+  soulSelections.forEach(function(s){
+    var typeEl=document.getElementById('d'+s.idx+'_exp'); if(typeEl&&s.type) typeEl.value=s.type;
+    var timeEl=document.getElementById('d'+s.idx+'_exp_time'); if(timeEl&&s.time) timeEl.value=s.time;
   });
 }
 function showScheduleStep(){
