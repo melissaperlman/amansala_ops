@@ -110,10 +110,11 @@ body{font-family:'Nunito',sans-serif;background:var(--cream);color:var(--deep);f
 .server-error-banner ul{margin:8px 0 0 20px;}
 
 /* ROOM REQUEST */
-.room-request-btn{background:none;border:1px solid rgba(212,160,32,.4);border-radius:12px;color:var(--clay);font-family:'Raleway',sans-serif;font-size:.65rem;font-weight:600;padding:3px 9px;cursor:pointer;letter-spacing:.06em;transition:all .15s;vertical-align:middle;}
-.room-request-btn:hover{border-color:var(--gold);color:var(--gold);}
-.room-request-btn.room-request-active{background:var(--gold);border-color:var(--gold);color:#fff;}
-.room-pending-badge{display:inline-block;font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;font-weight:700;padding:3px 9px;border-radius:12px;background:#fff8e1;color:#b8860b;border:1px solid #f0c040;vertical-align:middle;margin-left:6px;}
+.room-request-btn{background:none;border:none;color:rgba(212,160,32,.45);font-size:1rem;line-height:1;padding:0 3px;cursor:pointer;transition:color .15s;vertical-align:middle;}
+.room-request-btn:hover{color:var(--gold);}
+.room-request-btn.room-request-active{color:var(--gold);text-shadow:0 0 6px rgba(212,160,32,.5);}
+.e-sel.room-requested{border-bottom-color:var(--gold) !important;border-bottom-style:solid !important;color:var(--clay) !important;}
+.room-pending-badge{display:none;}
 .room-request-note-wrap{display:block;margin-top:6px;}
 .room-request-note{width:100%;border:1px dashed rgba(212,160,32,.4);border-radius:6px;background:#fffdf5;font-family:'Nunito',sans-serif;font-size:.78rem;color:var(--deep);padding:6px 10px;outline:none;transition:border-color .15s;}
 .room-request-note:focus{border-color:var(--gold);border-style:solid;}
@@ -207,13 +208,13 @@ body{font-family:'Nunito',sans-serif;background:var(--cream);color:var(--deep);f
         <p style="font-size:.86rem;color:var(--earth);margin-bottom:22px;line-height:1.65;">Your answers will pre-fill your schedule — you can adjust anything once you see it.</p>
         <div class="g2">
           <div class="f">
-            <label>Preferred morning class time</label>
+            <label>Preferred morning class start time</label>
             <select id="intake-morning" style="padding:9px 11px;border:1.5px solid var(--warm);border-radius:6px;font-size:.86rem;color:var(--deep);background:var(--cream);outline:none;width:100%;">
               <option value="">— Select time —</option>
             </select>
           </div>
           <div class="f">
-            <label>Preferred afternoon class time</label>
+            <label>Preferred afternoon class start time</label>
             <select id="intake-afternoon" style="padding:9px 11px;border:1.5px solid var(--warm);border-radius:6px;font-size:.86rem;color:var(--deep);background:var(--cream);outline:none;width:100%;">
               <option value="">— Select time —</option>
             </select>
@@ -221,8 +222,8 @@ body{font-family:'Nunito',sans-serif;background:var(--cream);color:var(--deep);f
         </div>
       </div>
       <div class="info-card" style="margin-bottom:28px;">
-        <div class="card-title">Pre-Paid Tours &amp; Activities</div>
-        <p style="font-size:.86rem;color:var(--earth);margin-bottom:18px;line-height:1.65;">Do any of your guests have pre-paid tours? Select the days and times below.</p>
+        <div class="card-title">Add-On Activities</div>
+        <p style="font-size:.86rem;color:var(--earth);margin-bottom:18px;line-height:1.65;">Do you have any add-on activities included in your retreat? If so, select your preferred day and time below.</p>
         <div id="intake-tour-days"></div>
       </div>
       <button class="gen-btn" onclick="applyIntakeAndBuild()">Build My Schedule &rarr;</button>
@@ -517,6 +518,8 @@ function toggleRoomRequest(btn, id){
   var active = btn.classList.toggle('room-request-active');
   var row = document.getElementById(id+'_pendingrow');
   if(row) row.style.display = active ? 'block' : 'none';
+  var roomSel = document.getElementById(id.replace('_req','_r'));
+  if(roomSel){ if(active) roomSel.classList.add('room-requested'); else roomSel.classList.remove('room-requested'); }
   btn.title = active ? 'Room requested — we\'ll do our best!' : 'Request this specific room';
 }
 function tourOpts(id){
@@ -609,8 +612,8 @@ function classRow(pfx, startVal, endVal, roomVal, defaultName, minH, maxH){
     +'<span class="doc-time">'+timeSelOC(pfx+'_s',startVal,minH,maxH,undefined,pfx+'_r')+' – '+timeSelOC(pfx+'_e',endVal,minH,maxH,undefined,pfx+'_r')+'</span>'
     +'<span class="doc-sep">|</span>'
     +'<span class="doc-main">'
-    +'<span class="doc-event">'+classNameInput(pfx+'_name', defaultName||'e.g. Vinyasa Flow, Yin Yoga…')+' &nbsp;'+roomOpts(pfx+'_r',roomVal)+'<span class="room-conflict-badge" id="'+pfx+'_conflict" style="display:none">⚠ Occupied</span> <button type="button" class="room-request-btn" id="'+pfx+'_req" onclick="toggleRoomRequest(this,\''+pfx+'_req\')" title="Request this specific room">Request</button></span>'
-    +'<span class="doc-sub" id="'+pfx+'_req_pendingrow" style="display:none"><span class="room-pending-badge" id="'+pfx+'_req_badge">Pending Approval</span> <input type="text" class="room-pending-note" id="'+pfx+'_req_pnote" placeholder="Leave a note e.g. can do Sky if Heaven unavailable..." /></span>'
+    +'<span class="doc-event">'+classNameInput(pfx+'_name', defaultName||'e.g. Vinyasa Flow, Yin Yoga…')+' &nbsp;'+roomOpts(pfx+'_r',roomVal)+'<span class="room-conflict-badge" id="'+pfx+'_conflict" style="display:none">⚠ Occupied</span> <button type="button" class="room-request-btn" id="'+pfx+'_req" onclick="toggleRoomRequest(this,\''+pfx+'_req\')" title="Request this specific room">★</button></span>'
+    +'<span class="doc-sub" id="'+pfx+'_req_pendingrow" style="display:none"><span style="font-size:.7rem;color:var(--gold);font-weight:600;">★ Room Requested</span> <input type="text" class="room-pending-note" id="'+pfx+'_req_pnote" placeholder="Leave a note e.g. can do Sky if Heaven unavailable..." /></span>'
     +'<span class="doc-sub">'+noise(pfx)+' &nbsp; '+notesInput(pfx+'_notes')+'</span>'
     +'</span>'
     +'</div>';
@@ -809,6 +812,8 @@ function restoreRoomRequest(btnId, requested, note){
   btn.title = 'Room requested — we\'ll do our best!';
   var row = document.getElementById(btnId+'_pendingrow');
   if(row) row.style.display = 'block';
+  var roomSel = document.getElementById(btnId.replace('_req','_r'));
+  if(roomSel) roomSel.classList.add('room-requested');
   if(note) setVal(btnId+'_pnote', note);
 }
 
