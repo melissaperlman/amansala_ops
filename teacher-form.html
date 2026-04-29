@@ -720,7 +720,7 @@ function buildIntakeScreen(){
   fmtTimeOpts('intake-afternoon', 15, 18, 30, '17:00');
   fmtTimeOpts('intake-afternoon-end', 16, 20, 30, '18:30');
   // Build a day row for tours or soul services
-  function buildActivityRows(cbClass, idPrefix, typeOpts, containerId) {
+  function buildActivityRows(cbClass, idPrefix, typeOpts, containerId, minH, maxH, defaultTime) {
     var html = '';
     DDAYS.forEach(function(d, i) {
       if (d.type !== 'full') return;
@@ -732,7 +732,7 @@ function buildIntakeScreen(){
         + '<label for="' + idPrefix + i + '" style="font-size:.88rem;font-weight:500;color:var(--deep);min-width:90px;cursor:pointer;">' + d.lbl + dateStr + '</label>'
         + '<select id="' + idPrefix + 'type' + i + '" disabled style="' + selStyle + '">' + typeOpts + '</select>'
         + '<select id="' + idPrefix + 'time' + i + '" disabled style="' + selStyle + '"><option value="">— Time —</option>';
-      for (var h = 10; h <= 14; h++) { for (var m = 0; m < 60; m += 30) { if (h === 14 && m > 0) break; var tt = String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0'); html += '<option value="' + tt + '"' + (tt === '11:00' ? ' selected' : '') + '>' + fmt(tt) + '</option>'; } }
+      for (var h = minH; h <= maxH; h++) { for (var m = 0; m < 60; m += 30) { if (h === maxH && m > 0) break; var tt = String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0'); html += '<option value="' + tt + '"' + (tt === defaultTime ? ' selected' : '') + '>' + fmt(tt) + '</option>'; } }
       html += '</select></div>';
     });
     document.getElementById(containerId).innerHTML = html || '<p style="font-size:.83rem;color:var(--earth)">No days available.</p>';
@@ -750,8 +750,8 @@ function buildIntakeScreen(){
     + '<option value="clay">Mayan Clay</option>'
     + '<option value="ice">Ice Bath</option>';
 
-  buildActivityRows('intake-tour-cb', 'itour-', tourTypeOpts, 'intake-tour-days');
-  buildActivityRows('intake-soul-cb', 'isoul-', soulTypeOpts, 'intake-soul-days');
+  buildActivityRows('intake-tour-cb', 'itour-', tourTypeOpts, 'intake-tour-days', 10, 14, '11:00');
+  buildActivityRows('intake-soul-cb', 'isoul-', soulTypeOpts, 'intake-soul-days', 17, 20, '17:00');
 }
 function toggleActivityRow(cb){
   var pfx = cb.dataset.prefix;
